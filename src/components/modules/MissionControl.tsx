@@ -9,6 +9,7 @@ import {
   NavigationTab 
 } from '../../types';
 import { ActiveWorkOrderHeader } from '../mission/ActiveWorkOrderHeader';
+import { MachineSnapshotPanel } from '../mission/MachineSnapshotPanel';
 import { InspectionStageStepper } from '../mission/InspectionStageStepper';
 import { OperationalPrerequisites } from '../mission/OperationalPrerequisites';
 import { WorkOrderChecklist } from '../mission/WorkOrderChecklist';
@@ -39,33 +40,40 @@ export const MissionControl: React.FC<MissionControlProps> = ({
   onOpenQuickMhc,
   onSelectMachine
 }) => {
+  const currentMachine = machines.find(m => m.id === 'mch-101') || machines[0];
+
   return (
     <div className="space-y-6 pb-12 transition-all duration-300">
-      {/* 1. Today's Primary Active Work Order Header (Customer, Machine, Purpose, Current Stage, Direct Next Action) */}
+      {/* 1. Hero Operational Desk (Customer, Machine, Mission, Current Stage, Direct Primary Action) */}
       <ActiveWorkOrderHeader 
         onNavigate={onNavigate}
         onOpenQuickMhc={onOpenQuickMhc}
       />
 
-      {/* 2. Sequential 5-Stage Inspection Stepper with Embedded Contextual AI Guidance */}
+      {/* 2. Machine Snapshot Panel (Health, Heads, Cooling, Runtime, Remaining Life, Contract) */}
+      <MachineSnapshotPanel 
+        machine={currentMachine}
+      />
+
+      {/* 3. Sequential 5-Stage Inspection Stepper with Embedded Contextual AI Guidance */}
       <InspectionStageStepper 
         onNavigate={onNavigate}
         onOpenQuickMhc={onOpenQuickMhc}
       />
 
-      {/* 3. Operational & Cleanroom Prerequisites + Active Machine Telemetry Risks */}
+      {/* 4. Operational Cleanroom Prerequisites & Active Machine Telemetry Risks */}
       <OperationalPrerequisites 
         alerts={alerts}
       />
 
-      {/* 4. Today's Work Order Sequential Execution Checklist */}
+      {/* 5. Today's Work Order Sequential Execution Checklist */}
       <WorkOrderChecklist 
         tasks={tasks}
         onToggleTask={onToggleTask}
         onNavigate={onNavigate}
       />
 
-      {/* 5. Today's On-Site Activity Audit Trace */}
+      {/* 6. Today's On-Site Activity Audit Trace */}
       <TodayActivityLog 
         recentMhcs={recentMhcs}
         onNavigate={onNavigate}

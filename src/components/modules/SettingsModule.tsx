@@ -3,13 +3,30 @@ import { Settings as SettingsIcon, ShieldCheck, Database, RefreshCw, Bot, User, 
 import { Card } from '../common/Card';
 import { Badge } from '../common/Badge';
 import { Button } from '../common/Button';
+import { useTheme } from '../../context/ThemeContext';
 
 interface SettingsProps {
   onResetData: () => void;
 }
 
 export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
+  const { effectiveTheme } = useTheme();
+  const isDark = effectiveTheme === 'dark';
+
   const changelog = [
+    {
+      version: 'v0.2.5',
+      date: '2026-07-30',
+      type: 'Mission Control Signature Design (ECO-20260730-003)',
+      highlights: [
+        'Transformed Mission Control into an engineer\'s Operational Desk with signature visual identity.',
+        'Implemented full pastel color language (#111315, #1A1D21, #20252B, #2B323A, #8B9DFF, #7FD4A6, #8ECDF7, #EFCB7A, #E98A8A).',
+        'Implemented complete Theme Engine supporting Dark, Light, and System modes with smooth 250ms transitions.',
+        'Refined Hero Section answering the 5 core operational questions in under 5 seconds.',
+        'Added dedicated compact Machine Snapshot panel (Health, Heads, Cooling, Runtime, Remaining Service Life, SLA Progress).',
+        'Reduced visual noise, softened borders, increased whitespace and mathematical typographic hierarchy.'
+      ]
+    },
     {
       version: 'v0.2.2',
       date: '2026-07-29',
@@ -58,17 +75,19 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
     <div className="space-y-6 pb-12">
       {/* Version Status Card */}
       <Card title="System Version & Operational Build Status">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl bg-[#090f1c] border border-slate-800 gap-4">
+        <div className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border gap-4 ${
+          isDark ? 'bg-[#1A1D21] border-[#2B323A]' : 'bg-slate-50 border-slate-200'
+        }`}>
           <div className="flex items-center gap-3">
-            <div className="p-3 rounded-xl bg-blue-950/80 border border-blue-800 text-blue-400 font-mono font-bold text-lg">
-              v0.2.2
+            <div className="p-3 rounded-xl bg-[#8B9DFF]/15 border border-[#8B9DFF]/30 text-[#8B9DFF] font-mono font-bold text-lg">
+              v0.2.5
             </div>
             <div>
-              <h3 className="text-base font-bold text-slate-100">Field Service Operations System</h3>
-              <p className="text-xs text-slate-400">Mission Control Re-Architecture v0.2.2 — Operational Work Order Workspace</p>
+              <h3 className="text-base font-bold">Field Service Operations System</h3>
+              <p className="text-xs text-slate-400">Mission Control Signature Design v0.2.5 — Operational Work Order Workspace</p>
             </div>
           </div>
-          <Badge variant="blue">v0.2.2 OPERATIONAL</Badge>
+          <Badge variant="blue">v0.2.5 OPERATIONAL</Badge>
         </div>
       </Card>
 
@@ -76,23 +95,19 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
       <Card title="System Architecture Milestone Changelog">
         <div className="space-y-4">
           {changelog.map((entry) => (
-            <div key={entry.version} className="p-4 rounded-xl bg-[#090f1c] border border-slate-800/80 text-xs space-y-2">
-              <div className="flex items-center justify-between border-b border-slate-800/80 pb-2">
+            <div key={entry.version} className={`p-4 rounded-xl border text-xs space-y-2 ${
+              isDark ? 'bg-[#1A1D21] border-[#2B323A]' : 'bg-slate-50 border-slate-200'
+            }`}>
+              <div className="flex items-center justify-between border-b border-[#2B323A]/60 pb-2">
                 <div className="flex items-center gap-2">
-                  <span className="font-mono font-bold text-blue-400 bg-blue-950/60 px-2 py-0.5 rounded border border-blue-800/50">
-                    {entry.version}
-                  </span>
-                  <span className="font-semibold text-slate-200">{entry.type}</span>
+                  <span className="font-mono font-bold text-[#8B9DFF]">{entry.version}</span>
+                  <span className="font-semibold">{entry.type}</span>
                 </div>
-                <span className="font-mono text-[11px] text-slate-500">{entry.date}</span>
+                <span className="font-mono text-slate-400">{entry.date}</span>
               </div>
-
-              <ul className="space-y-1.5 pt-1">
+              <ul className="space-y-1 pl-4 list-disc text-slate-400">
                 {entry.highlights.map((item, idx) => (
-                  <li key={idx} className="flex items-start gap-2 text-slate-300">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-blue-400 shrink-0 mt-0.5" />
-                    <span>{item}</span>
-                  </li>
+                  <li key={idx}>{item}</li>
                 ))}
               </ul>
             </div>
@@ -100,40 +115,33 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
         </div>
       </Card>
 
-      {/* Lead Engineer Profile */}
-      <Card title="Lead Field Service Engineer Profile">
-        <div className="space-y-3 text-xs">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 rounded-xl bg-[#090f1c] border border-slate-800">
-            <div>
-              <span className="text-slate-400 block font-mono">Engineer Name:</span>
-              <span className="text-slate-100 font-bold">Alex Mercer</span>
+      {/* Engineer Profile & Reset */}
+      <Card title="Engineer Workspace & System Data Management">
+        <div className="space-y-4 text-xs">
+          <div className={`p-4 rounded-xl border flex items-center justify-between ${
+            isDark ? 'bg-[#1A1D21] border-[#2B323A]' : 'bg-slate-50 border-slate-200'
+          }`}>
+            <div className="flex items-center gap-3">
+              <User className="w-5 h-5 text-[#8B9DFF]" />
+              <div>
+                <p className="font-bold text-sm">Alex Mercer</p>
+                <p className="text-slate-400">Lead Field Service Engineer • Certification: TRUMPF Tier 3 Laser Optics</p>
+              </div>
             </div>
-            <div>
-              <span className="text-slate-400 block font-mono">Title:</span>
-              <span className="text-slate-100 font-bold">Lead Laser Field Service Engineer</span>
-            </div>
-            <div>
-              <span className="text-slate-400 block font-mono">Cleanroom Certification:</span>
-              <span className="text-blue-400 font-bold">ISO Class 4 Wafer Cleanroom</span>
-            </div>
-            <div>
-              <span className="text-slate-400 block font-mono">Security SLA Level:</span>
-              <span className="text-emerald-400 font-bold">Enterprise Tier 1</span>
-            </div>
+            <Badge variant="emerald">ACTIVE ON-SITE</Badge>
           </div>
-        </div>
-      </Card>
 
-      {/* Local Storage Reset */}
-      <Card title="Data Persistence & Operational State Reset">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs">
-          <div>
-            <p className="font-semibold text-slate-200">Reset Local Storage to Factory System Defaults</p>
-            <p className="text-slate-400 text-[11px]">Resets contracts, planner, MHC reports, and machine records to initial state.</p>
+          <div className={`p-4 rounded-xl border flex items-center justify-between ${
+            isDark ? 'bg-[#1A1D21] border-[#2B323A]' : 'bg-slate-50 border-slate-200'
+          }`}>
+            <div>
+              <p className="font-bold text-sm text-[#E98A8A]">Reset Local Workspace State</p>
+              <p className="text-slate-400">Restores default contracts, machines, schedule, tasks, and MHC audit records.</p>
+            </div>
+            <Button variant="danger" size="sm" icon={<RefreshCw className="w-3.5 h-3.5" />} onClick={onResetData}>
+              Reset State
+            </Button>
           </div>
-          <Button variant="danger" size="sm" icon={<RefreshCw className="w-3.5 h-3.5" />} onClick={onResetData}>
-            Reset System Data
-          </Button>
         </div>
       </Card>
     </div>

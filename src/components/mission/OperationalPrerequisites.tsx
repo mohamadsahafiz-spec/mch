@@ -1,83 +1,103 @@
 import React from 'react';
-import { ShieldAlert, AlertTriangle, Wrench, ShieldCheck, Cpu, Clock, CheckCircle2 } from 'lucide-react';
+import { ShieldAlert, AlertTriangle, ShieldCheck } from 'lucide-react';
 import { AlertItem } from '../../types';
+import { useTheme } from '../../context/ThemeContext';
 
 interface OperationalPrerequisitesProps {
   alerts: AlertItem[];
 }
 
 export const OperationalPrerequisites: React.FC<OperationalPrerequisitesProps> = ({ alerts }) => {
-  const machineAlerts = alerts.filter(a => a.machineName.includes('TSMC') || a.machineName.includes('TruMicro'));
+  const { effectiveTheme } = useTheme();
+  const isDark = effectiveTheme === 'dark';
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {/* Facility & Safety Prerequisites */}
-      <div className="p-5 rounded-2xl bg-[#0e172a] border border-slate-800 space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+      <div className={`p-5 rounded-2xl border transition-all duration-200 space-y-4 ${
+        isDark 
+          ? 'bg-[#20252B] border-[#2B323A] text-[#F3F4F6]' 
+          : 'bg-white border-slate-200 text-slate-900 shadow-xs'
+      }`}>
+        <div className="flex items-center justify-between border-b border-[#2B323A]/60 pb-3">
           <div className="flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-blue-400" />
-            <h3 className="text-sm font-bold text-slate-100">Operational & Cleanroom Prerequisites</h3>
+            <ShieldCheck className="w-4 h-4 text-[#8ECDF7]" />
+            <h3 className="text-sm font-bold">Operational & Cleanroom Prerequisites</h3>
           </div>
-          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-950 text-blue-400 border border-blue-800">
+          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#8ECDF7]/10 text-[#8ECDF7] border border-[#8ECDF7]/30 font-semibold">
             ISO 4 VERIFIED
           </span>
         </div>
 
         <div className="space-y-2.5 text-xs">
-          <div className="p-3 rounded-xl bg-[#090f1d] border border-slate-800/80 flex items-start gap-2.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0 mt-1.5" />
+          <div className={`p-3 rounded-xl border flex items-start gap-2.5 ${
+            isDark ? 'bg-[#1A1D21] border-[#2B323A]' : 'bg-slate-50 border-slate-200'
+          }`}>
+            <span className="w-2 h-2 rounded-full bg-[#7FD4A6] shrink-0 mt-1.5" />
             <div>
-              <p className="font-semibold text-slate-200">ISO Class 4 Wafer Cleanroom Protocol</p>
-              <p className="text-[11px] text-slate-400">Full gowning, ESD wristband grounding, airborne particle count &lt;10/m³.</p>
+              <p className="font-semibold">ISO Class 4 Wafer Cleanroom Protocol</p>
+              <p className="text-[11px] text-slate-400 mt-0.5">Full gowning, ESD wristband grounding, airborne particle count &lt;10/m³.</p>
             </div>
           </div>
 
-          <div className="p-3 rounded-xl bg-[#090f1d] border border-slate-800/80 flex items-start gap-2.5">
-            <span className="w-2 h-2 rounded-full bg-blue-400 shrink-0 mt-1.5" />
+          <div className={`p-3 rounded-xl border flex items-start gap-2.5 ${
+            isDark ? 'bg-[#1A1D21] border-[#2B323A]' : 'bg-slate-50 border-slate-200'
+          }`}>
+            <span className="w-2 h-2 rounded-full bg-[#8ECDF7] shrink-0 mt-1.5" />
             <div>
-              <p className="font-semibold text-slate-200">Class 4 High-Power Optical Safety</p>
-              <p className="text-[11px] text-slate-400">OD 7+ laser safety eyewear rated for 1030nm femtosecond pulses required.</p>
+              <p className="font-semibold">Class 4 High-Power Optical Safety</p>
+              <p className="text-[11px] text-slate-400 mt-0.5">OD 7+ laser safety eyewear rated for 1030nm femtosecond pulses required.</p>
             </div>
           </div>
 
-          <div className="p-3 rounded-xl bg-[#090f1d] border border-slate-800/80 flex items-start gap-2.5">
-            <span className="w-2 h-2 rounded-full bg-indigo-400 shrink-0 mt-1.5" />
+          <div className={`p-3 rounded-xl border flex items-start gap-2.5 ${
+            isDark ? 'bg-[#1A1D21] border-[#2B323A]' : 'bg-slate-50 border-slate-200'
+          }`}>
+            <span className="w-2 h-2 rounded-full bg-[#8B9DFF] shrink-0 mt-1.5" />
             <div>
-              <p className="font-semibold text-slate-200">Required Engineering Toolkit</p>
-              <p className="text-[11px] text-slate-400">0.2µm filter canister spanner, thermal beam profiler, 9-point quartz grid target.</p>
+              <p className="font-semibold">Required Engineering Toolkit</p>
+              <p className="text-[11px] text-slate-400 mt-0.5">0.2µm filter canister spanner, thermal beam profiler, 9-point quartz grid target.</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Machine Risks & Telemetry Alerts */}
-      <div className="p-5 rounded-2xl bg-[#0e172a] border border-slate-800 space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+      <div className={`p-5 rounded-2xl border transition-all duration-200 space-y-4 ${
+        isDark 
+          ? 'bg-[#20252B] border-[#2B323A] text-[#F3F4F6]' 
+          : 'bg-white border-slate-200 text-slate-900 shadow-xs'
+      }`}>
+        <div className="flex items-center justify-between border-b border-[#2B323A]/60 pb-3">
           <div className="flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-amber-400" />
-            <h3 className="text-sm font-bold text-slate-100">Machine Health & Risk Telemetry</h3>
+            <AlertTriangle className="w-4 h-4 text-[#EFCB7A]" />
+            <h3 className="text-sm font-bold">Machine Health & Risk Telemetry</h3>
           </div>
-          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-950 text-amber-400 border border-amber-800">
+          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#EFCB7A]/10 text-[#EFCB7A] border border-[#EFCB7A]/30 font-semibold">
             2 ACTIVE RISKS
           </span>
         </div>
 
         <div className="space-y-2.5 text-xs">
-          <div className="p-3 rounded-xl bg-amber-950/20 border border-amber-800/40 text-amber-200 flex items-start gap-2.5">
-            <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+          <div className={`p-3 rounded-xl border flex items-start gap-2.5 ${
+            isDark ? 'bg-[#EFCB7A]/10 border-[#EFCB7A]/30 text-slate-200' : 'bg-amber-50 border-amber-200 text-slate-900'
+          }`}>
+            <AlertTriangle className="w-4 h-4 text-[#EFCB7A] shrink-0 mt-0.5" />
             <div>
-              <p className="font-semibold text-amber-200">Cooling DI Water Filter Capacity Critical</p>
-              <p className="text-[11px] text-amber-300/80">
+              <p className="font-semibold text-[#EFCB7A]">Cooling DI Water Filter Capacity Critical</p>
+              <p className="text-[11px] text-slate-400 mt-0.5">
                 Filter life at 18% (12 days estimated). Flow delta dropped by 0.8 LPM. Swap filter in Stage 2.
               </p>
             </div>
           </div>
 
-          <div className="p-3 rounded-xl bg-rose-950/20 border border-rose-800/40 text-rose-200 flex items-start gap-2.5">
-            <ShieldAlert className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+          <div className={`p-3 rounded-xl border flex items-start gap-2.5 ${
+            isDark ? 'bg-[#E98A8A]/10 border-[#E98A8A]/30 text-slate-200' : 'bg-rose-50 border-rose-200 text-slate-900'
+          }`}>
+            <ShieldAlert className="w-4 h-4 text-[#E98A8A] shrink-0 mt-0.5" />
             <div>
-              <p className="font-semibold text-rose-200">Laser Diode Module Head B Runtime Warning</p>
-              <p className="text-[11px] text-rose-300/80">
+              <p className="font-semibold text-[#E98A8A]">Laser Diode Module Head B Runtime Warning</p>
+              <p className="text-[11px] text-slate-400 mt-0.5">
                 Logged 9,680 running hours (threshold: 10,000 hrs). Schedule diode stack swap for Q3 SLA cycle.
               </p>
             </div>

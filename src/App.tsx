@@ -20,6 +20,7 @@ import {
   BaselineCheck 
 } from './types';
 import { StorageService } from './utils/persistence';
+import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
 
@@ -38,8 +39,10 @@ import { AnalyticsModule } from './components/modules/AnalyticsModule';
 import { KnowledgeBaseModule } from './components/modules/KnowledgeBaseModule';
 import { SettingsModule } from './components/modules/SettingsModule';
 
-export default function App() {
+function AppLayout() {
   const [activeTab, setActiveTab] = useState<NavigationTab>('mission_control');
+  const { effectiveTheme } = useTheme();
+  const isDark = effectiveTheme === 'dark';
 
   // Operational State
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -99,68 +102,16 @@ export default function App() {
     StorageService.saveSchedule(updated);
   };
 
-  const handleSaveMhcRecord = (newMhc: MHCRecord) => {
-    const updatedRecords = [newMhc, ...mhcRecords];
-    setMhcRecords(updatedRecords);
-    StorageService.saveMhcRecords(updatedRecords);
-
-    // Update machine health score
-    const updatedMachines = machines.map((m) => {
-      if (m.id === newMhc.machineId) {
-        return {
-          ...m,
-          healthScore: newMhc.healthScores.overallScore,
-          lastMhcDate: newMhc.date
-        };
-      }
-      return m;
-    });
-    setMachines(updatedMachines);
-    StorageService.saveMachines(updatedMachines);
+  const handleSaveMhcRecord = (record: MHCRecord) => {
+    const updated = [record, ...mhcRecords];
+    setMhcRecords(updated);
+    StorageService.saveMhcRecords(updated);
   };
 
-  const handleGenerateExecutiveReport = (mhcRecord: MHCRecord) => {
-    const newReport: ExecutiveReport = {
-      id: `rpt-${Date.now()}`,
-      reportNumber: `EXECUTIVE-RPT-2026-${Math.floor(100 + Math.random() * 900)}`,
-      mhcId: mhcRecord.id,
-      customerName: mhcRecord.customerName,
-      plantName: mhcRecord.plantName,
-      machineModel: mhcRecord.machineName,
-      serialNumber: mhcRecord.machineSerialNumber,
-      date: mhcRecord.date,
-      engineerName: mhcRecord.engineerName,
-      executiveSummary: `The ${mhcRecord.machineName} system underwent comprehensive 8-Point Machine Health Check inspection. The machine scored an overall health index of ${mhcRecord.healthScores.overallScore}/100 and has been granted ${mhcRecord.productionReleaseStatus} status for high-precision wafer annealing/welding operations.`,
-      overallHealthScore: mhcRecord.healthScores.overallScore,
-      productionReleaseStatus: mhcRecord.productionReleaseStatus,
-      subsystemHealth: mhcRecord.healthScores,
-      laserRuntimeSummary: {
-        runningHours: 8420,
-        maxHours: 10000,
-        head1Health: mhcRecord.healthScores.laserHead1,
-        head2Health: mhcRecord.healthScores.laserHead2
-      },
-      coolingStatus: `Flow rate: ${mhcRecord.inspectionData.coolingInspection.flowRateLpm} LPM, Temp: ${mhcRecord.inspectionData.coolingInspection.tempCelsius}°C. Nominal thermal control.`,
-      powerStability: `Measured output ${mhcRecord.inspectionData.powerCheck.measuredWatts}W vs Target ${mhcRecord.inspectionData.powerCheck.targetWatts}W.`,
-      beamProfileSummary: `Waist diameter: ${mhcRecord.inspectionData.beamProfile.beamSizeMm}mm, Focus Offset: ${mhcRecord.inspectionData.beamProfile.focusOffsetMm}mm.`,
-      powerComparison: {
-        baselinePowerWatts: mhcRecord.inspectionData.powerCheck.targetWatts,
-        currentPowerWatts: mhcRecord.inspectionData.powerCheck.measuredWatts,
-        deltaPercent: Math.round(((mhcRecord.inspectionData.powerCheck.measuredWatts - mhcRecord.inspectionData.powerCheck.targetWatts) / mhcRecord.inspectionData.powerCheck.targetWatts) * 1000) / 10
-      },
-      engineerRemarks: mhcRecord.engineerRemarks,
-      recommendations: mhcRecord.recommendations,
-      signatureName: 'Alex Mercer',
-      signatureTitle: 'Lead Field Service Engineer',
-      signedDate: mhcRecord.date
-    };
-
-    const updatedReports = [newReport, ...reports];
-    setReports(updatedReports);
-    StorageService.saveReports(updatedReports);
-
-    // Navigate to Reports view
-    setActiveTab('reports');
+  const handleGenerateExecutiveReport = (report: ExecutiveReport) => {
+    const updated = [report, ...reports];
+    setReports(updated);
+    StorageService.saveReports(updated);
   };
 
   const handleToggleTask = (taskId: string) => {
@@ -169,24 +120,25 @@ export default function App() {
     StorageService.saveTasks(updated);
   };
 
-  const handleAddInvestigation = (newItem: QualityInvestigation) => {
-    const updated = [newItem, ...investigations];
+  const handleAddInvestigation = (inv: QualityInvestigation) => {
+    const updated = [inv, ...investigations];
     setInvestigations(updated);
     StorageService.saveInvestigations(updated);
   };
 
   const handleResetData = () => {
-    if (confirm('Reset operational system data to initial factory defaults?')) {
+    if (window.confirm("Are you sure you want to reset all operational data to factory defaults?")) {
       StorageService.resetToDefaults();
       window.location.reload();
     }
   };
 
   const nextPriorityAction = "Execute DI Water Cooling Filter replacement & Q3 MHC on TRUMPF TruMicro 7000 (MCH-TSMC-01) at TSMC Fab 18A Cleanroom.";
-  const isLightTab = activeTab === 'reports' || activeTab === 'knowledge_base';
 
   return (
-    <div className={`min-h-screen flex transition-colors duration-300 ${isLightTab ? 'bg-slate-100 text-slate-900' : 'bg-[#080d1a] text-slate-100'}`}>
+    <div className={`min-h-screen flex transition-colors duration-250 ${
+      isDark ? 'bg-[#111315] text-[#F3F4F6]' : 'bg-[#F8F9FA] text-[#0F172A]'
+    }`}>
       {/* Sidebar Navigation */}
       <Sidebar
         activeTab={activeTab}
@@ -312,5 +264,13 @@ export default function App() {
         </main>
       </div>
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <ThemeProvider>
+      <AppLayout />
+    </ThemeProvider>
   );
 }

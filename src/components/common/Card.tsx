@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTheme } from '../../context/ThemeContext';
 
 interface CardProps {
   children: React.ReactNode;
@@ -19,6 +20,9 @@ export const Card: React.FC<CardProps> = ({
   padding = 'md',
   id
 }) => {
+  const { effectiveTheme } = useTheme();
+  const isDark = effectiveTheme === 'dark';
+
   const paddingStyles = {
     none: 'p-0',
     sm: 'p-3',
@@ -29,13 +33,17 @@ export const Card: React.FC<CardProps> = ({
   return (
     <div
       id={id}
-      className={`bg-[#0e172a] border border-slate-800/90 rounded-2xl shadow-xl shadow-black/40 transition-all duration-200 ${paddingStyles[padding]} ${className}`}
+      className={`border rounded-2xl transition-all duration-200 ${
+        isDark 
+          ? 'bg-[#20252B] border-[#2B323A] text-[#F3F4F6]' 
+          : 'bg-white border-slate-200 text-slate-900 shadow-xs'
+      } ${paddingStyles[padding]} ${className}`}
     >
       {(title || subtitle || action) && (
-        <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-800/80">
+        <div className="flex items-center justify-between pb-3 mb-4 border-b border-[#2B323A]/60">
           <div>
             {title && typeof title === 'string' ? (
-              <h3 className="text-base font-semibold text-slate-100 tracking-tight">{title}</h3>
+              <h3 className="text-base font-semibold tracking-tight">{title}</h3>
             ) : (
               title
             )}

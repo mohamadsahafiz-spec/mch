@@ -1,8 +1,9 @@
 import React from 'react';
-import { CheckCircle2, Clock, CheckSquare, ArrowRight } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
 import { FieldEngineerTask, NavigationTab } from '../../types';
 import { Badge } from '../common/Badge';
 import { Button } from '../common/Button';
+import { useTheme } from '../../context/ThemeContext';
 
 interface WorkOrderChecklistProps {
   tasks: FieldEngineerTask[];
@@ -15,23 +16,29 @@ export const WorkOrderChecklist: React.FC<WorkOrderChecklistProps> = ({
   onToggleTask,
   onNavigate
 }) => {
+  const { effectiveTheme } = useTheme();
+  const isDark = effectiveTheme === 'dark';
   const completedCount = tasks.filter(t => t.completed).length;
 
   return (
-    <div className="p-6 rounded-2xl bg-[#0e172a] border border-slate-800 space-y-4">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+    <div className={`p-6 rounded-2xl border transition-all duration-200 space-y-4 ${
+      isDark 
+        ? 'bg-[#20252B] border-[#2B323A] text-[#F3F4F6]' 
+        : 'bg-white border-slate-200 text-slate-900 shadow-xs'
+    }`}>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#2B323A]/60 pb-3">
         <div>
-          <span className="text-[10px] font-mono font-bold text-blue-400 uppercase tracking-wider">
+          <span className="text-[10px] font-mono font-bold text-[#8B9DFF] uppercase tracking-wider block mb-0.5">
             WORK ORDER CHECKLIST
           </span>
-          <h3 className="text-base font-bold text-slate-100">
+          <h3 className="text-base font-bold">
             Field Execution Checklist (#WO-20260729-TSMC)
           </h3>
         </div>
 
         <div className="flex items-center gap-3">
           <span className="text-xs font-mono text-slate-400">
-            Progress: <strong className="text-blue-400 font-bold">{completedCount} / {tasks.length} Done</strong>
+            Progress: <strong className="text-[#8B9DFF] font-bold">{completedCount} / {tasks.length} Done</strong>
           </span>
           <Button variant="ghost" size="sm" onClick={() => onNavigate('planner')}>
             Full Planner
@@ -47,32 +54,32 @@ export const WorkOrderChecklist: React.FC<WorkOrderChecklistProps> = ({
             onClick={() => onToggleTask(task.id)}
             className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
               task.completed
-                ? 'bg-slate-900/40 border-slate-800/80 text-slate-500 line-through'
+                ? isDark ? 'bg-[#1A1D21]/50 border-[#2B323A]/60 text-slate-500 line-through' : 'bg-slate-50 border-slate-200 text-slate-400 line-through'
                 : task.priority === 'URGENT'
-                ? 'bg-rose-950/20 border-rose-800/50 text-slate-100 hover:bg-rose-950/30'
-                : 'bg-[#090f1d] border-slate-800 text-slate-200 hover:bg-slate-800/50'
+                ? isDark ? 'bg-[#E98A8A]/10 border-[#E98A8A]/30 text-slate-100 hover:bg-[#E98A8A]/20' : 'bg-rose-50 border-rose-200 text-slate-900'
+                : isDark ? 'bg-[#1A1D21] border-[#2B323A] text-slate-200 hover:border-[#8B9DFF]/50' : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100'
             }`}
           >
             <div className="flex items-center gap-3 min-w-0">
               <div
                 className={`w-5 h-5 rounded-md border flex items-center justify-center shrink-0 transition-colors ${
                   task.completed
-                    ? 'bg-emerald-500 border-emerald-400 text-slate-950'
-                    : 'border-slate-600 bg-slate-900/80'
+                    ? 'bg-[#7FD4A6] border-[#7FD4A6] text-slate-950 font-bold'
+                    : isDark ? 'border-[#2B323A] bg-[#111315]' : 'border-slate-300 bg-white'
                 }`}
               >
                 {task.completed && <CheckCircle2 className="w-3.5 h-3.5" />}
               </div>
               <div className="truncate">
                 <p className="text-xs font-semibold truncate">{task.title}</p>
-                <p className="text-[11px] text-slate-400 truncate">
+                <p className="text-[11px] text-slate-400 truncate mt-0.5">
                   {task.customerName} • {task.machineName}
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
-              <span className="text-[10px] font-mono text-slate-500">{task.dueDate}</span>
+              <span className="text-[10px] font-mono text-slate-400">{task.dueDate}</span>
               <Badge
                 variant={
                   task.completed

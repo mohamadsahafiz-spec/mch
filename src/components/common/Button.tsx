@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTheme } from '../../context/ThemeContext';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'danger' | 'outline' | 'ghost';
@@ -15,14 +16,27 @@ export const Button: React.FC<ButtonProps> = ({
   disabled,
   ...props
 }) => {
-  const base = 'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-150 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none active:scale-[0.98]';
+  const { effectiveTheme } = useTheme();
+  const isDark = effectiveTheme === 'dark';
+
+  const base = 'inline-flex items-center justify-center font-medium rounded-xl transition-all duration-150 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none active:scale-[0.98]';
 
   const variants = {
-    primary: 'bg-blue-600 hover:bg-blue-500 text-white font-semibold shadow-lg shadow-blue-600/25 border border-blue-400/50',
-    secondary: 'bg-[#1e293b] hover:bg-[#334155] text-slate-100 border border-slate-700/80',
-    danger: 'bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/25 border border-rose-500/40',
-    outline: 'border border-slate-700 hover:border-slate-500 text-slate-200 hover:bg-slate-800/40',
-    ghost: 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/50'
+    primary: isDark 
+      ? 'bg-[#8B9DFF] hover:bg-[#A3B2FF] text-slate-950 font-bold shadow-xs' 
+      : 'bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-xs',
+    secondary: isDark
+      ? 'bg-[#1A1D21] hover:bg-[#20252B] text-slate-100 border border-[#2B323A]'
+      : 'bg-slate-100 hover:bg-slate-200 text-slate-900 border border-slate-200',
+    danger: isDark
+      ? 'bg-[#E98A8A]/20 hover:bg-[#E98A8A]/30 text-[#E98A8A] border border-[#E98A8A]/40 font-semibold'
+      : 'bg-rose-600 hover:bg-rose-700 text-white font-semibold shadow-xs',
+    outline: isDark
+      ? 'border border-[#2B323A] hover:border-[#8B9DFF]/50 text-slate-200 hover:bg-[#1A1D21]'
+      : 'border border-slate-300 hover:border-slate-400 text-slate-700 hover:bg-slate-100',
+    ghost: isDark
+      ? 'text-slate-400 hover:text-slate-100 hover:bg-[#1A1D21]'
+      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
   };
 
   const sizes = {
