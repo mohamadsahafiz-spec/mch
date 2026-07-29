@@ -183,9 +183,10 @@ export default function App() {
   };
 
   const nextPriorityAction = "Execute DI Water Cooling Filter replacement & Q3 MHC on TRUMPF TruMicro 7000 (MCH-TSMC-01) at TSMC Fab 18A Cleanroom.";
+  const isLightTab = activeTab === 'reports' || activeTab === 'knowledge_base';
 
   return (
-    <div className="min-h-screen bg-[#080d1a] text-slate-100 flex">
+    <div className={`min-h-screen flex transition-colors duration-300 ${isLightTab ? 'bg-slate-100 text-slate-900' : 'bg-[#080d1a] text-slate-100'}`}>
       {/* Sidebar Navigation */}
       <Sidebar
         activeTab={activeTab}

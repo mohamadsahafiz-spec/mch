@@ -56,7 +56,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div>
             <div className="flex items-center gap-1.5">
               <span className="text-sm font-bold text-slate-100 tracking-tight">FIELD OPS</span>
-              <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-blue-950/80 text-blue-400 border border-blue-800/50">v0.3</span>
+              <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-blue-950/80 text-blue-400 border border-blue-800/50">v0.2.1</span>
             </div>
             <p className="text-[11px] text-slate-400 font-mono">Laser & Precision Eng</p>
           </div>
@@ -116,7 +116,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
           <span>FSO Engine Online</span>
         </div>
-        <span className="text-slate-600">v0.3</span>
+        <span className="text-slate-600">v0.2.1</span>
       </div>
     </aside>
   );
