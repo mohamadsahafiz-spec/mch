@@ -3,16 +3,51 @@
 @layer base {
   :root {
     color-scheme: dark light;
+
+    /* Base tokens - Dark Defaults */
+    --color-bg: #111315;
+    --color-surface: #1A1D21;
+    --color-card: #20252B;
+    --color-border: #2B323A;
+    --color-primary: #8B9DFF;
+    --color-success: #7FD4A6;
+    --color-warning: #EFCB7A;
+    --color-danger: #E98A8A;
+    --color-info: #8ECDF7;
+    --color-text-primary: #F3F4F6;
+    --color-text-secondary: #94A3B8;
+    --color-text-muted: #64748B;
+    
+    --radius-sm: 0.5rem;
+    --radius-md: 0.75rem;
+    --radius-lg: 1rem;
+
+    --transition-speed: 250ms;
+  }
+
+  html.light {
+    --color-bg: #F8F9FA;
+    --color-surface: #FFFFFF;
+    --color-card: #FFFFFF;
+    --color-border: #E2E8F0;
+    --color-primary: #4F46E5;
+    --color-success: #059669;
+    --color-warning: #D97706;
+    --color-danger: #DC2626;
+    --color-info: #0284C7;
+    --color-text-primary: #0F172A;
+    --color-text-secondary: #475569;
+    --color-text-muted: #94A3B8;
   }
 
   html.dark body {
-    background-color: #111315;
-    color: #f3f4f6;
+    background-color: var(--color-bg);
+    color: var(--color-text-primary);
   }
 
   html.light body {
-    background-color: #f8f9fa;
-    color: #0f172a;
+    background-color: var(--color-bg);
+    color: var(--color-text-primary);
   }
 
   body {
