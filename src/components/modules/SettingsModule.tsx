@@ -11,6 +11,18 @@ interface SettingsProps {
 export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
   const changelog = [
     {
+      version: 'v0.2.2',
+      date: '2026-07-29',
+      type: 'Mission Control Re-Architecture (ECO-20260729-004)',
+      highlights: [
+        "Re-architected Mission Control from a generic dashboard into a true operational workspace (like opening today's work order).",
+        "Starts immediately with today's operation: Customer, Machine, Purpose, Inspection Stage, and Next Action.",
+        "Split Mission Control into modular components: ActiveWorkOrderHeader, InspectionStageStepper, WorkOrderChecklist, OperationalPrerequisites, TodayActivityLog.",
+        "Removed quick-action buttons grid and statistics charts from Mission Control in favor of sequence-based action flow.",
+        "Embedded contextual AI guidance directly inside active inspection stages."
+      ]
+    },
+    {
       version: 'v0.2.1',
       date: '2026-07-29',
       type: 'CTO Design Revision',
@@ -49,14 +61,14 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl bg-[#090f1c] border border-slate-800 gap-4">
           <div className="flex items-center gap-3">
             <div className="p-3 rounded-xl bg-blue-950/80 border border-blue-800 text-blue-400 font-mono font-bold text-lg">
-              v0.2.1
+              v0.2.2
             </div>
             <div>
               <h3 className="text-base font-bold text-slate-100">Field Service Operations System</h3>
-              <p className="text-xs text-slate-400">CTO Design Revision Build v0.2.1 — Field Operations Engineering Workspace</p>
+              <p className="text-xs text-slate-400">Mission Control Re-Architecture v0.2.2 — Operational Work Order Workspace</p>
             </div>
           </div>
-          <Badge variant="blue">v0.2.1 OPERATIONAL</Badge>
+          <Badge variant="blue">v0.2.2 OPERATIONAL</Badge>
         </div>
       </Card>
 
