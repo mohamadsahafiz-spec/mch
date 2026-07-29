@@ -1,0 +1,105 @@
+import { 
+  Customer, 
+  Plant, 
+  ProductionLine, 
+  Machine, 
+  Contract, 
+  ExecutionScheduleItem, 
+  MHCRecord, 
+  ExecutiveReport, 
+  QualityInvestigation, 
+  BaselineCheck, 
+  FieldEngineerTask, 
+  AlertItem 
+} from '../types';
+import { 
+  INITIAL_CUSTOMERS, 
+  INITIAL_PLANTS, 
+  INITIAL_LINES, 
+  INITIAL_MACHINES, 
+  INITIAL_CONTRACTS, 
+  INITIAL_SCHEDULE_ITEMS, 
+  INITIAL_MHC_RECORDS, 
+  INITIAL_EXECUTIVE_REPORTS, 
+  INITIAL_TASKS, 
+  INITIAL_ALERTS, 
+  INITIAL_QUALITY_INVESTIGATIONS, 
+  INITIAL_BASELINES 
+} from '../data/mockData';
+
+const KEYS = {
+  CUSTOMERS: 'fso_v03_customers',
+  PLANTS: 'fso_v03_plants',
+  LINES: 'fso_v03_lines',
+  MACHINES: 'fso_v03_machines',
+  CONTRACTS: 'fso_v03_contracts',
+  SCHEDULE: 'fso_v03_schedule',
+  MHC_RECORDS: 'fso_v03_mhc_records',
+  REPORTS: 'fso_v03_reports',
+  TASKS: 'fso_v03_tasks',
+  ALERTS: 'fso_v03_alerts',
+  INVESTIGATIONS: 'fso_v03_investigations',
+  BASELINES: 'fso_v03_baselines'
+};
+
+function getStorage<T>(key: string, defaultValue: T): T {
+  try {
+    const saved = localStorage.getItem(key);
+    if (saved) {
+      return JSON.parse(saved);
+    }
+  } catch (e) {
+    console.error(`Error reading ${key} from localStorage`, e);
+  }
+  return defaultValue;
+}
+
+function setStorage<T>(key: string, value: T): void {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch (e) {
+    console.error(`Error writing ${key} to localStorage`, e);
+  }
+}
+
+export const StorageService = {
+  getCustomers: (): Customer[] => getStorage(KEYS.CUSTOMERS, INITIAL_CUSTOMERS),
+  saveCustomers: (data: Customer[]) => setStorage(KEYS.CUSTOMERS, data),
+
+  getPlants: (): Plant[] => getStorage(KEYS.PLANTS, INITIAL_PLANTS),
+  savePlants: (data: Plant[]) => setStorage(KEYS.PLANTS, data),
+
+  getLines: (): ProductionLine[] => getStorage(KEYS.LINES, INITIAL_LINES),
+  saveLines: (data: ProductionLine[]) => setStorage(KEYS.LINES, data),
+
+  getMachines: (): Machine[] => getStorage(KEYS.MACHINES, INITIAL_MACHINES),
+  saveMachines: (data: Machine[]) => setStorage(KEYS.MACHINES, data),
+
+  getContracts: (): Contract[] => getStorage(KEYS.CONTRACTS, INITIAL_CONTRACTS),
+  saveContracts: (data: Contract[]) => setStorage(KEYS.CONTRACTS, data),
+
+  getSchedule: (): ExecutionScheduleItem[] => getStorage(KEYS.SCHEDULE, INITIAL_SCHEDULE_ITEMS),
+  saveSchedule: (data: ExecutionScheduleItem[]) => setStorage(KEYS.SCHEDULE, data),
+
+  getMhcRecords: (): MHCRecord[] => getStorage(KEYS.MHC_RECORDS, INITIAL_MHC_RECORDS),
+  saveMhcRecords: (data: MHCRecord[]) => setStorage(KEYS.MHC_RECORDS, data),
+
+  getReports: (): ExecutiveReport[] => getStorage(KEYS.REPORTS, INITIAL_EXECUTIVE_REPORTS),
+  saveReports: (data: ExecutiveReport[]) => setStorage(KEYS.REPORTS, data),
+
+  getTasks: (): FieldEngineerTask[] => getStorage(KEYS.TASKS, INITIAL_TASKS),
+  saveTasks: (data: FieldEngineerTask[]) => setStorage(KEYS.TASKS, data),
+
+  getAlerts: (): AlertItem[] => getStorage(KEYS.ALERTS, INITIAL_ALERTS),
+  saveAlerts: (data: AlertItem[]) => setStorage(KEYS.ALERTS, data),
+
+  getInvestigations: (): QualityInvestigation[] => getStorage(KEYS.INVESTIGATIONS, INITIAL_QUALITY_INVESTIGATIONS),
+  saveInvestigations: (data: QualityInvestigation[]) => setStorage(KEYS.INVESTIGATIONS, data),
+
+  getBaselines: (): BaselineCheck[] => getStorage(KEYS.BASELINES, INITIAL_BASELINES),
+  saveBaselines: (data: BaselineCheck[]) => setStorage(KEYS.BASELINES, data),
+
+  resetToDefaults: () => {
+    localStorage.clear();
+  }
+};

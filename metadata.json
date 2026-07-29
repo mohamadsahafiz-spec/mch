@@ -1,0 +1,6 @@
+{
+  "name": "Field Service Operations System",
+  "description": "Enterprise Field Service Operations System for Field Service Engineers managing contracts, customers, plants, machines, health checks, laser calibration, baseline checks, and executive engineering reports.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
