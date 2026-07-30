@@ -3,6 +3,7 @@ import { BookOpen, Search, FileText, AlertTriangle, ChevronRight, CheckCircle2, 
 import { Badge } from '../common/Badge';
 import { Modal } from '../common/Modal';
 import { Button } from '../common/Button';
+import { useTheme } from '../../context/ThemeContext';
 
 interface SOPItem {
   code: string;
@@ -17,6 +18,9 @@ interface SOPItem {
 }
 
 export const KnowledgeBaseModule: React.FC = () => {
+  const { effectiveTheme } = useTheme();
+  const isDark = effectiveTheme === 'dark';
+
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [activeSop, setActiveSop] = useState<SOPItem | null>(null);
@@ -104,29 +108,37 @@ export const KnowledgeBaseModule: React.FC = () => {
 
   return (
     <div className="space-y-6 pb-12 transition-all duration-300">
-      {/* Light Theme Knowledge Workspace Header */}
-      <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* Knowledge Workspace Header */}
+      <div className={`p-6 rounded-2xl border shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4 ${
+        isDark ? 'bg-[#1A1D21] border-[#2B323A]' : 'bg-white border-slate-200'
+      }`}>
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold bg-blue-100 text-blue-700 border border-blue-200 uppercase">
-              EXECUTIVE DOCUMENTation
+            <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold uppercase border ${
+              isDark ? 'bg-[#8B9DFF]/20 text-[#8B9DFF] border-[#8B9DFF]/30' : 'bg-blue-100 text-blue-700 border-blue-200'
+            }`}>
+              EXECUTIVE DOCUMENTATION
             </span>
-            <span className="text-xs text-slate-500 font-mono">ISO 9001 Compliant SOPs</span>
+            <span className={`text-xs font-mono ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>ISO 9001 Compliant SOPs</span>
           </div>
-          <h2 className="text-xl font-bold text-slate-900 tracking-tight">Field Engineering Knowledge Base & Standard Manuals</h2>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <h2 className={`text-xl font-bold tracking-tight ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>Field Engineering Knowledge Base & Standard Manuals</h2>
+          <p className={`text-xs mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
             Verified cleanroom procedures, optical calibration manuals, and error diagnostic protocols for laser field engineers.
           </p>
         </div>
 
-        <div className="flex items-center gap-2 font-mono text-xs text-slate-600 bg-slate-100 px-3 py-2 rounded-xl border border-slate-200">
-          <FileCheck className="w-4 h-4 text-emerald-600" />
+        <div className={`flex items-center gap-2 font-mono text-xs px-3 py-2 rounded-xl border ${
+          isDark ? 'bg-[#111315] text-slate-300 border-[#2B323A]' : 'bg-slate-100 text-slate-600 border-slate-200'
+        }`}>
+          <FileCheck className={`w-4 h-4 ${isDark ? 'text-[#7FD4A6]' : 'text-emerald-600'}`} />
           <span>4 Verified SOP Documents</span>
         </div>
       </div>
 
       {/* Search & Category Filter Controls */}
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+      <div className={`flex flex-col md:flex-row items-center justify-between gap-4 p-4 rounded-xl border shadow-xs ${
+        isDark ? 'bg-[#1A1D21] border-[#2B323A]' : 'bg-white border-slate-200'
+      }`}>
         <div className="relative w-full md:w-96">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
           <input
@@ -134,7 +146,9 @@ export const KnowledgeBaseModule: React.FC = () => {
             placeholder="Search SOPs, manuals, or error codes (e.g. ERR-402)..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-slate-50 text-slate-800 text-xs rounded-xl pl-9 pr-4 py-2.5 border border-slate-200 focus:outline-none focus:border-blue-500 focus:bg-white transition-all placeholder:text-slate-400"
+            className={`w-full text-xs rounded-xl pl-9 pr-4 py-2.5 border transition-all placeholder:text-slate-400 ${
+              isDark ? 'bg-[#111315] border-[#2B323A] text-slate-100 focus:border-[#8B9DFF]' : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-blue-500 focus:bg-white'
+            }`}
           />
         </div>
 
@@ -146,8 +160,8 @@ export const KnowledgeBaseModule: React.FC = () => {
               onClick={() => setSelectedCategory(cat)}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap border ${
                 selectedCategory === cat
-                  ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                  : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200'
+                  ? isDark ? 'bg-[#8B9DFF] text-slate-950 border-[#8B9DFF] font-bold' : 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                  : isDark ? 'bg-[#111315] text-slate-400 border-[#2B323A] hover:text-slate-200' : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200'
               }`}
             >
               {cat}
@@ -156,40 +170,54 @@ export const KnowledgeBaseModule: React.FC = () => {
         </div>
       </div>
 
-      {/* SOP Cards Grid (Light Theme Clean Look) */}
+      {/* SOP Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {filteredSops.map((sop) => (
           <div
             key={sop.code}
             onClick={() => setActiveSop(sop)}
-            className="p-5 rounded-2xl bg-white border border-slate-200 hover:border-blue-400 hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between"
+            className={`p-5 rounded-2xl border transition-all cursor-pointer group flex flex-col justify-between ${
+              isDark
+                ? 'bg-[#1A1D21] border-[#2B323A] hover:border-[#8B9DFF]/60'
+                : 'bg-white border-slate-200 hover:border-blue-400 hover:shadow-md'
+            }`}
           >
             <div>
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-mono font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-md border border-blue-100">
+                <span className={`text-xs font-mono font-bold px-2.5 py-1 rounded-md border ${
+                  isDark ? 'bg-[#8B9DFF]/15 text-[#8B9DFF] border-[#8B9DFF]/30' : 'bg-blue-50 text-blue-600 border-blue-100'
+                }`}>
                   {sop.code}
                 </span>
-                <span className="text-[11px] font-medium text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full border border-slate-200">
+                <span className={`text-[11px] font-medium px-2.5 py-0.5 rounded-full border ${
+                  isDark ? 'bg-[#111315] text-slate-400 border-[#2B323A]' : 'bg-slate-100 text-slate-500 border-slate-200'
+                }`}>
                   {sop.category}
                 </span>
               </div>
 
-              <h3 className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors mb-2 leading-snug">
+              <h3 className={`text-sm font-bold transition-colors mb-2 leading-snug ${
+                isDark ? 'text-slate-100 group-hover:text-[#8B9DFF]' : 'text-slate-900 group-hover:text-blue-600'
+              }`}>
                 {sop.title}
               </h3>
 
-              <p className="text-xs text-slate-600 leading-relaxed mb-4 line-clamp-2 font-sans">
+              <p className={`text-xs leading-relaxed mb-4 line-clamp-2 font-sans ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
                 {sop.summary}
               </p>
             </div>
 
-            <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-mono text-slate-500">
+            <div className={`pt-3 border-t flex items-center justify-between text-xs font-mono ${
+              isDark ? 'border-[#2B323A] text-slate-400' : 'border-slate-100 text-slate-500'
+            }`}>
               <span className="flex items-center gap-1">
                 <Clock className="w-3.5 h-3.5 text-slate-400" />
                 {sop.readTime} read
               </span>
 
-              <span className="text-blue-600 font-semibold flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
+              <span className={`font-semibold flex items-center gap-1 group-hover:translate-x-0.5 transition-transform ${
+                isDark ? 'text-[#8B9DFF]' : 'text-blue-600'
+              }`}>
                 View Operational Manual
                 <ChevronRight className="w-4 h-4" />
               </span>
@@ -205,29 +233,39 @@ export const KnowledgeBaseModule: React.FC = () => {
           onClose={() => setActiveSop(null)}
           title={`${activeSop.code}: ${activeSop.title}`}
         >
-          <div className="space-y-6 text-slate-800 text-xs">
+          <div className={`space-y-6 text-xs ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
             {/* Header Meta */}
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+            <div className={`p-4 rounded-xl border space-y-2 ${
+              isDark ? 'bg-[#111315] border-[#2B323A]' : 'bg-slate-50 border-slate-200'
+            }`}>
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="text-xs font-mono font-bold text-blue-700 bg-blue-100 px-2.5 py-1 rounded">
+                <span className={`text-xs font-mono font-bold px-2.5 py-1 rounded ${
+                  isDark ? 'bg-[#8B9DFF]/20 text-[#8B9DFF]' : 'bg-blue-100 text-blue-700'
+                }`}>
                   {activeSop.code}
                 </span>
-                <span className="text-xs font-semibold text-rose-700 bg-rose-50 px-2.5 py-1 rounded border border-rose-200">
+                <span className={`text-xs font-semibold px-2.5 py-1 rounded border ${
+                  isDark ? 'bg-[#E98A8A]/15 text-[#E98A8A] border-[#E98A8A]/30' : 'bg-rose-50 text-rose-700 border-rose-200'
+                }`}>
                   Classification: {activeSop.safetyClass}
                 </span>
               </div>
-              <p className="text-xs text-slate-600 mt-1">{activeSop.summary}</p>
+              <p className={`text-xs mt-1 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>{activeSop.summary}</p>
             </div>
 
             {/* Required Tools */}
             <div>
-              <h4 className="font-mono font-bold text-slate-900 uppercase text-[11px] mb-2 flex items-center gap-1.5">
-                <Wrench className="w-3.5 h-3.5 text-blue-600" />
+              <h4 className={`font-mono font-bold uppercase text-[11px] mb-2 flex items-center gap-1.5 ${
+                isDark ? 'text-slate-200' : 'text-slate-900'
+              }`}>
+                <Wrench className={`w-3.5 h-3.5 ${isDark ? 'text-[#8B9DFF]' : 'text-blue-600'}`} />
                 Required Equipment & PPE
               </h4>
               <div className="flex flex-wrap gap-2">
                 {activeSop.requiredTools.map((tool, idx) => (
-                  <span key={idx} className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 border border-slate-200 font-mono text-[11px]">
+                  <span key={idx} className={`px-2.5 py-1 rounded-lg border font-mono text-[11px] ${
+                    isDark ? 'bg-[#111315] border-[#2B323A] text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-700'
+                  }`}>
                     • {tool}
                   </span>
                 ))}
@@ -236,24 +274,30 @@ export const KnowledgeBaseModule: React.FC = () => {
 
             {/* Step-by-Step Procedure */}
             <div>
-              <h4 className="font-mono font-bold text-slate-900 uppercase text-[11px] mb-3 flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+              <h4 className={`font-mono font-bold uppercase text-[11px] mb-3 flex items-center gap-1.5 ${
+                isDark ? 'text-slate-200' : 'text-slate-900'
+              }`}>
+                <CheckCircle2 className={`w-3.5 h-3.5 ${isDark ? 'text-[#7FD4A6]' : 'text-emerald-600'}`} />
                 Sequential Operational Protocol
               </h4>
               <ol className="space-y-2.5">
                 {activeSop.steps.map((step, idx) => (
-                  <li key={idx} className="p-3 rounded-xl bg-white border border-slate-200 flex items-start gap-3 shadow-xs">
-                    <span className="w-5 h-5 rounded-full bg-blue-600 text-white font-mono font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">
+                  <li key={idx} className={`p-3 rounded-xl border flex items-start gap-3 ${
+                    isDark ? 'bg-[#111315] border-[#2B323A]' : 'bg-white border-slate-200 shadow-xs'
+                  }`}>
+                    <span className={`w-5 h-5 rounded-full font-mono font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5 ${
+                      isDark ? 'bg-[#8B9DFF] text-slate-950' : 'bg-blue-600 text-white'
+                    }`}>
                       {idx + 1}
                     </span>
-                    <span className="text-xs text-slate-700 leading-relaxed">{step}</span>
+                    <span className={`text-xs leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{step}</span>
                   </li>
                 ))}
               </ol>
             </div>
 
             {/* Footer Action */}
-            <div className="pt-4 border-t border-slate-200 flex justify-end gap-3">
+            <div className={`pt-4 border-t flex justify-end gap-3 ${isDark ? 'border-[#2B323A]' : 'border-slate-200'}`}>
               <Button variant="ghost" onClick={() => setActiveSop(null)}>Close Manual</Button>
               <Button variant="primary" icon={<Download className="w-3.5 h-3.5" />} onClick={() => window.print()}>
                 Print SOP Sheet

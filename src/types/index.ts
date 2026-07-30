@@ -1,5 +1,6 @@
 export type NavigationTab = 
   | 'start_page'
+  | 'workflow_guide'
   | 'mission_control'
   | 'contracts'
   | 'planner'
@@ -264,3 +265,58 @@ export interface AlertItem {
   message: string;
   timestamp: string;
 }
+
+// Report Studio Foundation Types (v0.4.0)
+export interface ReportSectionConfig {
+  id: string;
+  sectionType: string; // e.g. 'machine_info', 'customer_info', 'visit_summary'
+  title: string;
+  description?: string;
+  category?: 'CORE' | 'INSPECTION' | 'TIMELINE' | 'SIGNATURES' | 'OTHER';
+  visible: boolean;
+  pageBreakBefore: boolean;
+  collapsible: boolean;
+  showSectionNumber: boolean;
+  notes?: string;
+  customSettings?: Record<string, boolean | string | number>;
+}
+
+export interface ReportTemplate {
+  id: string;
+  name: string;
+  code: string; // e.g. 'STM_PM', 'STM_CM', 'INSTALLATION', 'ACCEPTANCE_TEST'
+  description: string;
+  category: 'Preventive Maintenance' | 'Corrective Maintenance' | 'Commissioning' | 'Emergency' | 'Internal' | 'Quick Visit';
+  sections: ReportSectionConfig[];
+  updatedAt: string;
+  isDefault?: boolean;
+}
+
+export interface FounderBrandingConfig {
+  companyName: string;
+  companyLogoUrl: string;
+  customerLogoUrl: string;
+  headerText: string;
+  footerText: string;
+  showPageNumbers: boolean;
+  primaryColor: string;
+  engineerSignatureBlock: boolean;
+  customerSignatureBlock: boolean;
+  confidentialityBanner: boolean;
+}
+
+export interface ReportDraft {
+  id: string;
+  reportTitle: string;
+  templateId?: string;
+  templateName?: string;
+  customerId?: string;
+  customerName?: string;
+  machineId?: string;
+  machineName?: string;
+  sections: ReportSectionConfig[];
+  branding: FounderBrandingConfig;
+  status: 'DRAFT' | 'READY_FOR_REVIEW' | 'SAVED';
+  updatedAt: string;
+}
+

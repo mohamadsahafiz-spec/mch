@@ -10,7 +10,10 @@ import {
   QualityInvestigation, 
   BaselineCheck, 
   FieldEngineerTask, 
-  AlertItem 
+  AlertItem,
+  ReportTemplate,
+  ReportDraft,
+  FounderBrandingConfig
 } from '../types';
 import { 
   INITIAL_CUSTOMERS, 
@@ -24,22 +27,28 @@ import {
   INITIAL_TASKS, 
   INITIAL_ALERTS, 
   INITIAL_QUALITY_INVESTIGATIONS, 
-  INITIAL_BASELINES 
+  INITIAL_BASELINES,
+  INITIAL_REPORT_TEMPLATES,
+  INITIAL_REPORT_DRAFTS,
+  INITIAL_FOUNDER_BRANDING
 } from '../data/mockData';
 
 const KEYS = {
-  CUSTOMERS: 'fso_v03_customers',
-  PLANTS: 'fso_v03_plants',
-  LINES: 'fso_v03_lines',
-  MACHINES: 'fso_v03_machines',
-  CONTRACTS: 'fso_v03_contracts',
-  SCHEDULE: 'fso_v03_schedule',
-  MHC_RECORDS: 'fso_v03_mhc_records',
-  REPORTS: 'fso_v03_reports',
-  TASKS: 'fso_v03_tasks',
-  ALERTS: 'fso_v03_alerts',
-  INVESTIGATIONS: 'fso_v03_investigations',
-  BASELINES: 'fso_v03_baselines'
+  CUSTOMERS: 'fso_v04_customers',
+  PLANTS: 'fso_v04_plants',
+  LINES: 'fso_v04_lines',
+  MACHINES: 'fso_v04_machines',
+  CONTRACTS: 'fso_v04_contracts',
+  SCHEDULE: 'fso_v04_schedule',
+  MHC_RECORDS: 'fso_v04_mhc_records',
+  REPORTS: 'fso_v04_reports',
+  TASKS: 'fso_v04_tasks',
+  ALERTS: 'fso_v04_alerts',
+  INVESTIGATIONS: 'fso_v04_investigations',
+  BASELINES: 'fso_v04_baselines',
+  TEMPLATES: 'fso_v04_templates',
+  DRAFTS: 'fso_v04_drafts',
+  BRANDING: 'fso_v04_branding'
 };
 
 function getStorage<T>(key: string, defaultValue: T): T {
@@ -99,7 +108,17 @@ export const StorageService = {
   getBaselines: (): BaselineCheck[] => getStorage(KEYS.BASELINES, INITIAL_BASELINES),
   saveBaselines: (data: BaselineCheck[]) => setStorage(KEYS.BASELINES, data),
 
+  getTemplates: (): ReportTemplate[] => getStorage(KEYS.TEMPLATES, INITIAL_REPORT_TEMPLATES),
+  saveTemplates: (data: ReportTemplate[]) => setStorage(KEYS.TEMPLATES, data),
+
+  getDrafts: (): ReportDraft[] => getStorage(KEYS.DRAFTS, INITIAL_REPORT_DRAFTS),
+  saveDrafts: (data: ReportDraft[]) => setStorage(KEYS.DRAFTS, data),
+
+  getBranding: (): FounderBrandingConfig => getStorage(KEYS.BRANDING, INITIAL_FOUNDER_BRANDING),
+  saveBranding: (data: FounderBrandingConfig) => setStorage(KEYS.BRANDING, data),
+
   resetToDefaults: () => {
     localStorage.clear();
   }
 };
+

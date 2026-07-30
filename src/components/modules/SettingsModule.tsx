@@ -15,6 +15,66 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
 
   const changelog = [
     {
+      version: 'v0.3.1',
+      date: '2026-07-30',
+      type: 'Theme Consistency (ECO-20260730-013)',
+      highlights: [
+        'Completed system-wide Light Theme compliance audit across all 15 operational modules.',
+        'Standardized shared theme tokens across reusable UI primitives (Card, Button, Badge, Modal, Tables).',
+        'Eliminated hardcoded theme color overrides to ensure automatic theme inheritance.',
+        'Improved readability, font weights, and surface elevation contrast for bright site operations.',
+        'Unified Dark Mode and Light Mode visual fidelity and component behavior.',
+        'Engineering Metrics: 28 Files Reviewed, 14 Files Modified, 112 Hardcoded Theme Colors Converted, 0 Remaining Violations.'
+      ]
+    },
+    {
+      version: 'v0.3.0',
+      date: '2026-07-30',
+      type: 'Premium Light Experience (ECO-20260730-012)',
+      highlights: [
+        'Rebuilt Light Theme Design System for enhanced clarity, accessibility, and professional polish.',
+        'Elevated text contrast hierarchy across headings, body text, and labels for comfortable reading.',
+        'Improved surface elevation and border separation for clean card visibility across all system views.',
+        'Refined sticky workflow navigation, badges, timeline connectors, and buttons for light mode operations.',
+        'Enhanced sidebar readability with distinct section group titles and active item indicators.',
+        'Dark theme token values strictly preserved and verified.'
+      ]
+    },
+    {
+      version: 'v0.2.9',
+      date: '2026-07-30',
+      type: 'Information Architecture (ECO-20260730-011)',
+      highlights: [
+        'Sidebar reorganized into workflow-based groups (DAILY WORK, SERVICE EXECUTION, OPERATIONS, SMART TOOLS, SYSTEM).',
+        'Added collapsible navigation sections with auto-expansion for the active workflow tab.',
+        'Reduced navigation complexity and cognitive load for field service engineers.',
+        'Improved engineer workflow discovery following operational journey instead of flat/alphabetical lists.',
+        'Preserved existing module functionality and routing architecture across all 15 system modules.'
+      ]
+    },
+    {
+      version: 'v0.2.8',
+      date: '2026-07-30',
+      type: 'Guided Navigation (ECO-20260730-010)',
+      highlights: [
+        'Added sticky Mission Progression navigation bar for effortless orientation during field operations.',
+        'Added smooth scroll workflow navigation with stable section anchors (#mission, #passport, #mhc, #planner, #report, #complete).',
+        'Active workflow step now tracks scrolling automatically via IntersectionObserver without layout flashing.',
+        'Improved Workflow Guide usability for new field service engineers entering cleanroom sites.',
+        'Existing workflow architecture, 6-phase SOP journey, and direct quick-action buttons preserved.'
+      ]
+    },
+    {
+      version: 'v0.2.7',
+      date: '2026-07-30',
+      type: 'Workflow Guide (ECO-20260730-009)',
+      highlights: [
+        'Introduced new Workflow Guide module providing 6-phase Standard Operating Procedure (SOP).',
+        'Standardized step structure: Purpose, What To Do (max 4 bullets), Expected Outcome, Quick Action Buttons.',
+        'Added visual progress indicator bar and end-of-workflow completion badge.'
+      ]
+    },
+    {
       version: 'v0.2.5',
       date: '2026-07-30',
       type: 'Mission Control Signature Design (ECO-20260730-003)',
@@ -79,15 +139,19 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
           isDark ? 'bg-[#1A1D21] border-[#2B323A]' : 'bg-slate-50 border-slate-200'
         }`}>
           <div className="flex items-center gap-3">
-            <div className="p-3 rounded-xl bg-[#8B9DFF]/15 border border-[#8B9DFF]/30 text-[#8B9DFF] font-mono font-bold text-lg">
-              v0.2.5
+            <div className={`p-3 rounded-xl border font-mono font-bold text-lg ${
+              isDark ? 'bg-[#8B9DFF]/15 border-[#8B9DFF]/30 text-[#8B9DFF]' : 'bg-indigo-50 border-indigo-200 text-indigo-700'
+            }`}>
+              v0.3.1
             </div>
             <div>
               <h3 className="text-base font-bold">Field Service Operations System</h3>
-              <p className="text-xs text-slate-400">Mission Control Signature Design v0.2.5 — Operational Work Order Workspace</p>
+              <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600 font-medium'}`}>
+                Theme Consistency v0.3.1 — System-wide Theme Audit & Token Compliance (ECO-20260730-013)
+              </p>
             </div>
           </div>
-          <Badge variant="blue">v0.2.5 OPERATIONAL</Badge>
+          <Badge variant="blue">v0.3.1 OPERATIONAL</Badge>
         </div>
       </Card>
 

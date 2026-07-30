@@ -36,18 +36,22 @@ export const Card: React.FC<CardProps> = ({
       className={`border rounded-2xl transition-all duration-200 ${
         isDark 
           ? 'bg-[#20252B] border-[#2B323A] text-[#F3F4F6]' 
-          : 'bg-white border-slate-200 text-slate-900 shadow-xs'
+          : 'bg-white border-slate-300/80 text-slate-900 shadow-sm'
       } ${paddingStyles[padding]} ${className}`}
     >
       {(title || subtitle || action) && (
-        <div className="flex items-center justify-between pb-3 mb-4 border-b border-[#2B323A]/60">
+        <div className={`flex items-center justify-between pb-3 mb-4 border-b ${
+          isDark ? 'border-[#2B323A]/60' : 'border-slate-200'
+        }`}>
           <div>
             {title && typeof title === 'string' ? (
-              <h3 className="text-base font-semibold tracking-tight">{title}</h3>
+              <h3 className={`text-base font-semibold tracking-tight ${isDark ? 'text-[#F3F4F6]' : 'text-slate-900'}`}>{title}</h3>
             ) : (
               title
             )}
-            {subtitle && <p className="text-xs text-slate-400 mt-0.5">{subtitle}</p>}
+            {subtitle && (
+              <p className={`text-xs mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-600 font-medium'}`}>{subtitle}</p>
+            )}
           </div>
           {action && <div>{action}</div>}
         </div>

@@ -26,21 +26,25 @@ export const WorkOrderChecklist: React.FC<WorkOrderChecklistProps> = ({
     <div className={`p-5 md:p-6 rounded-2xl border transition-all duration-250 space-y-4 ${
       isDark 
         ? 'bg-[#20252B] border-[#2B323A]/80 text-[#F3F4F6]' 
-        : 'bg-white border-slate-200/80 text-slate-900 shadow-xs'
+        : 'bg-white border-slate-300/80 text-slate-900 shadow-sm'
     }`}>
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#2B323A]/50 pb-3">
+      <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-3 ${
+        isDark ? 'border-[#2B323A]/50' : 'border-slate-200'
+      }`}>
         <div>
-          <span className="text-[10px] font-mono font-semibold text-[#8B9DFF] uppercase tracking-wider block mb-0.5">
+          <span className={`text-[10px] font-mono font-bold uppercase tracking-wider block mb-0.5 ${
+            isDark ? 'text-[#8B9DFF]' : 'text-indigo-700'
+          }`}>
             WORK ORDER CHECKLIST
           </span>
-          <h3 className="text-base font-semibold">
+          <h3 className="text-base font-bold">
             Field Execution Checklist (#WO-20260729-TSMC)
           </h3>
         </div>
 
         <div className="flex items-center gap-3">
-          <span className="text-xs font-mono text-slate-400">
-            Progress: <strong className="text-[#8B9DFF] font-semibold">{completedCount} / {tasks.length} Done</strong>
+          <span className={`text-xs font-mono ${isDark ? 'text-slate-400' : 'text-slate-700 font-medium'}`}>
+            Progress: <strong className={`font-bold ${isDark ? 'text-[#8B9DFF]' : 'text-indigo-800'}`}>{completedCount} / {tasks.length} Done</strong>
           </span>
           <Button variant="ghost" size="sm" onClick={() => onNavigate('planner')}>
             Full Planner
@@ -56,10 +60,10 @@ export const WorkOrderChecklist: React.FC<WorkOrderChecklistProps> = ({
             onClick={() => onToggleTask(task.id)}
             className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
               task.completed
-                ? isDark ? 'bg-[#1A1D21]/40 border-[#2B323A]/40 text-slate-500 line-through' : 'bg-slate-50/50 border-slate-200/60 text-slate-400 line-through'
+                ? isDark ? 'bg-[#1A1D21]/40 border-[#2B323A]/40 text-slate-500 line-through' : 'bg-slate-50 border-slate-200 text-slate-500 line-through'
                 : task.priority === 'URGENT'
-                ? isDark ? 'bg-[#E98A8A]/10 border-[#E98A8A]/25 text-slate-100 hover:bg-[#E98A8A]/15' : 'bg-rose-50/80 border-rose-200 text-slate-900'
-                : isDark ? 'bg-[#1A1D21] border-[#2B323A]/60 text-slate-200 hover:border-[#8B9DFF]/40' : 'bg-slate-50 border-slate-200/60 text-slate-800 hover:bg-slate-100/80'
+                ? isDark ? 'bg-[#E98A8A]/10 border-[#E98A8A]/25 text-slate-100 hover:bg-[#E98A8A]/15' : 'bg-rose-50 border-rose-300 text-slate-900'
+                : isDark ? 'bg-[#1A1D21] border-[#2B323A]/60 text-slate-200 hover:border-[#8B9DFF]/40' : 'bg-slate-50 border-slate-300/70 text-slate-900 hover:bg-slate-100'
             }`}
           >
             <div className="flex items-center gap-2.5 min-w-0">
@@ -73,15 +77,15 @@ export const WorkOrderChecklist: React.FC<WorkOrderChecklistProps> = ({
                 {task.completed && <CheckCircle2 className="w-3 h-3" />}
               </div>
               <div className="truncate">
-                <p className="text-xs font-medium truncate">{task.title}</p>
-                <p className="text-[11px] text-slate-400 truncate mt-0.5">
+                <p className="text-xs font-bold truncate">{task.title}</p>
+                <p className={`text-[11px] truncate mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-600 font-medium'}`}>
                   {task.customerName} • {task.machineName}
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
-              <span className="text-[10px] font-mono text-slate-400">{task.dueDate}</span>
+              <span className={`text-[10px] font-mono ${isDark ? 'text-slate-400' : 'text-slate-600 font-semibold'}`}>{task.dueDate}</span>
               <Badge
                 variant={
                   task.completed

@@ -46,38 +46,46 @@ export const TodayActivityLog: React.FC<TodayActivityLogProps> = ({
     <div className={`p-5 md:p-6 rounded-2xl border transition-all duration-250 space-y-4 ${
       isDark 
         ? 'bg-[#20252B] border-[#2B323A]/80 text-[#F3F4F6]' 
-        : 'bg-white border-slate-200/80 text-slate-900 shadow-xs'
+        : 'bg-white border-slate-300/80 text-slate-900 shadow-sm'
     }`}>
-      <div className="flex items-center justify-between border-b border-[#2B323A]/50 pb-3">
+      <div className={`flex items-center justify-between border-b pb-3 ${
+        isDark ? 'border-[#2B323A]/50' : 'border-slate-200'
+      }`}>
         <div>
-          <span className="text-[10px] font-mono font-semibold text-[#8B9DFF] uppercase tracking-wider block mb-0.5">
+          <span className={`text-[10px] font-mono font-bold uppercase tracking-wider block mb-0.5 ${
+            isDark ? 'text-[#8B9DFF]' : 'text-indigo-700'
+          }`}>
             AUDIT & ACTIVITY LOG
           </span>
-          <h3 className="text-base font-semibold">
+          <h3 className="text-base font-bold">
             Today's On-Site Operational Trace (2026-07-29)
           </h3>
         </div>
-        <span className="text-xs font-mono text-slate-400">3 Logs Today</span>
+        <span className={`text-xs font-mono ${isDark ? 'text-slate-400' : 'text-slate-600 font-medium'}`}>3 Logs Today</span>
       </div>
 
       {/* Chronological Timeline */}
-      <div className="space-y-3.5 pl-2 border-l border-[#2B323A]">
+      <div className={`space-y-3.5 pl-2 border-l ${isDark ? 'border-[#2B323A]' : 'border-slate-300'}`}>
         {todayLogs.map((log, index) => (
           <div key={index} className="relative pl-4 space-y-0.5">
-            <span className="absolute -left-[11px] top-1.5 w-2 h-2 rounded-full bg-[#8B9DFF]" />
+            <span className={`absolute -left-[11px] top-1.5 w-2 h-2 rounded-full ${isDark ? 'bg-[#8B9DFF]' : 'bg-indigo-600'}`} />
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-slate-200">{log.title}</span>
-              <span className="text-[10px] font-mono text-slate-400">{log.time}</span>
+              <span className={`text-xs font-bold ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>{log.title}</span>
+              <span className={`text-[10px] font-mono ${isDark ? 'text-slate-400' : 'text-slate-600 font-semibold'}`}>{log.time}</span>
             </div>
-            <p className="text-xs text-slate-400 font-sans leading-relaxed">{log.details}</p>
-            <p className="text-[10px] font-mono text-slate-500">Engineer: {log.engineer}</p>
+            <p className={`text-xs font-sans leading-relaxed ${isDark ? 'text-slate-400' : 'text-slate-700 font-medium'}`}>{log.details}</p>
+            <p className={`text-[10px] font-mono ${isDark ? 'text-slate-500' : 'text-slate-600 font-medium'}`}>Engineer: {log.engineer}</p>
           </div>
         ))}
       </div>
 
       {/* Historical MHC Reports Link */}
-      <div className="pt-3 border-t border-[#2B323A]/50 flex items-center justify-between text-xs font-mono">
-        <span className="text-slate-400">Previous Q2 MHC Audit Score: <strong className="text-[#7FD4A6] font-semibold">96/100</strong></span>
+      <div className={`pt-3 border-t flex items-center justify-between text-xs font-mono ${
+        isDark ? 'border-[#2B323A]/50' : 'border-slate-200'
+      }`}>
+        <span className={isDark ? 'text-slate-400' : 'text-slate-700 font-medium'}>
+          Previous Q2 MHC Audit Score: <strong className={`font-bold ${isDark ? 'text-[#7FD4A6]' : 'text-emerald-800'}`}>96/100</strong>
+        </span>
         <Button variant="ghost" size="sm" icon={<FileText className="w-3.5 h-3.5" />} onClick={() => onNavigate('reports')}>
           View Archived Reports
         </Button>

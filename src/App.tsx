@@ -26,6 +26,7 @@ import { Header } from './components/layout/Header';
 
 // Modules
 import { StartPageModule } from './components/modules/StartPageModule';
+import { WorkflowGuideModule } from './components/modules/WorkflowGuideModule';
 import { MissionControl } from './components/modules/MissionControl';
 import { ContractsModule } from './components/modules/ContractsModule';
 import { ExecutionPlannerModule } from './components/modules/ExecutionPlannerModule';
@@ -168,6 +169,12 @@ function AppLayout() {
                 setSelectedMachineId(id);
                 setActiveTab('machines');
               }}
+            />
+          )}
+
+          {activeTab === 'workflow_guide' && (
+            <WorkflowGuideModule
+              onNavigate={setActiveTab}
             />
           )}
 

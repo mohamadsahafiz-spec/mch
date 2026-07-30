@@ -61,18 +61,22 @@ export const InspectionStageStepper: React.FC<InspectionStageStepperProps> = ({
     <div className={`p-5 md:p-6 rounded-2xl border transition-all duration-250 space-y-5 ${
       isDark 
         ? 'bg-[#20252B] border-[#2B323A]/80 text-[#F3F4F6]' 
-        : 'bg-white border-slate-200/80 text-slate-900 shadow-xs'
+        : 'bg-white border-slate-300/80 text-slate-900 shadow-sm'
     }`}>
       {/* Title & Sequential Stepper Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-[#2B323A]/50 pb-3.5">
+      <div className={`flex flex-col md:flex-row md:items-center justify-between gap-2 border-b pb-3.5 ${
+        isDark ? 'border-[#2B323A]/50' : 'border-slate-200'
+      }`}>
         <div>
-          <span className="text-[10px] font-mono font-semibold text-[#8B9DFF] uppercase tracking-wider block mb-0.5">
+          <span className={`text-[10px] font-mono font-bold uppercase tracking-wider block mb-0.5 ${
+            isDark ? 'text-[#8B9DFF]' : 'text-indigo-700'
+          }`}>
             WORKFLOW SEQUENCE
           </span>
-          <h3 className="text-base font-semibold tracking-tight">Today's Sequential Inspection Stages</h3>
+          <h3 className="text-base font-bold tracking-tight">Today's Sequential Inspection Stages</h3>
         </div>
-        <div className="text-xs font-mono text-slate-400">
-          Progress: <span className="text-[#8B9DFF] font-semibold">2 / 5 Completed</span>
+        <div className={`text-xs font-mono ${isDark ? 'text-slate-400' : 'text-slate-700 font-medium'}`}>
+          Progress: <span className={`font-bold ${isDark ? 'text-[#8B9DFF]' : 'text-indigo-800'}`}>2 / 5 Completed</span>
         </div>
       </div>
 
@@ -90,36 +94,36 @@ export const InspectionStageStepper: React.FC<InspectionStageStepperProps> = ({
                 isActive
                   ? isDark 
                     ? 'bg-[#1A1D21] border-[#8B9DFF] text-slate-100 shadow-xs' 
-                    : 'bg-indigo-50 border-indigo-400 text-indigo-950 shadow-xs'
+                    : 'bg-indigo-50 border-indigo-500 text-indigo-950 shadow-xs ring-1 ring-indigo-200 font-semibold'
                   : isCompleted
                   ? isDark 
                     ? 'bg-[#1A1D21]/60 border-[#2B323A]/60 text-slate-300 hover:border-[#8B9DFF]/40' 
-                    : 'bg-slate-50 border-slate-200/60 text-slate-700 hover:bg-slate-100/80'
+                    : 'bg-slate-50 border-slate-300/80 text-slate-800 hover:bg-slate-100'
                   : isDark 
                     ? 'bg-[#1A1D21]/30 border-[#2B323A]/40 text-slate-500' 
-                    : 'bg-slate-50/50 border-slate-200/60 text-slate-400'
+                    : 'bg-slate-50/70 border-slate-200 text-slate-600'
               }`}
             >
               <div className="flex items-center justify-between mb-1.5">
-                <span className={`text-[9px] font-mono font-semibold px-1.5 py-0.2 rounded ${
+                <span className={`text-[9px] font-mono font-bold px-1.5 py-0.2 rounded ${
                   isActive 
-                    ? 'bg-[#8B9DFF] text-slate-950 font-bold' 
+                    ? isDark ? 'bg-[#8B9DFF] text-slate-950' : 'bg-indigo-600 text-white'
                     : isCompleted 
-                    ? 'bg-[#7FD4A6]/20 text-[#7FD4A6] border border-[#7FD4A6]/30' 
-                    : 'bg-[#2B323A]/60 text-slate-400'
+                    ? isDark ? 'bg-[#7FD4A6]/20 text-[#7FD4A6] border border-[#7FD4A6]/30' : 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                    : isDark ? 'bg-[#2B323A]/60 text-slate-400' : 'bg-slate-200 text-slate-700'
                 }`}>
                   STAGE {stage.id}
                 </span>
                 {isCompleted ? (
-                  <CheckCircle2 className="w-3.5 h-3.5 text-[#7FD4A6]" />
+                  <CheckCircle2 className={`w-3.5 h-3.5 ${isDark ? 'text-[#7FD4A6]' : 'text-emerald-700'}`} />
                 ) : isActive ? (
-                  <span className="w-2 h-2 rounded-full bg-[#8B9DFF]" />
+                  <span className={`w-2 h-2 rounded-full ${isDark ? 'bg-[#8B9DFF]' : 'bg-indigo-600'}`} />
                 ) : (
-                  <Clock className="w-3.5 h-3.5 text-slate-500" />
+                  <Clock className={`w-3.5 h-3.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`} />
                 )}
               </div>
-              <p className="text-xs font-medium truncate leading-snug">{stage.title}</p>
-              <p className="text-[10px] font-mono text-slate-400 mt-0.5">{stage.time}</p>
+              <p className="text-xs font-semibold truncate leading-snug">{stage.title}</p>
+              <p className={`text-[10px] font-mono mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-600 font-medium'}`}>{stage.time}</p>
             </button>
           );
         })}
@@ -127,12 +131,16 @@ export const InspectionStageStepper: React.FC<InspectionStageStepperProps> = ({
 
       {/* Active Stage Focus Detail Panel */}
       <div className={`p-4 rounded-xl border space-y-3.5 ${
-        isDark ? 'bg-[#1A1D21] border-[#2B323A]/60' : 'bg-slate-50 border-slate-200/60'
+        isDark ? 'bg-[#1A1D21] border-[#2B323A]/60' : 'bg-slate-50 border-slate-300/80'
       }`}>
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#2B323A]/50">
+        <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b ${
+          isDark ? 'border-[#2B323A]/50' : 'border-slate-200'
+        }`}>
           <div>
-            <span className="text-[10px] font-mono text-[#8B9DFF] font-semibold uppercase block mb-0.5">ACTIVE STAGE DETAIL</span>
-            <h4 className="text-sm font-semibold">
+            <span className={`text-[10px] font-mono font-bold uppercase block mb-0.5 ${
+              isDark ? 'text-[#8B9DFF]' : 'text-indigo-700'
+            }`}>ACTIVE STAGE DETAIL</span>
+            <h4 className="text-sm font-bold">
               Stage 3: Galvo Scanner Realignment & Beam Profiling
             </h4>
           </div>
@@ -161,42 +169,44 @@ export const InspectionStageStepper: React.FC<InspectionStageStepperProps> = ({
         <div className={`p-3.5 rounded-xl border space-y-1.5 ${
           isDark 
             ? 'bg-[#8B9DFF]/10 border-[#8B9DFF]/25 text-slate-200' 
-            : 'bg-indigo-50/80 border-indigo-200 text-slate-800'
+            : 'bg-indigo-50 border-indigo-200 text-slate-900 shadow-2xs'
         }`}>
           <div className="flex items-center justify-between">
-            <span className="flex items-center gap-1.5 text-xs font-mono font-semibold text-[#8B9DFF]">
+            <span className={`flex items-center gap-1.5 text-xs font-mono font-bold ${
+              isDark ? 'text-[#8B9DFF]' : 'text-indigo-800'
+            }`}>
               <Sparkles className="w-3.5 h-3.5" />
               CONTEXTUAL AI ADVISORY
             </span>
-            <span className="text-[10px] font-mono opacity-80">98.4% Confidence</span>
+            <span className="text-[10px] font-mono font-semibold opacity-90">98.4% Confidence</span>
           </div>
-          <p className="text-xs leading-relaxed opacity-90">
-            "Galvo X-Axis step response latency changed by <strong className="text-[#EFCB7A]">2.1µs</strong> following filter swap. Recommended action: Trim X-galvo motor servo gain pot until step latency drops below 12µs before executing Stage 4 MHC."
+          <p className="text-xs leading-relaxed font-medium">
+            "Galvo X-Axis step response latency changed by <strong className={isDark ? 'text-[#EFCB7A]' : 'text-amber-800 font-bold'}>2.1µs</strong> following filter swap. Recommended action: Trim X-galvo motor servo gain pot until step latency drops below 12µs before executing Stage 4 MHC."
           </p>
         </div>
 
         {/* Stage 3 Sub-tasks */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs pt-0.5">
-          <div className={`p-3 rounded-lg border ${isDark ? 'bg-[#20252B] border-[#2B323A]/60' : 'bg-white border-slate-200/60'}`}>
-            <span className="text-[10px] font-mono text-slate-400 uppercase block mb-0.5">Step 3.1: Target</span>
-            <p className="font-medium">Mount 9-point quartz target grid onto galvo focal plane</p>
-            <span className="text-[10px] font-mono text-[#7FD4A6] flex items-center gap-1 mt-1">
+          <div className={`p-3 rounded-lg border ${isDark ? 'bg-[#20252B] border-[#2B323A]/60' : 'bg-white border-slate-300/70'}`}>
+            <span className={`text-[10px] font-mono uppercase block mb-0.5 font-bold ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>Step 3.1: Target</span>
+            <p className="font-semibold">Mount 9-point quartz target grid onto galvo focal plane</p>
+            <span className={`text-[10px] font-mono flex items-center gap-1 mt-1 font-bold ${isDark ? 'text-[#7FD4A6]' : 'text-emerald-800'}`}>
               <CheckCircle2 className="w-3 h-3" /> VERIFIED
             </span>
           </div>
 
-          <div className={`p-3 rounded-lg border ${isDark ? 'bg-[#20252B] border-[#8B9DFF]/40' : 'bg-indigo-50/60 border-indigo-200'}`}>
-            <span className="text-[10px] font-mono text-[#8B9DFF] uppercase font-semibold block mb-0.5">Step 3.2: Gain Trim</span>
-            <p className="font-medium">Adjust X/Y galvo servo gain & trim latency &lt;12µs</p>
-            <span className="text-[10px] font-mono text-[#EFCB7A] flex items-center gap-1 mt-1">
+          <div className={`p-3 rounded-lg border ${isDark ? 'bg-[#20252B] border-[#8B9DFF]/40' : 'bg-indigo-50 border-indigo-300'}`}>
+            <span className={`text-[10px] font-mono uppercase font-bold block mb-0.5 ${isDark ? 'text-[#8B9DFF]' : 'text-indigo-800'}`}>Step 3.2: Gain Trim</span>
+            <p className="font-semibold">Adjust X/Y galvo servo gain & trim latency &lt;12µs</p>
+            <span className={`text-[10px] font-mono flex items-center gap-1 mt-1 font-bold ${isDark ? 'text-[#EFCB7A]' : 'text-amber-800'}`}>
               • IN PROGRESS
             </span>
           </div>
 
-          <div className={`p-3 rounded-lg border ${isDark ? 'bg-[#20252B] border-[#2B323A]/60' : 'bg-white border-slate-200/60'}`}>
-            <span className="text-[10px] font-mono text-slate-400 uppercase block mb-0.5">Step 3.3: Matrix Upload</span>
-            <p className="font-medium text-slate-400">Execute 81-point grid scan & upload 2D matrix</p>
-            <span className="text-[10px] font-mono text-slate-500 block mt-1">
+          <div className={`p-3 rounded-lg border ${isDark ? 'bg-[#20252B] border-[#2B323A]/60' : 'bg-white border-slate-300/70'}`}>
+            <span className={`text-[10px] font-mono uppercase block mb-0.5 font-bold ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>Step 3.3: Matrix Upload</span>
+            <p className={`font-semibold ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>Execute 81-point grid scan & upload 2D matrix</p>
+            <span className={`text-[10px] font-mono block mt-1 font-bold ${isDark ? 'text-slate-500' : 'text-slate-600'}`}>
               PENDING STEP 3.2
             </span>
           </div>

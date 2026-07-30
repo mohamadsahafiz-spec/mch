@@ -3,6 +3,7 @@ import { SlidersHorizontal, CheckCircle2, AlertTriangle, Cpu } from 'lucide-reac
 import { BaselineCheck, Machine } from '../../types';
 import { Card } from '../common/Card';
 import { Badge } from '../common/Badge';
+import { useTheme } from '../../context/ThemeContext';
 
 interface BaselineCheckProps {
   baselines: BaselineCheck[];
@@ -10,40 +11,47 @@ interface BaselineCheckProps {
 }
 
 export const BaselineCheckModule: React.FC<BaselineCheckProps> = ({ baselines, machines }) => {
+  const { effectiveTheme } = useTheme();
+  const isDark = effectiveTheme === 'dark';
+
   return (
     <div className="space-y-6 pb-12">
       <Card title="Factory Baseline Verification & Operational Drift Tracking">
         <div className="space-y-4">
           {baselines.map((bl) => (
-            <div key={bl.id} className="p-4 rounded-xl bg-[#090f1c] border border-[#1a2842] space-y-3">
+            <div key={bl.id} className={`p-4 rounded-xl border space-y-3 ${
+              isDark ? 'bg-[#1A1D21] border-[#2B323A]' : 'bg-slate-50 border-slate-200'
+            }`}>
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-sm font-bold text-slate-100">{bl.machineName}</h3>
-                  <p className="text-xs text-slate-400 font-mono">Captured: {bl.date} by {bl.engineerName}</p>
+                  <h3 className={`text-sm font-bold ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>{bl.machineName}</h3>
+                  <p className={`text-xs font-mono ${isDark ? 'text-slate-400' : 'text-slate-600 font-medium'}`}>Captured: {bl.date} by {bl.engineerName}</p>
                 </div>
                 <Badge variant={bl.passed ? 'emerald' : 'rose'}>{bl.passed ? 'BASELINE PASSED' : 'DRIFT EXCEEDED'}</Badge>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3 rounded-lg bg-[#0d1424] text-xs font-mono">
+              <div className={`grid grid-cols-2 sm:grid-cols-4 gap-3 p-3 rounded-lg border text-xs font-mono ${
+                isDark ? 'bg-[#111315] border-[#2B323A]' : 'bg-white border-slate-200'
+              }`}>
                 <div>
-                  <span className="text-slate-500 block">Baseline Power</span>
-                  <span className="font-bold text-slate-200">{bl.laserPowerBaselineWatts} W</span>
+                  <span className={`block ${isDark ? 'text-slate-500' : 'text-slate-600 font-medium'}`}>Baseline Power</span>
+                  <span className={`font-bold ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>{bl.laserPowerBaselineWatts} W</span>
                 </div>
                 <div>
-                  <span className="text-slate-500 block">Beam Diameter</span>
-                  <span className="font-bold text-slate-200">{bl.beamDiameterMm} mm</span>
+                  <span className={`block ${isDark ? 'text-slate-500' : 'text-slate-600 font-medium'}`}>Beam Diameter</span>
+                  <span className={`font-bold ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>{bl.beamDiameterMm} mm</span>
                 </div>
                 <div>
-                  <span className="text-slate-500 block">Cooling Flow Rate</span>
-                  <span className="font-bold text-slate-200">{bl.coolingFlowRateLpm} LPM</span>
+                  <span className={`block ${isDark ? 'text-slate-500' : 'text-slate-600 font-medium'}`}>Cooling Flow Rate</span>
+                  <span className={`font-bold ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>{bl.coolingFlowRateLpm} LPM</span>
                 </div>
                 <div>
-                  <span className="text-slate-500 block">Stage Repeatability</span>
-                  <span className="font-bold text-slate-200">±{bl.stageRepeatabilityMm} mm</span>
+                  <span className={`block ${isDark ? 'text-slate-500' : 'text-slate-600 font-medium'}`}>Stage Repeatability</span>
+                  <span className={`font-bold ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>±{bl.stageRepeatabilityMm} mm</span>
                 </div>
               </div>
 
-              <p className="text-xs text-slate-300 italic">"{bl.notes}"</p>
+              <p className={`text-xs italic ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>"{bl.notes}"</p>
             </div>
           ))}
         </div>

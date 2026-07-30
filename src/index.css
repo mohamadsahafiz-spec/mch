@@ -26,18 +26,18 @@
   }
 
   html.light {
-    --color-bg: #F8F9FA;
+    --color-bg: #F1F5F9;
     --color-surface: #FFFFFF;
     --color-card: #FFFFFF;
-    --color-border: #E2E8F0;
-    --color-primary: #4F46E5;
-    --color-success: #059669;
-    --color-warning: #D97706;
-    --color-danger: #DC2626;
-    --color-info: #0284C7;
+    --color-border: #CBD5E1;
+    --color-primary: #4338CA;
+    --color-success: #047857;
+    --color-warning: #B45309;
+    --color-danger: #B91C1C;
+    --color-info: #0369A1;
     --color-text-primary: #0F172A;
-    --color-text-secondary: #475569;
-    --color-text-muted: #94A3B8;
+    --color-text-secondary: #334155;
+    --color-text-muted: #64748B;
   }
 
   html.dark body {

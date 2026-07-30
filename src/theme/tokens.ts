@@ -1,6 +1,6 @@
 /**
  * Centralized Design Token System
- * Document ID: ECO-20260730-004 (v0.2.6)
+ * Document ID: ECO-20260730-013 (v0.3.1)
  * Single Source of Truth for spacing, typography, colors, radii, shadows, and transitions.
  */
 
@@ -30,26 +30,26 @@ export const designTokens = {
       },
     },
     light: {
-      background: '#F8F9FA',
-      surface: '#FFFFFF',
-      card: '#FFFFFF',
-      border: '#E2E8F0',
-      borderSubtle: '#F1F5F9',
-      primary: '#4F46E5',
-      primaryHover: '#4338CA',
-      primaryMuted: '#EEF2FF',
-      success: '#059669',
-      successMuted: '#ECFDF5',
-      warning: '#D97706',
-      warningMuted: '#FFFBEB',
-      danger: '#DC2626',
-      dangerMuted: '#FEF2F2',
-      info: '#0284C7',
-      infoMuted: '#F0F9FF',
+      background: '#F1F5F9', // Surface Level 0: Crisp Slate-100
+      surface: '#FFFFFF',    // Surface Level 1: Pure White
+      card: '#FFFFFF',       // Surface Level 1: Elevated White
+      border: '#CBD5E1',     // Visible crisp border (Slate-300)
+      borderSubtle: '#E2E8F0', // Subtle border (Slate-200)
+      primary: '#4338CA',    // Indigo-700
+      primaryHover: '#3730A3', // Indigo-800
+      primaryMuted: '#EEF2FF', // Indigo-50
+      success: '#047857',    // Emerald-700
+      successMuted: '#ECFDF5', // Emerald-50
+      warning: '#B45309',    // Amber-700
+      warningMuted: '#FFFBEB', // Amber-50
+      danger: '#B91C1C',     // Rose-700
+      dangerMuted: '#FEF2F2', // Rose-50
+      info: '#0369A1',       // Sky-700
+      infoMuted: '#F0F9FF', // Sky-50
       text: {
-        primary: '#0F172A',
-        secondary: '#475569',
-        muted: '#94A3B8',
+        primary: '#0F172A',  // Slate-900 (High contrast)
+        secondary: '#334155',// Slate-700 (Strong contrast)
+        muted: '#64748B',    // Slate-500 (Readable muted)
       },
     },
   },
@@ -67,8 +67,8 @@ export const designTokens = {
     full: '9999px',
   },
   shadow: {
-    sm: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
-    md: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+    sm: '0 1px 3px 0 rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.04)',
+    md: '0 4px 6px -1px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.05)',
   },
   transition: {
     fast: '150ms cubic-bezier(0.4, 0, 0.2, 1)',
@@ -81,29 +81,29 @@ export const designTokens = {
  */
 export function getThemeClasses(isDark: boolean) {
   return {
-    bg: isDark ? 'bg-[#111315]' : 'bg-[#F8F9FA]',
+    bg: isDark ? 'bg-[#111315]' : 'bg-slate-100/90',
     surface: isDark ? 'bg-[#1A1D21]' : 'bg-white',
     card: isDark ? 'bg-[#20252B]' : 'bg-white',
-    border: isDark ? 'border-[#2B323A]' : 'border-slate-200',
-    borderSubtle: isDark ? 'border-[#2B323A]/60' : 'border-slate-100',
+    border: isDark ? 'border-[#2B323A]' : 'border-slate-300/80',
+    borderSubtle: isDark ? 'border-[#2B323A]/60' : 'border-slate-200',
     textPrimary: isDark ? 'text-[#F3F4F6]' : 'text-slate-900',
-    textSecondary: isDark ? 'text-slate-400' : 'text-slate-600',
-    textMuted: isDark ? 'text-slate-500' : 'text-slate-400',
-    primary: isDark ? 'text-[#8B9DFF]' : 'text-indigo-600',
+    textSecondary: isDark ? 'text-slate-400' : 'text-slate-700',
+    textMuted: isDark ? 'text-slate-500' : 'text-slate-500',
+    primary: isDark ? 'text-[#8B9DFF]' : 'text-indigo-700',
     primaryBg: isDark ? 'bg-[#8B9DFF]' : 'bg-indigo-600',
     primaryBgMuted: isDark ? 'bg-[#8B9DFF]/15' : 'bg-indigo-50',
     primaryBorder: isDark ? 'border-[#8B9DFF]/30' : 'border-indigo-200',
-    success: isDark ? 'text-[#7FD4A6]' : 'text-emerald-600',
+    success: isDark ? 'text-[#7FD4A6]' : 'text-emerald-700',
     successBgMuted: isDark ? 'bg-[#7FD4A6]/10' : 'bg-emerald-50',
-    warning: isDark ? 'text-[#EFCB7A]' : 'text-amber-600',
+    warning: isDark ? 'text-[#EFCB7A]' : 'text-amber-700',
     warningBgMuted: isDark ? 'bg-[#EFCB7A]/10' : 'bg-amber-50',
-    danger: isDark ? 'text-[#E98A8A]' : 'text-rose-600',
+    danger: isDark ? 'text-[#E98A8A]' : 'text-rose-700',
     dangerBgMuted: isDark ? 'bg-[#E98A8A]/10' : 'bg-rose-50',
     cardContainer: isDark 
       ? 'bg-[#20252B] border-[#2B323A] text-[#F3F4F6]' 
-      : 'bg-white border-slate-200 text-slate-900 shadow-xs',
+      : 'bg-white border-slate-300/80 text-slate-900 shadow-sm hover:shadow-md',
     surfaceContainer: isDark
       ? 'bg-[#1A1D21] border-[#2B323A]'
-      : 'bg-slate-50 border-slate-200',
+      : 'bg-slate-50 border-slate-300/70',
   };
 }

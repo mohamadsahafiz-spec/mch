@@ -19,6 +19,7 @@ import { Card } from '../common/Card';
 import { Badge } from '../common/Badge';
 import { Button } from '../common/Button';
 import { Modal } from '../common/Modal';
+import { useTheme } from '../../context/ThemeContext';
 
 interface ContractsModuleProps {
   contracts: Contract[];
@@ -31,6 +32,9 @@ export const ContractsModule: React.FC<ContractsModuleProps> = ({
   onUpdateContract,
   onOpenPlannerForContract
 }) => {
+  const { effectiveTheme } = useTheme();
+  const isDark = effectiveTheme === 'dark';
+
   const [selectedContractId, setSelectedContractId] = useState<string>(contracts[0]?.id || '');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingContract, setEditingContract] = useState<Contract | null>(null);
@@ -81,20 +85,26 @@ export const ContractsModule: React.FC<ContractsModuleProps> = ({
               onClick={() => setSelectedContractId(cnt.id)}
               className={`p-4 rounded-xl border cursor-pointer transition-all ${
                 isSelected
-                  ? 'bg-[#111e36] border-cyan-500/60 shadow-lg shadow-cyan-950/40'
-                  : 'bg-[#0d1424] border-[#1e2d4a] hover:bg-[#131d33]'
+                  ? isDark
+                    ? 'bg-[#1A1D21] border-[#8B9DFF] shadow-lg shadow-black/20'
+                    : 'bg-blue-50 border-blue-500 shadow-md'
+                  : isDark
+                    ? 'bg-[#111315] border-[#2B323A] hover:bg-[#1A1D21]'
+                    : 'bg-white border-slate-200 hover:bg-slate-50'
               }`}
             >
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-mono font-bold text-cyan-400">{cnt.contractNumber}</span>
+                <span className={`text-xs font-mono font-bold ${isDark ? 'text-[#8ECDF7]' : 'text-sky-800'}`}>{cnt.contractNumber}</span>
                 <Badge variant={cnt.riskLevel === 'LOW' ? 'emerald' : 'amber'} size="sm">
                   {cnt.status}
                 </Badge>
               </div>
-              <h3 className="text-sm font-bold text-slate-100 truncate">{cnt.customerName}</h3>
-              <p className="text-xs text-slate-400 truncate mt-0.5">{cnt.plantName}</p>
+              <h3 className={`text-sm font-bold truncate ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>{cnt.customerName}</h3>
+              <p className={`text-xs truncate mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>{cnt.plantName}</p>
 
-              <div className="mt-3 pt-2 border-t border-slate-800 flex items-center justify-between text-[11px] font-mono text-slate-400">
+              <div className={`mt-3 pt-2 border-t flex items-center justify-between text-[11px] font-mono ${
+                isDark ? 'border-slate-800 text-slate-400' : 'border-slate-200 text-slate-600'
+              }`}>
                 <span>Progress: {cnt.progressPercent}%</span>
                 <span>{cnt.remainingWorkingDays} Days Left</span>
               </div>
@@ -109,13 +119,13 @@ export const ContractsModule: React.FC<ContractsModuleProps> = ({
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-sm font-mono text-cyan-400 font-bold">{selectedContract.contractNumber}</span>
+                <span className={`text-sm font-mono font-bold ${isDark ? 'text-[#8ECDF7]' : 'text-sky-800'}`}>{selectedContract.contractNumber}</span>
                 <Badge variant={selectedContract.riskLevel === 'LOW' ? 'emerald' : 'amber'}>
                   Risk Level: {selectedContract.riskLevel}
                 </Badge>
               </div>
-              <h2 className="text-xl font-bold text-slate-100 mt-1">{selectedContract.customerName}</h2>
-              <p className="text-xs text-slate-400">{selectedContract.plantName}</p>
+              <h2 className={`text-xl font-bold mt-1 ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>{selectedContract.customerName}</h2>
+              <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>{selectedContract.plantName}</p>
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
@@ -136,26 +146,28 @@ export const ContractsModule: React.FC<ContractsModuleProps> = ({
       >
         <div className="space-y-6">
           {/* Key Metrics Bar */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 rounded-xl bg-[#090f1c] border border-[#1a2842]">
+          <div className={`grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 rounded-xl border ${
+            isDark ? 'bg-[#111315] border-[#2B323A]' : 'bg-slate-50 border-slate-200'
+          }`}>
             <div>
-              <span className="text-[11px] text-slate-400 uppercase font-mono">Duration</span>
-              <p className="text-base font-bold text-slate-100 mt-0.5">{selectedContract.durationMonths} Months</p>
-              <p className="text-[10px] text-slate-500">{selectedContract.startDate} to {selectedContract.endDate}</p>
+              <span className={`text-[11px] uppercase font-mono ${isDark ? 'text-slate-400' : 'text-slate-600 font-medium'}`}>Duration</span>
+              <p className={`text-base font-bold mt-0.5 ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>{selectedContract.durationMonths} Months</p>
+              <p className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>{selectedContract.startDate} to {selectedContract.endDate}</p>
             </div>
             <div>
-              <span className="text-[11px] text-slate-400 uppercase font-mono">Total Working Days</span>
-              <p className="text-base font-bold text-slate-100 mt-0.5">{selectedContract.totalWorkingDays} Days</p>
-              <p className="text-[10px] text-slate-500">M-F Working Calendar</p>
+              <span className={`text-[11px] uppercase font-mono ${isDark ? 'text-slate-400' : 'text-slate-600 font-medium'}`}>Total Working Days</span>
+              <p className={`text-base font-bold mt-0.5 ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>{selectedContract.totalWorkingDays} Days</p>
+              <p className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>M-F Working Calendar</p>
             </div>
             <div>
-              <span className="text-[11px] text-slate-400 uppercase font-mono">Remaining Days</span>
-              <p className="text-base font-bold text-cyan-400 mt-0.5">{selectedContract.remainingWorkingDays} Days</p>
-              <p className="text-[10px] text-slate-500">Active Execution Window</p>
+              <span className={`text-[11px] uppercase font-mono ${isDark ? 'text-slate-400' : 'text-slate-600 font-medium'}`}>Remaining Days</span>
+              <p className={`text-base font-bold mt-0.5 ${isDark ? 'text-[#8ECDF7]' : 'text-sky-800'}`}>{selectedContract.remainingWorkingDays} Days</p>
+              <p className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>Active Execution Window</p>
             </div>
             <div>
-              <span className="text-[11px] text-slate-400 uppercase font-mono">Lead Engineer</span>
-              <p className="text-xs font-semibold text-slate-100 truncate mt-0.5">{selectedContract.engineerAssigned}</p>
-              <p className="text-[10px] text-slate-500">{selectedContract.quarterlyScheduleCount} Quarterly MHCs</p>
+              <span className={`text-[11px] uppercase font-mono ${isDark ? 'text-slate-400' : 'text-slate-600 font-medium'}`}>Lead Engineer</span>
+              <p className={`text-xs font-semibold truncate mt-0.5 ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>{selectedContract.engineerAssigned}</p>
+              <p className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>{selectedContract.quarterlyScheduleCount} Quarterly MHCs</p>
             </div>
           </div>
 
@@ -164,8 +176,8 @@ export const ContractsModule: React.FC<ContractsModuleProps> = ({
             <Card title="Contract Deliverables & Scope">
               <ul className="space-y-2">
                 {selectedContract.deliverables.map((del, i) => (
-                  <li key={i} className="flex items-start gap-2.5 text-xs text-slate-200">
-                    <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
+                  <li key={i} className={`flex items-start gap-2.5 text-xs ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
+                    <CheckCircle2 className={`w-4 h-4 shrink-0 mt-0.5 ${isDark ? 'text-[#8ECDF7]' : 'text-sky-700'}`} />
                     <span>{del}</span>
                   </li>
                 ))}
@@ -173,14 +185,18 @@ export const ContractsModule: React.FC<ContractsModuleProps> = ({
             </Card>
 
             <Card title="Terms, SLA & Custom Notes">
-              <div className="space-y-3 text-xs text-slate-300">
+              <div className="space-y-3 text-xs">
                 <div>
-                  <span className="font-semibold text-slate-400 block mb-1">Service Level Agreement:</span>
-                  <p className="p-2.5 rounded-lg bg-[#090f1c] border border-[#1a2842]">{selectedContract.terms}</p>
+                  <span className={`font-semibold block mb-1 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>Service Level Agreement:</span>
+                  <p className={`p-2.5 rounded-lg border ${
+                    isDark ? 'bg-[#111315] border-[#2B323A] text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-800'
+                  }`}>{selectedContract.terms}</p>
                 </div>
                 <div>
-                  <span className="font-semibold text-slate-400 block mb-1">Site Protocol Notes:</span>
-                  <p className="p-2.5 rounded-lg bg-[#090f1c] border border-[#1a2842] text-amber-200">
+                  <span className={`font-semibold block mb-1 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>Site Protocol Notes:</span>
+                  <p className={`p-2.5 rounded-lg border ${
+                    isDark ? 'bg-[#111315] border-[#2B323A] text-[#EFCB7A]' : 'bg-amber-50 border-amber-200 text-amber-900'
+                  }`}>
                     {selectedContract.customNotes}
                   </p>
                 </div>
@@ -197,23 +213,27 @@ export const ContractsModule: React.FC<ContractsModuleProps> = ({
                   onClick={() => toggleMilestone(ms.id)}
                   className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
                     ms.completed
-                      ? 'bg-emerald-950/20 border-emerald-800/40 text-slate-300'
-                      : 'bg-[#111c30] border-[#1f2f4d] hover:bg-[#16243d] text-slate-100'
+                      ? isDark
+                        ? 'bg-[#7FD4A6]/10 border-[#7FD4A6]/30 text-slate-200'
+                        : 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                      : isDark
+                        ? 'bg-[#111315] border-[#2B323A] hover:bg-[#1A1D21] text-slate-100'
+                        : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-900'
                   }`}
                 >
                   <div className="flex items-center gap-3">
                     <div
                       className={`w-5 h-5 rounded-md border flex items-center justify-center shrink-0 ${
                         ms.completed
-                          ? 'bg-emerald-500 border-emerald-400 text-slate-950'
-                          : 'border-slate-600 bg-slate-900/80'
+                          ? isDark ? 'bg-[#7FD4A6] border-[#7FD4A6] text-slate-950' : 'bg-emerald-600 border-emerald-600 text-white'
+                          : isDark ? 'border-slate-600 bg-[#1A1D21]' : 'border-slate-300 bg-white'
                       }`}
                     >
                       {ms.completed && <CheckCircle2 className="w-3.5 h-3.5" />}
                     </div>
                     <div>
                       <p className="text-xs font-semibold">{ms.title}</p>
-                      <p className="text-[10px] text-slate-400 font-mono">Due Target: {ms.dueDate}</p>
+                      <p className={`text-[10px] font-mono ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Due Target: {ms.dueDate}</p>
                     </div>
                   </div>
 
@@ -237,92 +257,108 @@ export const ContractsModule: React.FC<ContractsModuleProps> = ({
         {editingContract && (
           <div className="space-y-4 text-xs">
             <div>
-              <label className="block text-slate-400 mb-1">Customer Name</label>
+              <label className={`block mb-1 ${isDark ? 'text-slate-400' : 'text-slate-600 font-medium'}`}>Customer Name</label>
               <input
                 type="text"
                 value={editingContract.customerName}
                 onChange={(e) => setEditingContract({ ...editingContract, customerName: e.target.value })}
-                className="w-full bg-[#111a2d] border border-slate-700 rounded-lg p-2.5 text-slate-100"
+                className={`w-full border rounded-lg p-2.5 transition-all ${
+                  isDark ? 'bg-[#111315] border-[#2B323A] text-slate-100' : 'bg-white border-slate-300 text-slate-900'
+                }`}
               />
             </div>
 
             <div>
-              <label className="block text-slate-400 mb-1">Plant Name</label>
+              <label className={`block mb-1 ${isDark ? 'text-slate-400' : 'text-slate-600 font-medium'}`}>Plant Name</label>
               <input
                 type="text"
                 value={editingContract.plantName}
                 onChange={(e) => setEditingContract({ ...editingContract, plantName: e.target.value })}
-                className="w-full bg-[#111a2d] border border-slate-700 rounded-lg p-2.5 text-slate-100"
+                className={`w-full border rounded-lg p-2.5 transition-all ${
+                  isDark ? 'bg-[#111315] border-[#2B323A] text-slate-100' : 'bg-white border-slate-300 text-slate-900'
+                }`}
               />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-slate-400 mb-1">Start Date</label>
+                <label className={`block mb-1 ${isDark ? 'text-slate-400' : 'text-slate-600 font-medium'}`}>Start Date</label>
                 <input
                   type="date"
                   value={editingContract.startDate}
                   onChange={(e) => setEditingContract({ ...editingContract, startDate: e.target.value })}
-                  className="w-full bg-[#111a2d] border border-slate-700 rounded-lg p-2.5 text-slate-100"
+                  className={`w-full border rounded-lg p-2.5 transition-all ${
+                    isDark ? 'bg-[#111315] border-[#2B323A] text-slate-100' : 'bg-white border-slate-300 text-slate-900'
+                  }`}
                 />
               </div>
               <div>
-                <label className="block text-slate-400 mb-1">End Date</label>
+                <label className={`block mb-1 ${isDark ? 'text-slate-400' : 'text-slate-600 font-medium'}`}>End Date</label>
                 <input
                   type="date"
                   value={editingContract.endDate}
                   onChange={(e) => setEditingContract({ ...editingContract, endDate: e.target.value })}
-                  className="w-full bg-[#111a2d] border border-slate-700 rounded-lg p-2.5 text-slate-100"
+                  className={`w-full border rounded-lg p-2.5 transition-all ${
+                    isDark ? 'bg-[#111315] border-[#2B323A] text-slate-100' : 'bg-white border-slate-300 text-slate-900'
+                  }`}
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-slate-400 mb-1">Total Working Days</label>
+                <label className={`block mb-1 ${isDark ? 'text-slate-400' : 'text-slate-600 font-medium'}`}>Total Working Days</label>
                 <input
                   type="number"
                   value={editingContract.totalWorkingDays}
                   onChange={(e) =>
                     setEditingContract({ ...editingContract, totalWorkingDays: parseInt(e.target.value) || 0 })
                   }
-                  className="w-full bg-[#111a2d] border border-slate-700 rounded-lg p-2.5 text-slate-100"
+                  className={`w-full border rounded-lg p-2.5 transition-all ${
+                    isDark ? 'bg-[#111315] border-[#2B323A] text-slate-100' : 'bg-white border-slate-300 text-slate-900'
+                  }`}
                 />
               </div>
               <div>
-                <label className="block text-slate-400 mb-1">Remaining Working Days</label>
+                <label className={`block mb-1 ${isDark ? 'text-slate-400' : 'text-slate-600 font-medium'}`}>Remaining Working Days</label>
                 <input
                   type="number"
                   value={editingContract.remainingWorkingDays}
                   onChange={(e) =>
                     setEditingContract({ ...editingContract, remainingWorkingDays: parseInt(e.target.value) || 0 })
                   }
-                  className="w-full bg-[#111a2d] border border-slate-700 rounded-lg p-2.5 text-slate-100"
+                  className={`w-full border rounded-lg p-2.5 transition-all ${
+                    isDark ? 'bg-[#111315] border-[#2B323A] text-slate-100' : 'bg-white border-slate-300 text-slate-900'
+                  }`}
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-slate-400 mb-1">Assigned Lead Engineer</label>
+              <label className={`block mb-1 ${isDark ? 'text-slate-400' : 'text-slate-600 font-medium'}`}>Assigned Lead Engineer</label>
               <input
                 type="text"
                 value={editingContract.engineerAssigned}
                 onChange={(e) => setEditingContract({ ...editingContract, engineerAssigned: e.target.value })}
-                className="w-full bg-[#111a2d] border border-slate-700 rounded-lg p-2.5 text-slate-100"
+                className={`w-full border rounded-lg p-2.5 transition-all ${
+                  isDark ? 'bg-[#111315] border-[#2B323A] text-slate-100' : 'bg-white border-slate-300 text-slate-900'
+                }`}
               />
             </div>
 
             <div>
-              <label className="block text-slate-400 mb-1">Terms & Conditions</label>
+              <label className={`block mb-1 ${isDark ? 'text-slate-400' : 'text-slate-600 font-medium'}`}>Terms & Conditions</label>
               <textarea
                 value={editingContract.terms}
                 onChange={(e) => setEditingContract({ ...editingContract, terms: e.target.value })}
                 rows={3}
-                className="w-full bg-[#111a2d] border border-slate-700 rounded-lg p-2.5 text-slate-100"
+                className={`w-full border rounded-lg p-2.5 transition-all ${
+                  isDark ? 'bg-[#111315] border-[#2B323A] text-slate-100' : 'bg-white border-slate-300 text-slate-900'
+                }`}
               />
             </div>
 
-            <div className="pt-4 flex items-center justify-end gap-3 border-t border-slate-800">
+            <div className={`pt-4 flex items-center justify-end gap-3 border-t ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
               <Button variant="ghost" onClick={() => setIsEditModalOpen(false)}>
                 Cancel
               </Button>

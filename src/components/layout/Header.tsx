@@ -29,6 +29,7 @@ export const Header: React.FC<HeaderProps> = ({
   const getTabTitle = (tab: NavigationTab) => {
     switch (tab) {
       case 'start_page': return 'Start Page & Dispatch Lobby';
+      case 'workflow_guide': return 'Workflow Guide (SOP Manual)';
       case 'mission_control': return 'Mission Control & Directives';
       case 'contracts': return 'Contract Management';
       case 'planner': return 'Execution Planner';
@@ -52,23 +53,23 @@ export const Header: React.FC<HeaderProps> = ({
     <header className={`px-6 py-3 border-b sticky top-0 z-20 backdrop-blur-md transition-colors duration-250 flex flex-col md:flex-row md:items-center justify-between gap-4 ${
       isDark 
         ? 'bg-[#111315]/90 border-[#2B323A]/80 text-[#F3F4F6]' 
-        : 'bg-white/90 border-slate-200/80 text-slate-900 shadow-xs'
+        : 'bg-white/95 border-slate-300/80 text-slate-900 shadow-xs'
     }`}>
       {/* Title & Next Action Directive */}
       <div>
-        <h1 className="text-base font-semibold tracking-tight flex items-center gap-2">
+        <h1 className="text-base font-bold tracking-tight flex items-center gap-2">
           {getTabTitle(activeTab)}
         </h1>
         <div className="flex items-center gap-2 mt-0.5">
-          <span className={`text-[9px] font-mono font-semibold px-1.5 py-0.2 rounded border uppercase tracking-wider flex items-center gap-1 ${
+          <span className={`text-[9px] font-mono font-bold px-1.5 py-0.2 rounded border uppercase tracking-wider flex items-center gap-1 ${
             isDark 
               ? 'bg-[#8B9DFF]/15 text-[#8B9DFF] border-[#8B9DFF]/30' 
-              : 'bg-indigo-50 text-indigo-700 border-indigo-200'
+              : 'bg-indigo-50 text-indigo-800 border-indigo-200'
           }`}>
-            <Sparkles className="w-2.5 h-2.5 text-[#8B9DFF]" />
+            <Sparkles className={`w-2.5 h-2.5 ${isDark ? 'text-[#8B9DFF]' : 'text-indigo-600'}`} />
             DIRECTIVE
           </span>
-          <p className="text-xs text-slate-400 font-normal truncate max-w-xl">
+          <p className={`text-xs font-medium truncate max-w-xl ${isDark ? 'text-slate-400' : 'text-slate-700'}`}>
             {nextPriorityAction || "Execute scheduled Q3 MHC on TRUMPF TruMicro Fab 18A."}
           </p>
         </div>
@@ -78,7 +79,7 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="flex items-center gap-2.5">
         {/* Theme Selector Controls */}
         <div className={`p-1 rounded-lg border flex items-center gap-0.5 ${
-          isDark ? 'bg-[#1A1D21] border-[#2B323A]' : 'bg-slate-100 border-slate-200'
+          isDark ? 'bg-[#1A1D21] border-[#2B323A]' : 'bg-slate-100 border-slate-300/80'
         }`}>
           <button
             onClick={() => setTheme('dark')}
@@ -86,7 +87,7 @@ export const Header: React.FC<HeaderProps> = ({
             className={`p-1 rounded transition-all ${
               theme === 'dark' 
                 ? 'bg-[#20252B] text-[#8B9DFF] shadow-xs' 
-                : 'text-slate-400 hover:text-slate-200'
+                : isDark ? 'text-slate-400 hover:text-slate-200' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             <Moon className="w-3.5 h-3.5" />
@@ -96,8 +97,8 @@ export const Header: React.FC<HeaderProps> = ({
             title="Light Theme"
             className={`p-1 rounded transition-all ${
               theme === 'light' 
-                ? 'bg-white text-indigo-600 shadow-xs' 
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-white text-indigo-700 shadow-xs border border-slate-200' 
+                : isDark ? 'text-slate-400 hover:text-slate-200' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             <Sun className="w-3.5 h-3.5" />
@@ -107,8 +108,8 @@ export const Header: React.FC<HeaderProps> = ({
             title="System Theme"
             className={`p-1 rounded transition-all ${
               theme === 'system' 
-                ? isDark ? 'bg-[#20252B] text-[#8B9DFF]' : 'bg-white text-indigo-600' 
-                : 'text-slate-400 hover:text-slate-200'
+                ? isDark ? 'bg-[#20252B] text-[#8B9DFF]' : 'bg-white text-indigo-700 border border-slate-200 shadow-xs' 
+                : isDark ? 'text-slate-400 hover:text-slate-200' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             <Monitor className="w-3.5 h-3.5" />
@@ -117,7 +118,7 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Global Search Bar */}
         <div className="relative hidden lg:block w-56">
-          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+          <Search className={`w-3.5 h-3.5 absolute left-3 top-2.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`} />
           <input
             type="text"
             placeholder="Search Serial, Contract..."
@@ -126,7 +127,7 @@ export const Header: React.FC<HeaderProps> = ({
             className={`w-full text-xs rounded-lg pl-8 pr-3 py-1.5 border transition-all ${
               isDark 
                 ? 'bg-[#1A1D21] text-slate-200 border-[#2B323A] placeholder-slate-500 focus:border-[#8B9DFF]' 
-                : 'bg-slate-50 text-slate-900 border-slate-200 placeholder-slate-400 focus:border-indigo-500'
+                : 'bg-slate-50 text-slate-900 border-slate-300 placeholder-slate-500 focus:border-indigo-600'
             }`}
           />
         </div>
