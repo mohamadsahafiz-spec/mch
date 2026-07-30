@@ -25,6 +25,7 @@ import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
 
 // Modules
+import { StartPageModule } from './components/modules/StartPageModule';
 import { MissionControl } from './components/modules/MissionControl';
 import { ContractsModule } from './components/modules/ContractsModule';
 import { ExecutionPlannerModule } from './components/modules/ExecutionPlannerModule';
@@ -40,7 +41,7 @@ import { KnowledgeBaseModule } from './components/modules/KnowledgeBaseModule';
 import { SettingsModule } from './components/modules/SettingsModule';
 
 function AppLayout() {
-  const [activeTab, setActiveTab] = useState<NavigationTab>('mission_control');
+  const [activeTab, setActiveTab] = useState<NavigationTab>('start_page');
   const { effectiveTheme } = useTheme();
   const isDark = effectiveTheme === 'dark';
 
@@ -157,6 +158,19 @@ function AppLayout() {
         />
 
         <main className="flex-1 p-6 overflow-y-auto max-w-7xl w-full mx-auto">
+          {activeTab === 'start_page' && (
+            <StartPageModule
+              onNavigate={setActiveTab}
+              schedule={schedule}
+              machines={machines}
+              tasks={tasks}
+              onSelectMachine={(id) => {
+                setSelectedMachineId(id);
+                setActiveTab('machines');
+              }}
+            />
+          )}
+
           {activeTab === 'mission_control' && (
             <MissionControl
               tasks={tasks}

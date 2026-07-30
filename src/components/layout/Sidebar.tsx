@@ -1,5 +1,6 @@
 import React from 'react';
 import { 
+  Compass,
   LayoutDashboard, 
   FileText, 
   CalendarDays, 
@@ -36,6 +37,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const themeCls = getThemeClasses(isDark);
 
   const navItems: { id: NavigationTab; label: string; icon: React.ReactNode; badge?: number }[] = [
+    { id: 'start_page', label: 'Start Page', icon: <Compass className="w-4 h-4" /> },
     { id: 'mission_control', label: 'Mission Control', icon: <LayoutDashboard className="w-4 h-4" /> },
     { id: 'contracts', label: 'Contracts', icon: <FileText className="w-4 h-4" /> },
     { id: 'planner', label: 'Execution Planner', icon: <CalendarDays className="w-4 h-4" /> },
@@ -71,7 +73,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <span className={`text-[9px] font-mono px-1.5 py-0.2 rounded border ${
                 isDark ? 'bg-[#8B9DFF]/10 text-[#8B9DFF] border-[#8B9DFF]/30' : 'bg-indigo-50 text-indigo-700 border-indigo-200'
               }`}>
-                v0.2.6
+                v0.2.7
               </span>
             </div>
             <p className="text-[10px] text-slate-400 font-mono">Precision Laser Eng</p>
@@ -140,7 +142,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <span className="w-1.5 h-1.5 rounded-full bg-[#7FD4A6]" />
           <span>FSO Engine Online</span>
         </div>
-        <span className="text-slate-400">v0.2.6</span>
+        <span className="text-slate-400">v0.2.7</span>
       </div>
     </aside>
   );

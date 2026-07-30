@@ -1,4 +1,5 @@
 export type NavigationTab = 
+  | 'start_page'
   | 'mission_control'
   | 'contracts'
   | 'planner'

@@ -28,6 +28,7 @@ export const Header: React.FC<HeaderProps> = ({
 
   const getTabTitle = (tab: NavigationTab) => {
     switch (tab) {
+      case 'start_page': return 'Start Page & Dispatch Lobby';
       case 'mission_control': return 'Mission Control & Directives';
       case 'contracts': return 'Contract Management';
       case 'planner': return 'Execution Planner';
