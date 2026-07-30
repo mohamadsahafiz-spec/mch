@@ -266,7 +266,7 @@ export interface AlertItem {
   timestamp: string;
 }
 
-// Report Studio Foundation Types (v0.4.0)
+// Report Studio Foundation Types (v0.4.1)
 export interface ReportSectionConfig {
   id: string;
   sectionType: string; // e.g. 'machine_info', 'customer_info', 'visit_summary'

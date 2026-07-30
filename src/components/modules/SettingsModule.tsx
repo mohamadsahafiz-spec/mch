@@ -15,6 +15,20 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
 
   const changelog = [
     {
+      version: 'v0.4.1',
+      date: '2026-07-30',
+      type: 'Machine Passport Management (ECO-20260730-015)',
+      highlights: [
+        'Integrated complete Machine Passport Management suite inside MachinePassportModule.',
+        'Added Add Machine feature with complete telemetry baseline, laser heads, and consumable defaults.',
+        'Added Edit Machine feature for updating machine specifications, customer allocations, and health scores.',
+        'Added Rename Machine feature for fast inline re-designation of machine models and IDs.',
+        'Added Delete Machine feature with confirmation dialog and automatic fleet re-selection.',
+        'Positioned high-visibility management toolbar for <5-second discovery in Machine Passport.',
+        'Updated system version discipline to v0.4.1 across sidebar, settings, and release notes.'
+      ]
+    },
+    {
       version: 'v0.3.1',
       date: '2026-07-30',
       type: 'Theme Consistency (ECO-20260730-013)',
@@ -142,16 +156,16 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
             <div className={`p-3 rounded-xl border font-mono font-bold text-lg ${
               isDark ? 'bg-[#8B9DFF]/15 border-[#8B9DFF]/30 text-[#8B9DFF]' : 'bg-indigo-50 border-indigo-200 text-indigo-700'
             }`}>
-              v0.3.1
+              v0.4.1
             </div>
             <div>
               <h3 className="text-base font-bold">Field Service Operations System</h3>
               <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600 font-medium'}`}>
-                Theme Consistency v0.3.1 — System-wide Theme Audit & Token Compliance (ECO-20260730-013)
+                Machine Passport Management v0.4.1 — Fleet Creation, Editing, Renaming & Deletion (ECO-20260730-015)
               </p>
             </div>
           </div>
-          <Badge variant="blue">v0.3.1 OPERATIONAL</Badge>
+          <Badge variant="blue">v0.4.1 OPERATIONAL</Badge>
         </div>
       </Card>
 

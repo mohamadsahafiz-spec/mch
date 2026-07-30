@@ -79,6 +79,29 @@ function AppLayout() {
     setBaselines(StorageService.getBaselines());
   }, []);
 
+  // Machine Management Helpers
+  const handleAddMachine = (newMachine: Machine) => {
+    const updated = [newMachine, ...machines];
+    setMachines(updated);
+    StorageService.saveMachines(updated);
+    setSelectedMachineId(newMachine.id);
+  };
+
+  const handleEditMachine = (updatedMachine: Machine) => {
+    const updated = machines.map((m) => (m.id === updatedMachine.id ? updatedMachine : m));
+    setMachines(updated);
+    StorageService.saveMachines(updated);
+  };
+
+  const handleDeleteMachine = (machineId: string) => {
+    const updated = machines.filter((m) => m.id !== machineId);
+    setMachines(updated);
+    StorageService.saveMachines(updated);
+    if (selectedMachineId === machineId && updated.length > 0) {
+      setSelectedMachineId(updated[0].id);
+    }
+  };
+
   // Sync to persistence helpers
   const handleUpdateContract = (updatedContract: Contract) => {
     const updated = contracts.map((c) => (c.id === updatedContract.id ? updatedContract : c));
@@ -239,6 +262,9 @@ function AppLayout() {
                 setSelectedMachineId(id);
                 setActiveTab('mhc');
               }}
+              onAddMachine={handleAddMachine}
+              onEditMachine={handleEditMachine}
+              onDeleteMachine={handleDeleteMachine}
             />
           )}
 
