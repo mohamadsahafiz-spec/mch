@@ -169,16 +169,16 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
             <div className={`p-3 rounded-xl border font-mono font-bold text-lg ${
               isDark ? 'bg-[#8B9DFF]/15 border-[#8B9DFF]/30 text-[#8B9DFF]' : 'bg-indigo-50 border-indigo-200 text-indigo-700'
             }`}>
-              v0.4.1
+              v0.4.2
             </div>
             <div>
               <h3 className="text-base font-bold">Field Service Operations System</h3>
               <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600 font-medium'}`}>
-                Machine Passport Management v0.4.1 — Fleet Creation, Editing, Renaming & Deletion (ECO-20260730-015)
+                Machine Passport UX Enhancement v0.4.2 — Industrial Hero Cockpit & Fleet Navigation (ECO-20260730-016)
               </p>
             </div>
           </div>
-          <Badge variant="blue">v0.4.1 OPERATIONAL</Badge>
+          <Badge variant="blue">v0.4.2 OPERATIONAL</Badge>
         </div>
       </Card>
 
