@@ -1,79 +1,34 @@
-import React, { useState, useRef } from 'react';
-import { Settings as SettingsIcon, ShieldCheck, Database, RefreshCw, Bot, User, History, CheckCircle2, FileText, Info, Compass, AlertCircle, Cpu, Calendar, Tag, Activity, Bell, Save, Upload, Camera, Trash2, RotateCcw, Image as ImageIcon } from 'lucide-react';
+import React from 'react';
+import { RefreshCw, Bot, User, History, Compass, Cpu, Calendar, Tag, Activity, ShieldCheck } from 'lucide-react';
 import { Card } from '../common/Card';
 import { Badge } from '../common/Badge';
 import { Button } from '../common/Button';
 import { useTheme } from '../../context/ThemeContext';
-import { EngineerProfile } from '../../types';
-import { UserAvatar } from '../common/UserAvatar';
 
 interface SettingsProps {
   onResetData: () => void;
-  profile?: EngineerProfile;
-  onSaveProfile?: (profile: EngineerProfile) => void;
 }
 
-export const SettingsModule: React.FC<SettingsProps> = ({ onResetData, profile, onSaveProfile }) => {
+export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
   const { effectiveTheme } = useTheme();
   const isDark = effectiveTheme === 'dark';
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [photoError, setPhotoError] = useState<string | null>(null);
-
-  const [editProfile, setEditProfile] = useState<EngineerProfile>({
-    name: profile?.name || 'Sahafiz',
-    company: profile?.company || 'EO Technics',
-    role: profile?.role || 'Field Service Engineer',
-    department: profile?.department || 'Service Operations',
-    avatarUrl: profile?.avatarUrl || ''
-  });
-  const [profileSaved, setProfileSaved] = useState(false);
-
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    setPhotoError(null);
-    if (!file) return;
-
-    // Accepted formats check: JPG, JPEG, PNG, WEBP
-    const validFormats = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-    if (!validFormats.includes(file.type.toLowerCase())) {
-      setPhotoError('Invalid format. Accepted formats: JPG, JPEG, PNG, WEBP.');
-      return;
-    }
-
-    // Maximum file size: 5 MB
-    if (file.size > 5 * 1024 * 1024) {
-      setPhotoError('File size exceeds 5 MB limit. Please select a smaller photo.');
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      if (event.target?.result) {
-        setEditProfile(prev => ({ ...prev, avatarUrl: event.target!.result as string }));
-      }
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleRemovePhoto = () => {
-    setEditProfile(prev => ({ ...prev, avatarUrl: '' }));
-    setPhotoError(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
-
-  const handleSaveProfileSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (onSaveProfile) {
-      onSaveProfile(editProfile);
-      setProfileSaved(true);
-      setTimeout(() => setProfileSaved(false), 3000);
-    }
-  };
-
   const changelog = [
+    {
+      version: 'v0.7.5',
+      date: '2026-08-03',
+      type: 'Identity Experience Refinement (ECO-20260802-029)',
+      highlights: [
+        'UX REFINEMENT: Centralized Engineer Profile management into dedicated My Profile workspace.',
+        'CLEANUP: Completely removed duplicate profile fields (photo, name, role, email, phone, company, department) from Settings.',
+        'DESKTOP ERGONOMICS: Re-architected My Profile into balanced 2-column layout (Personal Info vs Account Context & Certifications).',
+        'HEADER POLISH: Compacted top header account menu trigger to [Avatar ▼], removing redundant text clutter.',
+        'NAVIGATION HARMONIZATION: Direct profile access links from Sidebar Engineer Card, Header Account Menu, Users Directory, and Profile Panel.',
+        'USERS DIRECTORY REDESIGN: Simplified Users table to 5 core columns with zero horizontal scrolling.',
+        'OVERLAY STANDARDIZATION: Unified outside click, ESC key dismissal, and navigation auto-close across Notification Center and Account Dropdowns.',
+        'FSOS DISCIPLINE: Synchronized system version v0.7.5 across all headers, sidebar, settings, and release documentation.'
+      ]
+    },
     {
       version: 'v0.7.4',
       date: '2026-08-03',
@@ -463,16 +418,16 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData, profile, 
             <div className={`p-3 rounded-xl border font-mono font-bold text-lg ${
               isDark ? 'bg-[#8B9DFF]/15 border-[#8B9DFF]/30 text-[#8B9DFF]' : 'bg-indigo-50 border-indigo-200 text-indigo-700'
             }`}>
-              v0.7.3
+              v0.7.5
             </div>
             <div>
               <h3 className="text-base font-bold">Field Service Operations System</h3>
               <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600 font-medium'}`}>
-                Identity & User Management v0.7.3 — Multi-Engineer Foundation (ECO-20260802-027)
+                Identity Experience Refinement v0.7.5 — Cleanroom Operations Standard (ECO-20260802-029)
               </p>
             </div>
           </div>
-          <Badge variant="blue">v0.7.3 OPERATIONAL</Badge>
+          <Badge variant="blue">v0.7.5 OPERATIONAL</Badge>
         </div>
       </Card>
 
@@ -486,7 +441,7 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData, profile, 
               <Tag className="w-3.5 h-3.5 text-[#8B9DFF]" />
               <span className="font-mono uppercase text-[10px]">Version</span>
             </div>
-            <p className="font-mono font-bold text-sm text-[#8B9DFF]">v0.7.3</p>
+            <p className="font-mono font-bold text-sm text-[#8B9DFF]">v0.7.5</p>
           </div>
 
           <div className={`p-3.5 rounded-xl border space-y-1 ${
@@ -496,7 +451,7 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData, profile, 
               <Cpu className="w-3.5 h-3.5 text-[#8B9DFF]" />
               <span className="font-mono uppercase text-[10px]">Build ID</span>
             </div>
-            <p className="font-mono font-bold text-sm">ECO-20260802-027</p>
+            <p className="font-mono font-bold text-sm">ECO-20260802-029</p>
           </div>
 
           <div className={`p-3.5 rounded-xl border space-y-1 ${
@@ -506,7 +461,7 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData, profile, 
               <Compass className="w-3.5 h-3.5 text-[#8B9DFF]" />
               <span className="font-mono uppercase text-[10px]">Release Codename</span>
             </div>
-            <p className="font-semibold text-xs text-emerald-400">Daily Work Orchestration</p>
+            <p className="font-semibold text-xs text-emerald-400">Identity Experience Refinement</p>
           </div>
 
           <div className={`p-3.5 rounded-xl border space-y-1 ${
@@ -516,7 +471,7 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData, profile, 
               <Calendar className="w-3.5 h-3.5 text-[#8B9DFF]" />
               <span className="font-mono uppercase text-[10px]">Release Date</span>
             </div>
-            <p className="font-mono text-xs">2026-08-02</p>
+            <p className="font-mono text-xs">2026-08-03</p>
           </div>
 
           <div className={`p-3.5 rounded-xl border space-y-1 ${
@@ -651,224 +606,31 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData, profile, 
         </div>
       </Card>
 
-      {/* Engineer Profile & Reset */}
-      <Card title="Engineer Profile & System Data Management">
-        <div className="space-y-6 text-xs">
-          {/* Active Profile Card & Editor */}
-          <div className={`p-5 rounded-2xl border ${
-            isDark ? 'bg-[#1A1D21] border-[#2B323A]' : 'bg-slate-50 border-slate-200'
-          }`}>
-            <div className="flex items-center justify-between pb-4 border-b border-[#2B323A]/60 mb-4">
-              <div className="flex items-center gap-3">
-                <div className={`p-2.5 rounded-xl border ${
-                  isDark ? 'bg-[#8B9DFF]/10 border-[#8B9DFF]/30 text-[#8B9DFF]' : 'bg-indigo-50 border-indigo-200 text-indigo-700'
-                }`}>
-                  <User className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h4 className="font-bold text-sm text-slate-100 dark:text-white">
-                      {profile?.name || editProfile.name || 'Engineer'}
-                    </h4>
-                    <Badge variant="emerald">ACTIVE ON-SITE</Badge>
-                  </div>
-                  <p className="text-slate-400 text-[11px]">
-                    {profile?.role || editProfile.role} • {profile?.company || editProfile.company} ({profile?.department || editProfile.department})
-                  </p>
-                </div>
-              </div>
-
-              {profileSaved && (
-                <span className="text-xs font-semibold text-emerald-400 flex items-center gap-1 font-mono">
-                  <CheckCircle2 className="w-3.5 h-3.5" /> Profile Updated
-                </span>
-              )}
-            </div>
-
-            {/* Profile Photo Experience (Sprint ECO-20260802-028) */}
-            <div className={`p-4 rounded-xl border mb-5 ${
-              isDark ? 'bg-[#111315] border-[#2B323A]' : 'bg-white border-slate-200'
-            }`}>
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <UserAvatar
-                    user={editProfile}
-                    size="xl"
-                    showStatus={true}
-                    status="Online"
-                  />
-                  <div>
-                    <h5 className="font-bold text-sm text-slate-100 dark:text-white flex items-center gap-2">
-                      Profile Photo
-                      {editProfile.avatarUrl && (
-                        <span className="text-[10px] font-mono text-emerald-400 font-semibold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                          Custom Photo Active
-                        </span>
-                      )}
-                    </h5>
-                    <p className="text-slate-400 text-[11px] mt-0.5">
-                      Accepted formats: <strong className="text-slate-300">JPG, JPEG, PNG, WEBP</strong> (Max <strong className="text-slate-300">5 MB</strong>). Instant preview before saving.
-                    </p>
-                    {photoError && (
-                      <p className="text-rose-400 text-[11px] font-semibold mt-1 flex items-center gap-1">
-                        <AlertCircle className="w-3.5 h-3.5 shrink-0" /> {photoError}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2 shrink-0">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/jpeg,image/jpg,image/png,image/webp"
-                    onChange={handlePhotoUpload}
-                    className="hidden"
-                  />
-
-                  {!editProfile.avatarUrl ? (
-                    <Button
-                      type="button"
-                      variant="primary"
-                      size="sm"
-                      icon={<Upload className="w-3.5 h-3.5" />}
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      Upload Photo
-                    </Button>
-                  ) : (
-                    <>
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        size="sm"
-                        icon={<Camera className="w-3.5 h-3.5" />}
-                        onClick={() => fileInputRef.current?.click()}
-                      >
-                        Change Photo
-                      </Button>
-
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        icon={<RotateCcw className="w-3.5 h-3.5 text-slate-400" />}
-                        onClick={handleRemovePhoto}
-                        title="Restore Default Initials Avatar"
-                      >
-                        Restore Default
-                      </Button>
-
-                      <Button
-                        type="button"
-                        variant="danger"
-                        size="sm"
-                        icon={<Trash2 className="w-3.5 h-3.5" />}
-                        onClick={handleRemovePhoto}
-                      >
-                        Remove
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Profile Edit Form */}
-            <form onSubmit={handleSaveProfileSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[11px] font-semibold mb-1 text-slate-300">
-                    Engineer Name
-                  </label>
-                  <input
-                    type="text"
-                    value={editProfile.name}
-                    onChange={(e) => setEditProfile({ ...editProfile, name: e.target.value })}
-                    placeholder="e.g. Sahafiz"
-                    className={`w-full px-3 py-1.5 rounded-lg border text-xs font-medium ${
-                      isDark 
-                        ? 'bg-[#111315] border-[#2B323A] text-slate-200 focus:border-[#8B9DFF]' 
-                        : 'bg-white border-slate-300 text-slate-900 focus:border-indigo-600'
-                    }`}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-semibold mb-1 text-slate-300">
-                    Company
-                  </label>
-                  <input
-                    type="text"
-                    value={editProfile.company}
-                    onChange={(e) => setEditProfile({ ...editProfile, company: e.target.value })}
-                    placeholder="e.g. EO Technics"
-                    className={`w-full px-3 py-1.5 rounded-lg border text-xs font-medium ${
-                      isDark 
-                        ? 'bg-[#111315] border-[#2B323A] text-slate-200 focus:border-[#8B9DFF]' 
-                        : 'bg-white border-slate-300 text-slate-900 focus:border-indigo-600'
-                    }`}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-semibold mb-1 text-slate-300">
-                    Role / Title
-                  </label>
-                  <input
-                    type="text"
-                    value={editProfile.role}
-                    onChange={(e) => setEditProfile({ ...editProfile, role: e.target.value })}
-                    placeholder="e.g. Field Service Engineer"
-                    className={`w-full px-3 py-1.5 rounded-lg border text-xs font-medium ${
-                      isDark 
-                        ? 'bg-[#111315] border-[#2B323A] text-slate-200 focus:border-[#8B9DFF]' 
-                        : 'bg-white border-slate-300 text-slate-900 focus:border-indigo-600'
-                    }`}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-semibold mb-1 text-slate-300">
-                    Department
-                  </label>
-                  <input
-                    type="text"
-                    value={editProfile.department}
-                    onChange={(e) => setEditProfile({ ...editProfile, department: e.target.value })}
-                    placeholder="e.g. Service Operations"
-                    className={`w-full px-3 py-1.5 rounded-lg border text-xs font-medium ${
-                      isDark 
-                        ? 'bg-[#111315] border-[#2B323A] text-slate-200 focus:border-[#8B9DFF]' 
-                        : 'bg-white border-slate-300 text-slate-900 focus:border-indigo-600'
-                    }`}
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-end pt-1">
-                <Button
-                  type="submit"
-                  variant="primary"
-                  size="sm"
-                  icon={<Save className="w-3.5 h-3.5" />}
-                >
-                  Save Profile Settings
-                </Button>
-              </div>
-            </form>
-          </div>
-
-          <div className={`p-4 rounded-xl border flex items-center justify-between ${
+      {/* System Data & Workspace Management */}
+      <Card title="System Data & Workspace Management">
+        <div className="space-y-4 text-xs">
+          <div className={`p-4 rounded-xl border flex items-center justify-between gap-4 ${
             isDark ? 'bg-[#1A1D21] border-[#2B323A]' : 'bg-slate-50 border-slate-200'
           }`}>
             <div>
               <p className="font-bold text-sm text-[#E98A8A]">Reset Local Workspace State</p>
-              <p className="text-slate-400">Restores default contracts, machines, schedule, tasks, and MHC audit records.</p>
+              <p className="text-slate-400 mt-0.5">Restores default contracts, machines, schedule, tasks, and MHC audit records.</p>
             </div>
             <Button variant="danger" size="sm" icon={<RefreshCw className="w-3.5 h-3.5" />} onClick={onResetData}>
               Reset State
             </Button>
+          </div>
+
+          <div className={`p-4 rounded-xl border ${
+            isDark ? 'bg-[#141618] border-[#2B323A] text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-700'
+          }`}>
+            <div className="flex items-center gap-2 font-bold text-xs text-[#8B9DFF] mb-1">
+              <User className="w-4 h-4" />
+              <span>Engineer Profile Governance</span>
+            </div>
+            <p className="text-[11px] leading-relaxed text-slate-400">
+              Personal identity details, avatar photo management, contact preferences, and certifications have been centralized under <strong>My Profile</strong> in accordance with FSOS Identity Standard v0.7.5.
+            </p>
           </div>
         </div>
       </Card>

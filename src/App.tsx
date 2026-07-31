@@ -43,6 +43,7 @@ import { ReportsModule } from './components/modules/ReportsModule';
 import { AnalyticsModule } from './components/modules/AnalyticsModule';
 import { KnowledgeBaseModule } from './components/modules/KnowledgeBaseModule';
 import { UsersModule } from './components/modules/UsersModule';
+import { ProfileModule } from './components/modules/ProfileModule';
 import { SettingsModule } from './components/modules/SettingsModule';
 
 function AppLayout() {
@@ -413,11 +414,17 @@ function AppLayout() {
             />
           )}
 
+          {activeTab === 'profile' && (
+            <ProfileModule
+              activeUser={activeUser}
+              onUpdateUser={handleUpdateUser}
+              onNavigate={setActiveTab}
+            />
+          )}
+
           {activeTab === 'settings' && (
             <SettingsModule 
               onResetData={handleResetData} 
-              profile={profile}
-              onSaveProfile={handleSaveProfile}
             />
           )}
         </main>

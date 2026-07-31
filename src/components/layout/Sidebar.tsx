@@ -16,6 +16,7 @@ import {
   BookOpen, 
   Settings, 
   Users,
+  User,
   ShieldCheck,
   ChevronRight,
   ChevronDown
@@ -96,6 +97,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       key: 'system',
       title: 'SYSTEM',
       items: [
+        { id: 'profile', label: 'My Profile', icon: <User className="w-4 h-4" /> },
         { id: 'users', label: 'Users', icon: <Users className="w-4 h-4" /> },
         { id: 'settings', label: 'Settings', icon: <Settings className="w-4 h-4" /> },
       ]
@@ -158,7 +160,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <span className={`text-[9px] font-mono px-1.5 py-0.2 rounded border font-semibold ${
                 isDark ? 'bg-[#8B9DFF]/10 text-[#8B9DFF] border-[#8B9DFF]/30' : 'bg-indigo-50 text-indigo-700 border-indigo-200'
               }`}>
-                v0.7.4
+                v0.7.5
               </span>
             </div>
             <p className={`text-[10px] font-mono ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Precision Laser Eng</p>
@@ -166,11 +168,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </div>
 
-      {/* Engineer Status Card with Avatar */}
+      {/* Engineer Status Card with Avatar (Access Point 1: Sidebar Card -> My Profile) */}
       <div className={`px-3 py-2 border-b ${isDark ? 'border-[#2B323A]/40' : 'border-slate-100'}`}>
-        <div className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg border text-xs ${
-          isDark ? 'bg-[#1A1D21]/60 border-[#2B323A]/60 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-800'
-        }`}>
+        <div 
+          onClick={() => setActiveTab('profile')}
+          title="Open My Profile"
+          className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg border text-xs cursor-pointer transition-all ${
+            activeTab === 'profile'
+              ? isDark ? 'bg-[#8B9DFF]/15 border-[#8B9DFF]/40 text-white' : 'bg-indigo-100 border-indigo-300 text-indigo-900'
+              : isDark ? 'bg-[#1A1D21]/60 border-[#2B323A]/60 text-slate-300 hover:bg-[#20252B] hover:border-[#8B9DFF]/30' : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100'
+          }`}
+        >
           <div className="flex items-center gap-2 overflow-hidden">
             <UserAvatar user={profile} size="sm" showStatus={true} status="Online" />
             <div className="truncate">
@@ -267,7 +275,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
           <span>FSO Engine Online</span>
         </div>
-        <span className="font-semibold">v0.7.4</span>
+        <span className="font-semibold">v0.7.5</span>
       </div>
     </aside>
   );

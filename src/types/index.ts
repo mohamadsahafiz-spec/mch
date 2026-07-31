@@ -14,7 +14,8 @@ export type NavigationTab =
   | 'analytics'
   | 'knowledge_base'
   | 'users'
-  | 'settings';
+  | 'settings'
+  | 'profile';
 
 export type UserRole =
   | 'Administrator'
