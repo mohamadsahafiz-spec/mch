@@ -192,7 +192,7 @@ export const WorkflowNavigator: React.FC<WorkflowNavigatorProps> = ({
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
           Live SOP Sync
         </span>
-        <span>FSOS v0.6.1</span>
+        <span>FSOS v0.6.2</span>
       </div>
     </div>
   );
@@ -406,14 +406,14 @@ export const WorkflowGuideModule: React.FC<WorkflowGuideModuleProps> = ({ onNavi
               }`}>
                 STANDARD OPERATING PROCEDURE (SOP)
               </span>
-              <span className="text-xs font-mono text-slate-400">FSOS Field Guide v0.6.1</span>
+              <span className="text-xs font-mono text-slate-400">FSOS Field Guide v0.6.2</span>
             </div>
             <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100 flex items-center gap-2.5">
               <BookOpen className="w-7 h-7 text-[#8B9DFF]" />
               Workflow Guide
             </h1>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-2xl">
-              The end-to-end operational roadmap for Field Service Engineers — integrated with a persistent SOP Guide Rail.
+              The end-to-end operational roadmap for Field Service Engineers — integrated as a unified operational document.
             </p>
           </div>
 
@@ -426,11 +426,11 @@ export const WorkflowGuideModule: React.FC<WorkflowGuideModuleProps> = ({ onNavi
         </div>
       </div>
 
-      {/* Main 2-Column Responsive Layout: Left Sticky Workflow Navigator, Right SOP Timeline */}
+      {/* Main 2-Column Responsive Layout: Left Document-Flow Workflow Navigator, Right SOP Timeline */}
       <div className="flex flex-col lg:flex-row gap-5 items-start relative">
         
-        {/* Left Column — Sticky Vertical Workflow Navigator Guide Rail (Desktop lg:) */}
-        <div className="w-full lg:w-64 lg:shrink-0 lg:sticky lg:top-4 z-20">
+        {/* Left Column — Natural Document-Flow Workflow Navigator Guide Rail (Desktop lg:) */}
+        <div className="w-full lg:w-64 lg:shrink-0">
           <WorkflowNavigator
             steps={steps}
             activeStepIndex={activeStepIndex}

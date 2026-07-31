@@ -15,6 +15,18 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
 
   const changelog = [
     {
+      version: 'v0.6.2',
+      date: '2026-08-01',
+      type: 'Workflow Navigator Document Flow Correction (ECO-20260801-022B)',
+      highlights: [
+        'Enforced Document Flow Principle: Restored Workflow Navigator to natural document flow, removing viewport-locking and sticky offset.',
+        'Eliminated Independent Floating Sidebar Perception: Workflow Guide now scrolls as one unified engineering document.',
+        'Preserved Document-Based Step Jump Navigation: Smooth auto-scroll jumping remains instant while preserving unbroken vertical document flow.',
+        'Validated Operational Manual Presentation: Guaranteed that all SOP stages (Mission, Passport, MHC, Planner, Report, Complete) travel together.',
+        'Concluded Workflow Navigator refinement milestone in complete alignment with Founder UX standards.'
+      ]
+    },
+    {
       version: 'v0.6.1',
       date: '2026-08-01',
       type: 'Workflow Navigator Polish & Integration (ECO-20260801-022A)',
@@ -245,16 +257,16 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
             <div className={`p-3 rounded-xl border font-mono font-bold text-lg ${
               isDark ? 'bg-[#8B9DFF]/15 border-[#8B9DFF]/30 text-[#8B9DFF]' : 'bg-indigo-50 border-indigo-200 text-indigo-700'
             }`}>
-              v0.6.1
+              v0.6.2
             </div>
             <div>
               <h3 className="text-base font-bold">Field Service Operations System</h3>
               <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600 font-medium'}`}>
-                Workflow Navigator Polish v0.6.1 — Unified SOP Presentation (ECO-20260801-022A)
+                Workflow Navigator Document Flow v0.6.2 — Unified Document Manual (ECO-20260801-022B)
               </p>
             </div>
           </div>
-          <Badge variant="blue">v0.6.1 OPERATIONAL</Badge>
+          <Badge variant="blue">v0.6.2 OPERATIONAL</Badge>
         </div>
       </Card>
 
