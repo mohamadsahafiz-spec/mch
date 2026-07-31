@@ -15,6 +15,19 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
 
   const changelog = [
     {
+      version: 'v0.5.0',
+      date: '2026-07-31',
+      type: 'Customer Workspace Foundation (ECO-20260731-017)',
+      highlights: [
+        'Architected Layer 1 Customer Workspace with high-precision account cards displaying machine counts, average health, PM due, and critical alert badges.',
+        'Architected Layer 2 Machine Workspace displaying filtered laser asset cards for the active customer account.',
+        'Seamlessly bound Layer 3 Machine Hero Cockpit to selected machine cards for unified 3-tier navigation: Customer → Machine → Workspace.',
+        'Preserved all existing CRUD features (Add, Edit, Rename, Duplicate, Archive, Delete) and 8-Point MHC execution workflows.',
+        'Scaled navigation architecture for multi-customer, multi-site, and 100+ machine expansion.',
+        'Updated system version discipline to v0.5.0 across all application modules.'
+      ]
+    },
+    {
       version: 'v0.4.2',
       date: '2026-07-30',
       type: 'Machine Passport UX Enhancement (ECO-20260730-016)',
@@ -169,16 +182,16 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
             <div className={`p-3 rounded-xl border font-mono font-bold text-lg ${
               isDark ? 'bg-[#8B9DFF]/15 border-[#8B9DFF]/30 text-[#8B9DFF]' : 'bg-indigo-50 border-indigo-200 text-indigo-700'
             }`}>
-              v0.4.2
+              v0.5.0
             </div>
             <div>
               <h3 className="text-base font-bold">Field Service Operations System</h3>
               <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600 font-medium'}`}>
-                Machine Passport UX Enhancement v0.4.2 — Industrial Hero Cockpit & Fleet Navigation (ECO-20260730-016)
+                Customer Workspace Foundation v0.5.0 — Multi-Account Navigation & Asset Cockpit (ECO-20260731-017)
               </p>
             </div>
           </div>
-          <Badge variant="blue">v0.4.2 OPERATIONAL</Badge>
+          <Badge variant="blue">v0.5.0 OPERATIONAL</Badge>
         </div>
       </Card>
 

@@ -19,8 +19,6 @@ import {
   X,
   Settings,
   Building2,
-  ChevronLeft,
-  ChevronRight,
   ChevronDown,
   Copy,
   Archive,
@@ -28,6 +26,7 @@ import {
   ShieldCheck
 } from 'lucide-react';
 import { Machine, MHCRecord, ExecutiveReport } from '../../types';
+import { INITIAL_CUSTOMERS } from '../../data/mockData';
 import { Card } from '../common/Card';
 import { Badge } from '../common/Badge';
 import { Button } from '../common/Button';
@@ -61,6 +60,121 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
   const { effectiveTheme } = useTheme();
   const isDark = effectiveTheme === 'dark';
   const selectedMachine = machines.find((m) => m.id === selectedMachineId) || machines[0];
+
+  // Derive aggregated Customer Workspace Accounts
+  const customers = React.useMemo(() => {
+    const map = new Map<string, {
+      id: string;
+      name: string;
+      site: string;
+      machineCount: number;
+      avgHealth: number;
+      pmDueCount: number;
+      criticalAlerts: number;
+      status: 'OPTIMAL' | 'WARNING' | 'CRITICAL';
+    }>();
+
+    // Seed initial customer records
+    INITIAL_CUSTOMERS.forEach((c) => {
+      map.set(c.id, {
+        id: c.id,
+        name: c.name,
+        site: c.industry || 'Global Cleanroom Operations',
+        machineCount: 0,
+        avgHealth: 0,
+        pmDueCount: 0,
+        criticalAlerts: 0,
+        status: 'OPTIMAL'
+      });
+    });
+
+    // Populate machine stats
+    machines.forEach((m) => {
+      let custId = m.customerId;
+      if (!map.has(custId)) {
+        const found = Array.from(map.values()).find((c) => c.name === m.customerName);
+        if (found) {
+          custId = found.id;
+        } else {
+          custId = m.customerId || `cust-${m.customerName.replace(/\s+/g, '-').toLowerCase()}`;
+          map.set(custId, {
+            id: custId,
+            name: m.customerName,
+            site: m.plantName || 'Primary Cleanroom Facility',
+            machineCount: 0,
+            avgHealth: 0,
+            pmDueCount: 0,
+            criticalAlerts: 0,
+            status: 'OPTIMAL'
+          });
+        }
+      }
+
+      const item = map.get(custId)!;
+      item.machineCount += 1;
+      item.avgHealth += m.healthScore;
+      if (m.status === 'NEEDS_CALIBRATION' || m.status === 'MAINTENANCE_DUE') {
+        item.pmDueCount += 1;
+      }
+      if (m.status === 'OUT_OF_SERVICE' || m.healthScore < 70) {
+        item.criticalAlerts += 1;
+      }
+      if (m.plantName && item.site === 'Global Cleanroom Operations') {
+        item.site = m.plantName;
+      }
+    });
+
+    // Normalize averages and statuses
+    map.forEach((item) => {
+      if (item.machineCount > 0) {
+        item.avgHealth = Math.round(item.avgHealth / item.machineCount);
+      } else {
+        item.avgHealth = 100;
+      }
+      if (item.criticalAlerts > 0) {
+        item.status = 'CRITICAL';
+      } else if (item.pmDueCount > 0 || item.avgHealth < 85) {
+        item.status = 'WARNING';
+      } else {
+        item.status = 'OPTIMAL';
+      }
+    });
+
+    return Array.from(map.values());
+  }, [machines]);
+
+  // Active Selected Customer State
+  const [activeCustomerId, setActiveCustomerId] = useState<string>(() => {
+    return selectedMachine?.customerId || 'cust-1';
+  });
+
+  // Sync active customer if selectedMachine changes externally
+  React.useEffect(() => {
+    if (selectedMachine?.customerId) {
+      setActiveCustomerId(selectedMachine.customerId);
+    }
+  }, [selectedMachine?.id, selectedMachine?.customerId]);
+
+  const activeCustomer = customers.find((c) => c.id === activeCustomerId) || customers[0];
+
+  // Filter machines for selected customer
+  const filteredMachines = machines.filter(
+    (m) => m.customerId === activeCustomerId || m.customerName === activeCustomer?.name
+  );
+
+  // Handle customer switching
+  const handleSelectCustomer = (custId: string) => {
+    setActiveCustomerId(custId);
+    const targetCust = customers.find((c) => c.id === custId);
+    const custMachines = machines.filter(
+      (m) => m.customerId === custId || m.customerName === targetCust?.name
+    );
+    if (custMachines.length > 0) {
+      if (!custMachines.some((m) => m.id === selectedMachine?.id)) {
+        onSelectMachine(custMachines[0].id);
+      }
+    }
+  };
 
   // Action Menu Dropdown State
   const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
@@ -323,66 +437,190 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
 
   return (
     <div className="space-y-6 pb-12">
-      {/* Layer 1 — Fleet Navigator Strip */}
-      <div className={`px-4 py-2.5 rounded-2xl border flex flex-col sm:flex-row items-center justify-between gap-3 ${
-        isDark ? 'bg-[#14171A] border-[#2B323A]' : 'bg-slate-50 border-slate-200'
-      }`}>
-        <div className="flex items-center gap-2">
-          <span className={`text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-2 ${
-            isDark ? 'text-slate-400' : 'text-slate-600'
-          }`}>
-            <Layers className="w-4 h-4 text-[#8B9DFF]" />
-            Fleet Navigator
-            <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold border ${
-              isDark ? 'bg-[#8B9DFF]/10 border-[#8B9DFF]/30 text-[#8B9DFF]' : 'bg-indigo-50 border-indigo-200 text-indigo-700'
+      {/* Layer 1 — Customer Workspace */}
+      <div className="space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Building2 className={`w-5 h-5 ${isDark ? 'text-[#8B9DFF]' : 'text-indigo-600'}`} />
+            <h2 className={`text-sm font-bold font-mono uppercase tracking-wider ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>
+              Customer Workspace
+            </h2>
+            <span className={`text-[11px] font-mono font-semibold px-2 py-0.5 rounded-full border ${
+              isDark ? 'bg-[#8B9DFF]/10 text-[#8B9DFF] border-[#8B9DFF]/30' : 'bg-indigo-50 text-indigo-700 border-indigo-200'
             }`}>
-              {machines.length} Machines
+              {customers.length} Accounts
             </span>
+          </div>
+          <span className={`text-xs font-mono ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+            Select Customer Account to inspect plant equipment
           </span>
         </div>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
-          <button
-            onClick={handlePrevMachine}
-            title="Previous Machine"
-            className={`p-2 rounded-xl border text-xs transition-all flex items-center gap-1 font-semibold ${
-              isDark ? 'bg-[#1E2227] border-[#2B323A] text-slate-300 hover:text-white hover:bg-[#282E36]' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-100'
-            }`}
-          >
-            <ChevronLeft className="w-4 h-4" />
-            <span className="hidden md:inline">Prev</span>
-          </button>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {customers.map((c) => {
+            const isSelected = c.id === activeCustomerId;
+            return (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => handleSelectCustomer(c.id)}
+                className={`p-4 rounded-2xl border text-left transition-all duration-200 relative overflow-hidden group ${
+                  isSelected
+                    ? isDark
+                      ? 'bg-gradient-to-br from-[#1E2228] to-[#16181C] border-[#8B9DFF] shadow-lg shadow-[#8B9DFF]/10 ring-1 ring-[#8B9DFF]/50'
+                      : 'bg-white border-indigo-600 shadow-md ring-1 ring-indigo-500/30'
+                    : isDark
+                      ? 'bg-[#14171A] border-[#2B323A] hover:bg-[#1A1D21] hover:border-slate-600'
+                      : 'bg-slate-50 border-slate-200 hover:bg-white hover:border-slate-300'
+                }`}
+              >
+                {isSelected && (
+                  <div className={`absolute top-0 right-0 w-16 h-16 pointer-events-none opacity-20 ${
+                    isDark ? 'bg-[#8B9DFF] blur-xl' : 'bg-indigo-500 blur-xl'
+                  }`} />
+                )}
 
-          <div className="relative flex-1 sm:w-64 md:w-72">
-            <select
-              value={selectedMachine.id}
-              onChange={(e) => onSelectMachine(e.target.value)}
-              className={`w-full appearance-none pl-3 pr-8 py-1.5 rounded-xl text-xs font-bold font-mono border transition-all cursor-pointer ${
-                isDark
-                  ? 'bg-[#1E2227] border-[#2B323A] text-slate-100 hover:border-[#8B9DFF]/60'
-                  : 'bg-white border-slate-300 text-slate-900 shadow-xs hover:border-indigo-400'
-              }`}
-            >
-              {machines.map((m) => (
-                <option key={m.id} value={m.id} className={isDark ? 'bg-[#1A1D21] text-slate-100' : 'bg-white text-slate-900'}>
-                  {m.model} ({m.machineNumber}) — {m.status}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="w-4 h-4 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" />
-          </div>
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <div className="min-w-0 flex-1">
+                    <h3 className={`text-sm font-bold truncate ${
+                      isSelected
+                        ? isDark ? 'text-white' : 'text-slate-900'
+                        : isDark ? 'text-slate-200' : 'text-slate-800'
+                    }`}>
+                      {c.name}
+                    </h3>
+                    <p className={`text-xs flex items-center gap-1 font-medium mt-0.5 ${
+                      isDark ? 'text-slate-400' : 'text-slate-500'
+                    }`}>
+                      <MapPin className="w-3.5 h-3.5 shrink-0 text-slate-400" />
+                      <span className="truncate">{c.site}</span>
+                    </p>
+                  </div>
+                  <span className={`px-2 py-0.5 text-[10px] font-mono font-bold rounded-md border shrink-0 ${
+                    c.status === 'OPTIMAL'
+                      ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30'
+                      : c.status === 'WARNING'
+                        ? 'bg-amber-500/10 text-amber-500 border-amber-500/30'
+                        : 'bg-rose-500/10 text-rose-500 border-rose-500/30'
+                  }`}>
+                    {c.status}
+                  </span>
+                </div>
 
-          <button
-            onClick={handleNextMachine}
-            title="Next Machine"
-            className={`p-2 rounded-xl border text-xs transition-all flex items-center gap-1 font-semibold ${
-              isDark ? 'bg-[#1E2227] border-[#2B323A] text-slate-300 hover:text-white hover:bg-[#282E36]' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-100'
-            }`}
-          >
-            <span className="hidden md:inline">Next</span>
-            <ChevronRight className="w-4 h-4" />
-          </button>
+                <div className={`pt-2.5 mt-2 border-t flex items-center justify-between text-xs font-mono ${
+                  isDark ? 'border-[#2B323A]/60 text-slate-400' : 'border-slate-200 text-slate-600'
+                }`}>
+                  <span className="flex items-center gap-1 font-semibold">
+                    <Cpu className="w-3.5 h-3.5 text-[#8B9DFF]" />
+                    {c.machineCount} {c.machineCount === 1 ? 'Asset' : 'Assets'}
+                  </span>
+                  <div className="flex items-center gap-3">
+                    <span className="font-bold text-emerald-500">{c.avgHealth}% Health</span>
+                    {c.pmDueCount > 0 ? (
+                      <span className="text-amber-500 font-bold">{c.pmDueCount} PM Due</span>
+                    ) : (
+                      <span className="text-slate-400 text-[11px]">0 Alerts</span>
+                    )}
+                  </div>
+                </div>
+              </button>
+            );
+          })}
         </div>
+      </div>
+
+      {/* Layer 2 — Machine Workspace */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Cpu className={`w-4 h-4 ${isDark ? 'text-[#8B9DFF]' : 'text-indigo-600'}`} />
+            <h3 className={`text-xs font-bold font-mono uppercase tracking-wider ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+              Managed Laser Fleet — {activeCustomer?.name}
+            </h3>
+            <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${
+              isDark ? 'bg-slate-800 text-slate-300 border-slate-700' : 'bg-slate-100 text-slate-700 border-slate-200'
+            }`}>
+              {filteredMachines.length} {filteredMachines.length === 1 ? 'Machine' : 'Machines'}
+            </span>
+          </div>
+        </div>
+
+        {filteredMachines.length === 0 ? (
+          <Card className="p-6 text-center">
+            <Cpu className="w-8 h-8 text-slate-400 mx-auto mb-2 opacity-50" />
+            <p className={`text-xs font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+              No laser machines assigned to {activeCustomer?.name}.
+            </p>
+            <Button variant="outline" size="sm" className="mt-3" onClick={() => setIsAddModalOpen(true)}>
+              <Plus className="w-3.5 h-3.5 mr-1" />
+              Add Machine to Customer
+            </Button>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {filteredMachines.map((m) => {
+              const isSelected = m.id === selectedMachine?.id;
+              return (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => onSelectMachine(m.id)}
+                  className={`p-3.5 rounded-xl border text-left transition-all duration-150 relative ${
+                    isSelected
+                      ? isDark
+                        ? 'bg-[#1D2127] border-[#8B9DFF] ring-1 ring-[#8B9DFF]/60 shadow-md'
+                        : 'bg-white border-indigo-600 ring-1 ring-indigo-500/40 shadow-sm'
+                      : isDark
+                        ? 'bg-[#14171A] border-[#2B323A] hover:bg-[#1A1D21] hover:border-slate-600'
+                        : 'bg-slate-50 border-slate-200 hover:bg-white hover:border-slate-300'
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <span className={`text-[11px] font-mono font-bold px-2 py-0.5 rounded border ${
+                      isSelected
+                        ? isDark ? 'bg-[#8B9DFF]/20 text-[#8B9DFF] border-[#8B9DFF]/40' : 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                        : isDark ? 'bg-slate-800 text-slate-400 border-slate-700' : 'bg-slate-100 text-slate-600 border-slate-200'
+                    }`}>
+                      {m.machineNumber}
+                    </span>
+                    <Badge
+                      variant={
+                        m.status === 'OPERATIONAL'
+                          ? 'emerald'
+                          : m.status === 'NEEDS_CALIBRATION'
+                            ? 'amber'
+                            : m.status === 'MAINTENANCE_DUE'
+                              ? 'purple'
+                              : 'rose'
+                      }
+                    >
+                      {m.status}
+                    </Badge>
+                  </div>
+
+                  <h4 className={`text-xs font-bold truncate ${
+                    isSelected
+                      ? isDark ? 'text-white' : 'text-slate-900'
+                      : isDark ? 'text-slate-300' : 'text-slate-800'
+                  }`}>
+                    {m.model}
+                  </h4>
+
+                  <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-[#2B323A]/40 text-[11px] font-mono">
+                    <span className={`font-medium truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                      {m.plantName}
+                    </span>
+                    <span className={`font-bold shrink-0 ${
+                      m.healthScore >= 90 ? 'text-emerald-500' : m.healthScore >= 75 ? 'text-amber-500' : 'text-rose-500'
+                    }`}>
+                      {m.healthScore}% Health
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Layer 2 & 3 & 4 — Machine Hero Cockpit */}
