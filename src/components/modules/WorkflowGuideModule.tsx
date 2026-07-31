@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Play, 
   Cpu, 
@@ -11,7 +11,9 @@ import {
   ChevronRight,
   ShieldCheck,
   Award,
-  Layers
+  Layers,
+  Circle,
+  Check
 } from 'lucide-react';
 import { NavigationTab } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
@@ -21,7 +23,7 @@ interface WorkflowGuideModuleProps {
   onNavigate: (tab: NavigationTab) => void;
 }
 
-interface WorkflowStep {
+export interface WorkflowStep {
   stepNumber: number;
   id: string;
   anchorId: string;
@@ -35,6 +37,175 @@ interface WorkflowStep {
   navLabel: string;
   badgeColor: string;
 }
+
+interface WorkflowNavigatorProps {
+  steps: WorkflowStep[];
+  activeStepIndex: number;
+  onSelectStep: (anchorId: string, index: number) => void;
+  isDark: boolean;
+}
+
+/**
+ * Standalone Reusable Vertical Workflow Navigator Component
+ * Follows FSOS Workflow Navigation Principle: Exists once, remains visible, reflects progress.
+ */
+export const WorkflowNavigator: React.FC<WorkflowNavigatorProps> = ({
+  steps,
+  activeStepIndex,
+  onSelectStep,
+  isDark,
+}) => {
+  const progressPercent = Math.round(((activeStepIndex + 1) / steps.length) * 100);
+
+  return (
+    <div className={`p-4 md:p-5 rounded-3xl border transition-all shadow-md ${
+      isDark 
+        ? 'bg-[#1A1D21] border-[#2B323A] text-slate-200' 
+        : 'bg-white border-slate-200 text-slate-900 shadow-sm'
+    }`}>
+      {/* Navigator Header */}
+      <div className="pb-4 border-b border-slate-200 dark:border-[#2B323A]/80 space-y-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <Layers className="w-4 h-4 text-[#8B9DFF]" />
+            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
+              SOP Navigator
+            </span>
+          </div>
+          <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded-full border ${
+            isDark ? 'bg-[#8B9DFF]/15 text-[#8B9DFF] border-[#8B9DFF]/30' : 'bg-indigo-50 text-indigo-700 border-indigo-200'
+          }`}>
+            {progressPercent}% Done
+          </span>
+        </div>
+
+        <div className="flex items-center justify-between text-xs font-mono">
+          <span className={isDark ? 'text-slate-300' : 'text-slate-700'}>
+            Step <strong className="font-bold text-[#8B9DFF]">{activeStepIndex + 1}</strong> of {steps.length}
+          </span>
+          <span className="text-[11px] text-slate-400 font-medium truncate max-w-[120px]">
+            {steps[activeStepIndex]?.shortLabel}
+          </span>
+        </div>
+
+        {/* Progress Bar */}
+        <div className={`w-full h-1.5 rounded-full overflow-hidden ${isDark ? 'bg-[#20252B]' : 'bg-slate-100'}`}>
+          <div 
+            className="h-full bg-gradient-to-r from-[#8B9DFF] to-emerald-400 transition-all duration-300 ease-out"
+            style={{ width: `${progressPercent}%` }}
+          />
+        </div>
+      </div>
+
+      {/* Steps List */}
+      <div className="pt-3 space-y-1.5">
+        {steps.map((step, idx) => {
+          const isCompleted = idx < activeStepIndex;
+          const isActive = idx === activeStepIndex;
+
+          return (
+            <button
+              key={step.id}
+              onClick={() => onSelectStep(step.anchorId, idx)}
+              className={`w-full text-left p-2.5 rounded-2xl transition-all duration-150 flex items-center justify-between group relative ${
+                isActive
+                  ? isDark
+                    ? 'bg-gradient-to-r from-[#8B9DFF]/20 to-[#8B9DFF]/5 border border-[#8B9DFF]/50 text-white shadow-sm ring-1 ring-[#8B9DFF]/30'
+                    : 'bg-indigo-50/90 border border-indigo-300 text-indigo-950 shadow-sm ring-1 ring-indigo-200'
+                  : isCompleted
+                    ? isDark
+                      ? 'bg-[#14171A]/50 hover:bg-[#20252B] border border-transparent text-slate-300'
+                      : 'bg-slate-50/60 hover:bg-slate-100/80 border border-transparent text-slate-800'
+                    : isDark
+                      ? 'hover:bg-[#20252B] text-slate-400 border border-transparent'
+                      : 'hover:bg-slate-100/60 text-slate-600 border border-transparent'
+              }`}
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                {/* Status Indicator Icon */}
+                <div className={`w-6 h-6 rounded-xl flex items-center justify-center shrink-0 text-xs font-mono font-bold transition-transform group-hover:scale-105 ${
+                  isCompleted
+                    ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                    : isActive
+                      ? isDark
+                        ? 'bg-[#8B9DFF] text-slate-950 font-extrabold shadow-sm'
+                        : 'bg-indigo-600 text-white font-extrabold shadow-sm'
+                      : isDark
+                        ? 'bg-[#20252B] text-slate-400 border border-[#2B323A]'
+                        : 'bg-slate-100 text-slate-600 border border-slate-200'
+                }`}>
+                  {isCompleted ? (
+                    <Check className="w-3.5 h-3.5 stroke-[3]" />
+                  ) : isActive ? (
+                    <span>{step.stepNumber}</span>
+                  ) : (
+                    <span>{step.stepNumber}</span>
+                  )}
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <span className={`text-[10px] font-mono font-bold uppercase ${
+                      isActive 
+                        ? isDark ? 'text-[#8B9DFF]' : 'text-indigo-600'
+                        : isCompleted
+                          ? 'text-emerald-500'
+                          : 'text-slate-400'
+                    }`}>
+                      0{step.stepNumber}
+                    </span>
+                    <span className={`text-xs font-bold truncate ${
+                      isActive 
+                        ? isDark ? 'text-white' : 'text-slate-900'
+                        : 'text-slate-700 dark:text-slate-300'
+                    }`}>
+                      {step.shortLabel}
+                    </span>
+                  </div>
+                  <p className={`text-[11px] truncate ${
+                    isActive 
+                      ? isDark ? 'text-slate-300' : 'text-slate-700'
+                      : 'text-slate-400 dark:text-slate-500'
+                  }`}>
+                    {step.title}
+                  </p>
+                </div>
+              </div>
+
+              {/* Status Badge */}
+              <div className="shrink-0 pl-1">
+                {isCompleted ? (
+                  <span className="text-[10px] font-mono font-bold text-emerald-500 px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">
+                    ✓
+                  </span>
+                ) : isActive ? (
+                  <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${
+                    isDark ? 'bg-[#8B9DFF]/20 text-[#8B9DFF]' : 'bg-indigo-100 text-indigo-700'
+                  }`}>
+                    ►
+                  </span>
+                ) : (
+                  <Circle className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600" />
+                )}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Footer hint */}
+      <div className={`mt-4 pt-3 border-t text-[10px] font-mono flex items-center justify-between ${
+        isDark ? 'border-[#2B323A]/80 text-slate-400' : 'border-slate-200 text-slate-500'
+      }`}>
+        <span className="flex items-center gap-1">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          Live SOP Sync
+        </span>
+        <span>FSOS v0.6.0</span>
+      </div>
+    </div>
+  );
+};
 
 export const WorkflowGuideModule: React.FC<WorkflowGuideModuleProps> = ({ onNavigate }) => {
   const { effectiveTheme } = useTheme();
@@ -158,10 +329,10 @@ export const WorkflowGuideModule: React.FC<WorkflowGuideModuleProps> = ({ onNavi
     }
   ];
 
-  const isManualScrollingRef = React.useRef(false);
-  const manualScrollTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+  const isManualScrollingRef = useRef(false);
+  const manualScrollTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Automatic Active Step Tracking using precise scroll position calculation
+  // Automatic Active Step Tracking using scroll position calculation
   useEffect(() => {
     const mainContainer = document.querySelector('main');
     if (!mainContainer) return;
@@ -170,8 +341,7 @@ export const WorkflowGuideModule: React.FC<WorkflowGuideModuleProps> = ({ onNavi
       if (isManualScrollingRef.current) return;
 
       const mainRect = mainContainer.getBoundingClientRect();
-      // Target reading line: ~140px below top of main viewport
-      const targetY = mainRect.top + 140;
+      const targetY = mainRect.top + 180;
 
       let foundIndex = 0;
       for (let i = 0; i < steps.length; i++) {
@@ -189,7 +359,6 @@ export const WorkflowGuideModule: React.FC<WorkflowGuideModuleProps> = ({ onNavi
       setActiveStepIndex(foundIndex);
     };
 
-    // Initial calculation
     calculateActiveStep();
 
     const handleScroll = () => {
@@ -224,11 +393,11 @@ export const WorkflowGuideModule: React.FC<WorkflowGuideModuleProps> = ({ onNavi
 
     manualScrollTimerRef.current = setTimeout(() => {
       isManualScrollingRef.current = false;
-    }, 750);
+    }, 800);
   };
 
   return (
-    <div className="max-w-4xl mx-auto py-2 md:py-6 space-y-8 md:space-y-10">
+    <div className="max-w-6xl mx-auto py-2 md:py-6 space-y-6">
       
       {/* Page Header */}
       <div className={`p-6 md:p-8 rounded-3xl border transition-all ${
@@ -246,14 +415,14 @@ export const WorkflowGuideModule: React.FC<WorkflowGuideModuleProps> = ({ onNavi
               }`}>
                 STANDARD OPERATING PROCEDURE (SOP)
               </span>
-              <span className="text-xs font-mono text-slate-400">FSOS Field Guide</span>
+              <span className="text-xs font-mono text-slate-400">FSOS Field Guide v0.6.0</span>
             </div>
             <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100 flex items-center gap-2.5">
               <BookOpen className="w-7 h-7 text-[#8B9DFF]" />
               Workflow Guide
             </h1>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-2xl">
-              The end-to-end operational roadmap for Field Service Engineers — from mission start to report handover.
+              The end-to-end operational roadmap for Field Service Engineers — equipped with persistent sticky vertical Workflow Navigation.
             </p>
           </div>
 
@@ -266,224 +435,205 @@ export const WorkflowGuideModule: React.FC<WorkflowGuideModuleProps> = ({ onNavi
         </div>
       </div>
 
-      {/* Mission Progression Title Header (Scrolls away naturally) */}
-      <div className="flex items-center justify-between px-1 pt-2">
-        <div className="flex items-center gap-2">
-          <Layers className="w-4 h-4 text-[#8B9DFF]" />
-          <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-400">
-            Mission Progression
-          </span>
+      {/* Main 2-Column Responsive Layout: Left Sticky Workflow Navigator, Right SOP Timeline */}
+      <div className="flex flex-col lg:flex-row gap-6 items-start relative">
+        
+        {/* Left Column — Sticky Vertical Workflow Navigator (Desktop lg:) */}
+        <div className="w-full lg:w-72 lg:shrink-0 lg:sticky lg:top-4 z-20">
+          <WorkflowNavigator
+            steps={steps}
+            activeStepIndex={activeStepIndex}
+            onSelectStep={scrollToStep}
+            isDark={isDark}
+          />
         </div>
-        <span className="text-xs font-mono font-semibold text-[#8B9DFF]">
-          Step {activeStepIndex + 1} of 6 — {steps[activeStepIndex]?.title}
-        </span>
-      </div>
 
-      {/* Task 1 & 2: Compact Sticky Navigation Buttons Row ONLY */}
-      <div className={`sticky top-0 z-30 p-2 md:p-2.5 rounded-2xl border backdrop-blur-md transition-all shadow-md ${
-        isDark 
-          ? 'bg-[#1A1D21]/95 border-[#2B323A] text-slate-200' 
-          : 'bg-white/95 border-slate-300 text-slate-900'
-      }`}>
-        <div className="grid grid-cols-6 gap-1.5 md:gap-2">
-          {steps.map((step, idx) => {
-            const isActive = idx === activeStepIndex;
-            return (
-              <button
-                key={step.id}
-                onClick={() => scrollToStep(step.anchorId, idx)}
-                title={`Jump to Step ${step.stepNumber}: ${step.title}`}
-                className={`group relative flex flex-col md:flex-row items-center justify-center md:justify-start gap-1.5 py-1.5 md:py-2 px-2 rounded-xl transition-all font-mono ${
-                  isActive 
-                    ? isDark
-                      ? 'bg-[#8B9DFF] text-slate-950 font-bold shadow-sm ring-2 ring-[#8B9DFF]/40 scale-[1.01]' 
-                      : 'bg-indigo-600 text-white font-bold shadow-sm ring-2 ring-indigo-300 scale-[1.01]'
-                    : isDark
-                    ? 'bg-[#20252B] text-slate-400 hover:text-slate-200 hover:bg-[#2B323A] border border-[#2B323A]/60'
-                    : 'bg-slate-100 text-slate-700 hover:text-slate-950 hover:bg-slate-200 border border-slate-300/80 font-medium'
-                }`}
-              >
-                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${
-                  isActive 
-                    ? isDark ? 'bg-slate-950 text-[#8B9DFF]' : 'bg-white text-indigo-700 shadow-2xs'
-                    : isDark ? 'bg-[#2B323A] text-slate-400' : 'bg-slate-200 text-slate-700'
-                }`}>
-                  {step.stepNumber}
-                </div>
-                <span className="text-[11px] font-semibold truncate hidden md:inline">
-                  {step.shortLabel}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
+        {/* Right Column — SOP Timeline Content Stream */}
+        <div className="flex-1 min-w-0 space-y-6">
+          <div className="flex items-center justify-between px-1">
+            <h2 className={`text-xs font-mono uppercase tracking-wider font-semibold ${
+              isDark ? 'text-slate-400' : 'text-slate-600'
+            }`}>
+              Standard Operating Procedure Timeline
+            </h2>
+            <span className="text-xs font-mono font-semibold text-[#8B9DFF]">
+              Active: Step {activeStepIndex + 1} ({steps[activeStepIndex]?.title})
+            </span>
+          </div>
 
-      {/* Task 2 & 4 & 6: Vertical Timeline Sequence with Section Anchors */}
-      <div className="space-y-6 pt-2">
-        <h2 className={`text-xs font-mono uppercase tracking-wider font-semibold px-1 ${
-          isDark ? 'text-slate-400' : 'text-slate-600'
-        }`}>
-          Standard Operating Procedure Timeline
-        </h2>
+          <div className="relative pl-4 md:pl-8 space-y-8 before:absolute before:left-3 md:before:left-7 before:top-4 before:bottom-4 before:w-0.5 before:bg-slate-300 dark:before:bg-[#2B323A]">
+            {steps.map((step, idx) => {
+              const isActive = idx === activeStepIndex;
+              const isCompleted = idx < activeStepIndex;
 
-        <div className="relative pl-4 md:pl-8 space-y-10 before:absolute before:left-3 md:before:left-7 before:top-4 before:bottom-4 before:w-0.5 before:bg-slate-300 dark:before:bg-[#2B323A]">
-          {steps.map((step, idx) => {
-            const isActive = idx === activeStepIndex;
-            return (
-              <div 
-                id={step.anchorId}
-                key={step.id} 
-                className="scroll-mt-28 relative transition-all"
-              >
-                {/* Timeline Dot Icon */}
-                <div className={`absolute -left-4 md:-left-8 top-1 w-7 h-7 rounded-full border flex items-center justify-center transition-all ${
-                  isActive 
-                    ? isDark
-                      ? 'bg-[#8B9DFF] border-[#8B9DFF] text-slate-950 shadow-md ring-4 ring-[#8B9DFF]/20 scale-110' 
-                      : 'bg-indigo-600 border-indigo-600 text-white shadow-md ring-4 ring-indigo-200 scale-110'
-                    : 'bg-white dark:bg-[#1A1D21] border-slate-300 dark:border-[#2B323A] text-slate-500 dark:text-slate-400'
-                }`}>
-                  <span className="text-xs font-bold font-mono">{step.stepNumber}</span>
-                </div>
-
-                {/* Step Card */}
-                <div className={`p-6 md:p-7 rounded-2xl border transition-all duration-200 ${
-                  isActive
-                    ? isDark 
-                      ? 'bg-[#20252B] border-[#8B9DFF]/50 shadow-lg text-[#F3F4F6] ring-1 ring-[#8B9DFF]/20' 
-                      : 'bg-white border-indigo-300 shadow-md text-slate-900 ring-1 ring-indigo-100'
-                    : isDark
-                      ? 'bg-[#1A1D21]/90 border-[#2B323A]/70 text-slate-300 hover:border-[#2B323A]'
-                      : 'bg-white border-slate-300/80 text-slate-900 hover:border-slate-400 shadow-2xs'
-                }`}>
-                  {/* Step Title & Purpose */}
-                  <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b ${
-                    isDark ? 'border-[#2B323A]/60' : 'border-slate-200'
+              return (
+                <div 
+                  id={step.anchorId}
+                  key={step.id} 
+                  className="scroll-mt-20 relative transition-all"
+                >
+                  {/* Timeline Dot Icon */}
+                  <div className={`absolute -left-4 md:-left-8 top-1 w-7 h-7 rounded-full border flex items-center justify-center transition-all ${
+                    isCompleted
+                      ? 'bg-emerald-500 border-emerald-500 text-white shadow-sm'
+                      : isActive 
+                        ? isDark
+                          ? 'bg-[#8B9DFF] border-[#8B9DFF] text-slate-950 shadow-md ring-4 ring-[#8B9DFF]/20 scale-110' 
+                          : 'bg-indigo-600 border-indigo-600 text-white shadow-md ring-4 ring-indigo-200 scale-110'
+                        : 'bg-white dark:bg-[#1A1D21] border-slate-300 dark:border-[#2B323A] text-slate-500 dark:text-slate-400'
                   }`}>
-                    <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-xl border ${step.badgeColor}`}>
-                        {step.icon}
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className={`text-[10px] font-mono font-bold uppercase tracking-wider ${
-                            isDark ? 'text-slate-400' : 'text-slate-500'
-                          }`}>
-                            STEP 0{step.stepNumber} • #{step.anchorId}
-                          </span>
+                    {isCompleted ? (
+                      <Check className="w-4 h-4 stroke-[3]" />
+                    ) : (
+                      <span className="text-xs font-bold font-mono">{step.stepNumber}</span>
+                    )}
+                  </div>
+
+                  {/* Step Card */}
+                  <div className={`p-6 md:p-7 rounded-2xl border transition-all duration-200 ${
+                    isActive
+                      ? isDark 
+                        ? 'bg-[#20252B] border-[#8B9DFF]/60 shadow-lg text-[#F3F4F6] ring-1 ring-[#8B9DFF]/30' 
+                        : 'bg-white border-indigo-400 shadow-md text-slate-900 ring-2 ring-indigo-500/20'
+                      : isCompleted
+                        ? isDark
+                          ? 'bg-[#181B1F] border-[#2B323A] text-slate-200'
+                          : 'bg-slate-50/90 border-slate-200 text-slate-900'
+                        : isDark
+                          ? 'bg-[#1A1D21]/90 border-[#2B323A]/70 text-slate-300 hover:border-[#2B323A]'
+                          : 'bg-white border-slate-300/80 text-slate-900 hover:border-slate-400 shadow-2xs'
+                  }`}>
+                    {/* Step Title & Purpose */}
+                    <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b ${
+                      isDark ? 'border-[#2B323A]/60' : 'border-slate-200'
+                    }`}>
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-xl border ${step.badgeColor}`}>
+                          {step.icon}
                         </div>
-                        <h3 className={`text-lg font-bold tracking-tight ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
-                          {step.title}
-                        </h3>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-[10px] font-mono font-bold uppercase tracking-wider ${
+                              isDark ? 'text-slate-400' : 'text-slate-500'
+                            }`}>
+                              STEP 0{step.stepNumber} • #{step.anchorId}
+                            </span>
+                          </div>
+                          <h3 className={`text-lg font-bold tracking-tight ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
+                            {step.title}
+                          </h3>
+                        </div>
                       </div>
+
+                      {/* Quick Navigation Action Button */}
+                      <Button
+                        variant={isActive ? 'primary' : 'secondary'}
+                        size="sm"
+                        icon={<ChevronRight className="w-4 h-4" />}
+                        onClick={() => onNavigate(step.navTab)}
+                        className="shrink-0 self-start sm:self-center font-semibold"
+                      >
+                        {step.navLabel}
+                      </Button>
                     </div>
 
-                    {/* Quick Navigation Action Button */}
-                    <Button
-                      variant={isActive ? 'primary' : 'secondary'}
-                      size="sm"
-                      icon={<ChevronRight className="w-4 h-4" />}
-                      onClick={() => onNavigate(step.navTab)}
-                      className="shrink-0 self-start sm:self-center font-semibold"
-                    >
-                      {step.navLabel}
-                    </Button>
-                  </div>
+                    {/* Purpose */}
+                    <div className="py-3">
+                      <span className={`text-[10px] font-mono font-bold uppercase tracking-wider block mb-1 ${
+                        isDark ? 'text-slate-400' : 'text-slate-500'
+                      }`}>
+                        PURPOSE
+                      </span>
+                      <p className={`text-xs font-medium leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-800'}`}>
+                        {step.purpose}
+                      </p>
+                    </div>
 
-                  {/* Purpose */}
-                  <div className="py-3">
-                    <span className={`text-[10px] font-mono font-bold uppercase tracking-wider block mb-1 ${
-                      isDark ? 'text-slate-400' : 'text-slate-500'
-                    }`}>
-                      PURPOSE
-                    </span>
-                    <p className={`text-xs font-medium leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-800'}`}>
-                      {step.purpose}
-                    </p>
-                  </div>
+                    {/* What To Do */}
+                    <div className="py-2">
+                      <span className={`text-[10px] font-mono font-bold uppercase tracking-wider block mb-2 ${
+                        isDark ? 'text-slate-400' : 'text-slate-500'
+                      }`}>
+                        WHAT TO DO
+                      </span>
+                      <ul className="space-y-2">
+                        {step.whatToDo.map((item, bIdx) => (
+                          <li key={bIdx} className={`text-xs flex items-start gap-2.5 ${isDark ? 'text-slate-300' : 'text-slate-800 font-medium'}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full shrink-0 mt-1.5 ${isDark ? 'bg-[#8B9DFF]' : 'bg-indigo-600'}`} />
+                            <span>{item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
 
-                  {/* What To Do */}
-                  <div className="py-2">
-                    <span className={`text-[10px] font-mono font-bold uppercase tracking-wider block mb-2 ${
-                      isDark ? 'text-slate-400' : 'text-slate-500'
+                    {/* Expected Outcome */}
+                    <div className={`mt-4 pt-3 p-3 rounded-xl border ${
+                      isDark 
+                        ? 'border-[#2B323A]/40 bg-[#1A1D21]/60' 
+                        : 'border-emerald-200/80 bg-emerald-50/60'
                     }`}>
-                      WHAT TO DO
-                    </span>
-                    <ul className="space-y-2">
-                      {step.whatToDo.map((item, bIdx) => (
-                        <li key={bIdx} className={`text-xs flex items-start gap-2.5 ${isDark ? 'text-slate-300' : 'text-slate-800 font-medium'}`}>
-                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 mt-1.5 ${isDark ? 'bg-[#8B9DFF]' : 'bg-indigo-600'}`} />
-                          <span>{item}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  {/* Expected Outcome */}
-                  <div className={`mt-4 pt-3 p-3 rounded-xl border ${
-                    isDark 
-                      ? 'border-[#2B323A]/40 bg-[#1A1D21]/60' 
-                      : 'border-emerald-200/80 bg-emerald-50/60'
-                  }`}>
-                    <span className={`text-[10px] font-mono font-bold uppercase tracking-wider block mb-0.5 flex items-center gap-1 ${
-                      isDark ? 'text-[#7FD4A6]' : 'text-emerald-800 font-bold'
-                    }`}>
-                      <ShieldCheck className="w-3.5 h-3.5" />
-                      EXPECTED OUTCOME
-                    </span>
-                    <p className={`text-xs font-semibold ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>
-                      {step.expectedOutcome}
-                    </p>
+                      <span className={`text-[10px] font-mono font-bold uppercase tracking-wider block mb-0.5 flex items-center gap-1 ${
+                        isDark ? 'text-[#7FD4A6]' : 'text-emerald-800 font-bold'
+                      }`}>
+                        <ShieldCheck className="w-3.5 h-3.5" />
+                        EXPECTED OUTCOME
+                      </span>
+                      <p className={`text-xs font-semibold ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>
+                        {step.expectedOutcome}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+              );
+            })}
+          </div>
 
-      {/* Completion State Banner */}
-      <div className={`p-8 md:p-10 rounded-3xl border transition-all text-center space-y-4 ${
-        isDark 
-          ? 'bg-gradient-to-b from-[#1F2922] to-[#151C17] border-[#7FD4A6]/40 text-[#F3F4F6] shadow-xl' 
-          : 'bg-gradient-to-b from-emerald-50 via-white to-white border-emerald-200 text-slate-900 shadow-sm'
-      }`}>
-        <div className="w-12 h-12 rounded-2xl bg-[#7FD4A6]/20 border border-[#7FD4A6]/40 flex items-center justify-center mx-auto text-[#7FD4A6]">
-          <Award className="w-6 h-6" />
+          {/* Completion State Banner */}
+          <div className={`p-8 md:p-10 rounded-3xl border transition-all text-center space-y-4 ${
+            isDark 
+              ? 'bg-gradient-to-b from-[#1F2922] to-[#151C17] border-[#7FD4A6]/40 text-[#F3F4F6] shadow-xl' 
+              : 'bg-gradient-to-b from-emerald-50 via-white to-white border-emerald-200 text-slate-900 shadow-sm'
+          }`}>
+            <div className="w-12 h-12 rounded-2xl bg-[#7FD4A6]/20 border border-[#7FD4A6]/40 flex items-center justify-center mx-auto text-[#7FD4A6]">
+              <Award className="w-6 h-6" />
+            </div>
+
+            <div className="max-w-xl mx-auto space-y-2">
+              <h3 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+                Congratulations!
+              </h3>
+              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed font-normal">
+                You have completed one full Field Service workflow. You are now ready to operate FSOS independently.
+              </p>
+            </div>
+
+            <div className="pt-2 flex flex-wrap justify-center gap-3">
+              <Button
+                variant="primary"
+                size="md"
+                icon={<Play className="w-4 h-4 fill-current" />}
+                onClick={() => onNavigate('mission_control')}
+                className="font-bold px-6"
+              >
+                Start Today's Mission
+              </Button>
+              <Button
+                variant="secondary"
+                size="md"
+                icon={<ArrowRight className="w-4 h-4" />}
+                onClick={() => onNavigate('start_page')}
+                className="font-medium px-6"
+              >
+                Return to Start Page
+              </Button>
+            </div>
+          </div>
+
         </div>
 
-        <div className="max-w-xl mx-auto space-y-2">
-          <h3 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-            Congratulations!
-          </h3>
-          <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed font-normal">
-            You have completed one full Field Service workflow. You are now ready to operate FSOS independently.
-          </p>
-        </div>
-
-        <div className="pt-2 flex flex-wrap justify-center gap-3">
-          <Button
-            variant="primary"
-            size="md"
-            icon={<Play className="w-4 h-4 fill-current" />}
-            onClick={() => onNavigate('mission_control')}
-            className="font-bold px-6"
-          >
-            Start Today's Mission
-          </Button>
-          <Button
-            variant="secondary"
-            size="md"
-            icon={<ArrowRight className="w-4 h-4" />}
-            onClick={() => onNavigate('start_page')}
-            className="font-medium px-6"
-          >
-            Return to Start Page
-          </Button>
-        </div>
       </div>
 
     </div>
   );
 };
+

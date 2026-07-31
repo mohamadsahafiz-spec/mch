@@ -15,6 +15,31 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
 
   const changelog = [
     {
+      version: 'v0.6.0',
+      date: '2026-08-01',
+      type: 'Service Execution Foundation — SOP Navigation Enhancement (ECO-20260801-022)',
+      highlights: [
+        'Established FSOS Workflow Navigation Principle: Exists once, remains visible, reflects progress.',
+        'Replaced top horizontal Mission Progression bar with persistent sticky vertical Workflow Navigator.',
+        'Implemented automatic scroll-position synchronization with real-time active step detection.',
+        'Added visual step indicators for completed (✓), active (►), and upcoming (○) SOP stages.',
+        'Integrated smooth-scroll click jumping across all 6 SOP phases (Mission, Passport, MHC, Planner, Report, Complete).',
+        'Extracted WorkflowNavigator as a reusable component for future execution modules (Calibration, Quality, Reports).'
+      ]
+    },
+    {
+      version: 'v0.5.3',
+      date: '2026-07-31',
+      type: 'Machine Passport Production Ready (ECO-20260731-021)',
+      highlights: [
+        'Declared Machine Passport feature-complete for Founder Release v0.5.3.',
+        'Validated two-tier workspace interaction standard: Workspace Management vs Selected Object Management.',
+        'Refined Customer & Machine Workspace card visual consistency, dashed creation tiles, and hover states.',
+        'Verified zero modal clipping issues on Machine Hero Cockpit dropdowns across Light and Dark themes.',
+        'Established Machine Passport as the gold-standard reference implementation for upcoming Service Execution and Report Studio milestones.'
+      ]
+    },
+    {
       version: 'v0.5.2',
       date: '2026-07-31',
       type: 'Workspace Interaction Standardization (ECO-20260731-019)',
@@ -207,16 +232,16 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
             <div className={`p-3 rounded-xl border font-mono font-bold text-lg ${
               isDark ? 'bg-[#8B9DFF]/15 border-[#8B9DFF]/30 text-[#8B9DFF]' : 'bg-indigo-50 border-indigo-200 text-indigo-700'
             }`}>
-              v0.5.2
+              v0.6.0
             </div>
             <div>
               <h3 className="text-base font-bold">Field Service Operations System</h3>
               <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600 font-medium'}`}>
-                Workspace Interaction Standardization v0.5.2 — Creation vs Management Principle (ECO-20260731-019)
+                Service Execution Foundation v0.6.0 — SOP Navigation Enhancement (ECO-20260801-022)
               </p>
             </div>
           </div>
-          <Badge variant="blue">v0.5.2 OPERATIONAL</Badge>
+          <Badge variant="blue">v0.6.0 OPERATIONAL</Badge>
         </div>
       </Card>
 
