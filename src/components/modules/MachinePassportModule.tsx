@@ -843,31 +843,67 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
 
       {/* Layer 2 — Machine Workspace */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <Cpu className={`w-4 h-4 ${isDark ? 'text-[#8B9DFF]' : 'text-indigo-600'}`} />
             <h3 className={`text-xs font-bold font-mono uppercase tracking-wider ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
-              Managed Laser Fleet — {activeCustomer?.name}
+              Managed Laser Fleet
             </h3>
+            <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${
+              isDark ? 'bg-[#8B9DFF]/10 text-[#8B9DFF] border-[#8B9DFF]/30' : 'bg-indigo-50 text-indigo-700 border-indigo-200'
+            }`}>
+              {activeCustomer?.name}
+            </span>
             <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${
               isDark ? 'bg-slate-800 text-slate-300 border-slate-700' : 'bg-slate-100 text-slate-700 border-slate-200'
             }`}>
               {filteredMachines.length} {filteredMachines.length === 1 ? 'Machine' : 'Machines'}
             </span>
           </div>
+
+          <div className="flex items-center gap-2 text-xs font-mono">
+            <span className={`px-2 py-0.5 rounded border text-[11px] font-semibold ${
+              isDark ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+            }`}>
+              {filteredMachines.filter(m => m.status === 'OPERATIONAL').length}/{filteredMachines.length} Operational
+            </span>
+            <span className={`text-[11px] hidden md:inline ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+              {activeCustomer?.site || 'Cleanroom Site'}
+            </span>
+          </div>
         </div>
 
         {filteredMachines.length === 0 ? (
-          <Card className="p-6 text-center">
-            <Cpu className="w-8 h-8 text-slate-400 mx-auto mb-2 opacity-50" />
-            <p className={`text-xs font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-              No laser machines assigned to {activeCustomer?.name}.
-            </p>
-            <Button variant="outline" size="sm" className="mt-3" onClick={() => setIsAddModalOpen(true)}>
-              <Plus className="w-3.5 h-3.5 mr-1" />
-              Add Machine to Customer
-            </Button>
-          </Card>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <Card className="p-6 text-center col-span-full sm:col-span-1 lg:col-span-2">
+              <Cpu className="w-8 h-8 text-slate-400 mx-auto mb-2 opacity-50" />
+              <p className={`text-xs font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                No laser machines assigned to {activeCustomer?.name}.
+              </p>
+            </Card>
+
+            {/* Add Machine Card */}
+            <button
+              type="button"
+              onClick={handleOpenAdd}
+              className={`p-4 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-2 min-h-[110px] transition-all group ${
+                isDark
+                  ? 'border-[#2B323A] hover:border-[#8B9DFF] bg-[#14171A]/40 hover:bg-[#1A1D21]'
+                  : 'border-slate-300 hover:border-indigo-500 bg-slate-50/50 hover:bg-white'
+              }`}
+            >
+              <div className={`p-2 rounded-full transition-transform group-hover:scale-110 ${
+                isDark ? 'bg-[#8B9DFF]/10 text-[#8B9DFF]' : 'bg-indigo-50 text-indigo-600'
+              }`}>
+                <Plus className="w-4 h-4" />
+              </div>
+              <span className={`text-xs font-bold font-mono ${
+                isDark ? 'text-slate-300 group-hover:text-white' : 'text-slate-700 group-hover:text-indigo-600'
+              }`}>
+                + Add Machine
+              </span>
+            </button>
+          </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {filteredMachines.map((m) => {
@@ -877,14 +913,14 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
                   key={m.id}
                   type="button"
                   onClick={() => onSelectMachine(m.id)}
-                  className={`p-3.5 rounded-xl border text-left transition-all duration-150 relative ${
+                  className={`p-4 rounded-2xl border text-left transition-all duration-200 relative group cursor-pointer ${
                     isSelected
                       ? isDark
-                        ? 'bg-[#1D2127] border-[#8B9DFF] ring-1 ring-[#8B9DFF]/60 shadow-md'
-                        : 'bg-white border-indigo-600 ring-1 ring-indigo-500/40 shadow-sm'
+                        ? 'bg-gradient-to-br from-[#1E2228] to-[#16181C] border-[#8B9DFF] shadow-lg shadow-[#8B9DFF]/10 ring-1 ring-[#8B9DFF]/50'
+                        : 'bg-white border-indigo-600 ring-2 ring-indigo-500/20 shadow-md'
                       : isDark
                         ? 'bg-[#14171A] border-[#2B323A] hover:bg-[#1A1D21] hover:border-slate-600'
-                        : 'bg-slate-50 border-slate-200 hover:bg-white hover:border-slate-300'
+                        : 'bg-slate-50/80 border-slate-200 hover:bg-white hover:border-slate-300'
                   }`}
                 >
                   <div className="flex items-center justify-between gap-2 mb-1.5">
@@ -918,7 +954,9 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
                     {m.model}
                   </h4>
 
-                  <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-[#2B323A]/40 text-[11px] font-mono">
+                  <div className={`flex items-center justify-between mt-2.5 pt-2 border-t text-[11px] font-mono ${
+                    isDark ? 'border-[#2B323A]/60' : 'border-slate-200'
+                  }`}>
                     <span className={`font-medium truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                       {m.plantName}
                     </span>
@@ -931,6 +969,28 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
                 </button>
               );
             })}
+
+            {/* Part 1 — Add Machine Card */}
+            <button
+              type="button"
+              onClick={handleOpenAdd}
+              className={`p-4 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-2 min-h-[110px] transition-all group ${
+                isDark
+                  ? 'border-[#2B323A] hover:border-[#8B9DFF] bg-[#14171A]/40 hover:bg-[#1A1D21]'
+                  : 'border-slate-300 hover:border-indigo-500 bg-slate-50/50 hover:bg-white'
+              }`}
+            >
+              <div className={`p-2 rounded-full transition-transform group-hover:scale-110 ${
+                isDark ? 'bg-[#8B9DFF]/10 text-[#8B9DFF]' : 'bg-indigo-50 text-indigo-600'
+              }`}>
+                <Plus className="w-4 h-4" />
+              </div>
+              <span className={`text-xs font-bold font-mono ${
+                isDark ? 'text-slate-300 group-hover:text-white' : 'text-slate-700 group-hover:text-indigo-600'
+              }`}>
+                + Add Machine
+              </span>
+            </button>
           </div>
         )}
       </div>
@@ -1072,19 +1132,6 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
                         : 'bg-white border-slate-200 text-slate-800 divide-y divide-slate-100 shadow-2xl'
                     }`}>
                       <div className="py-1">
-                        <button
-                          onClick={() => {
-                            setIsActionMenuOpen(false);
-                            handleOpenAdd();
-                          }}
-                          className={`w-full px-4 py-2 text-left text-xs font-semibold flex items-center gap-2.5 transition-colors ${
-                            isDark ? 'hover:bg-[#282E36] hover:text-white' : 'hover:bg-slate-100 hover:text-slate-900'
-                          }`}
-                        >
-                          <Plus className="w-4 h-4 text-emerald-500" />
-                          + Add New Machine
-                        </button>
-
                         <button
                           onClick={() => {
                             setIsActionMenuOpen(false);

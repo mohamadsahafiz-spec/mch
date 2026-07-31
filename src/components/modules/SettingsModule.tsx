@@ -15,6 +15,19 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
 
   const changelog = [
     {
+      version: 'v0.5.2',
+      date: '2026-07-31',
+      type: 'Workspace Interaction Standardization (ECO-20260731-019)',
+      highlights: [
+        'Established FSOS permanent Workspace Interaction Principle: Creation is a Workspace Action, Management is an Object Action.',
+        'Extracted "Add Machine" from Machine Actions dropdown and implemented dedicated "+ Add Machine" card tile in Machine Workspace grid.',
+        'Maintained strict visual consistency between Customer Workspace cards and Machine Workspace cards (proportions, border-radius, hover transitions, dashed creation tiles).',
+        'Enhanced Managed Laser Fleet header with rich customer account site, asset count, and operational availability status indicators.',
+        'Kept Machine Actions dropdown strictly contextual to the selected machine (Edit, Rename, Duplicate, Archive, Delete).',
+        'Updated version discipline across system sidebar, settings, report studio, and CTO notes.'
+      ]
+    },
+    {
       version: 'v0.5.1',
       date: '2026-07-31',
       type: 'Customer Workspace Management (ECO-20260731-018)',
@@ -194,16 +207,16 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
             <div className={`p-3 rounded-xl border font-mono font-bold text-lg ${
               isDark ? 'bg-[#8B9DFF]/15 border-[#8B9DFF]/30 text-[#8B9DFF]' : 'bg-indigo-50 border-indigo-200 text-indigo-700'
             }`}>
-              v0.5.1
+              v0.5.2
             </div>
             <div>
               <h3 className="text-base font-bold">Field Service Operations System</h3>
               <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600 font-medium'}`}>
-                Customer Workspace Management v0.5.1 — Account CRUD & Hero Dropdown Unclipping (ECO-20260731-018)
+                Workspace Interaction Standardization v0.5.2 — Creation vs Management Principle (ECO-20260731-019)
               </p>
             </div>
           </div>
-          <Badge variant="blue">v0.5.1 OPERATIONAL</Badge>
+          <Badge variant="blue">v0.5.2 OPERATIONAL</Badge>
         </div>
       </Card>
 
