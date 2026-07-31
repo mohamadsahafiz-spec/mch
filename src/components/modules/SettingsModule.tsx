@@ -15,6 +15,19 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
 
   const changelog = [
     {
+      version: 'v0.6.1',
+      date: '2026-08-01',
+      type: 'Workflow Navigator Polish & Integration (ECO-20260801-022A)',
+      highlights: [
+        'Established FSOS Workflow Presentation Principle: Every workflow feels like one continuous operational document.',
+        'Refined Workflow Navigator into a sleek, integrated SOP Guide Rail that attaches seamlessly to the timeline content stream.',
+        'Eliminated duplicate navigation headers and redundant step labels to establish single-source visual clarity.',
+        'Subordinated Navigator container styling with lighter footprints, left border indicator pills, and refined typography.',
+        'Optimized desktop spatial grid spacing and responsive mobile guide rail alignment.',
+        'Concluded Workflow Navigator milestone in full preparation for Daily Work Orchestration.'
+      ]
+    },
+    {
       version: 'v0.6.0',
       date: '2026-08-01',
       type: 'Service Execution Foundation — SOP Navigation Enhancement (ECO-20260801-022)',
@@ -232,16 +245,16 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
             <div className={`p-3 rounded-xl border font-mono font-bold text-lg ${
               isDark ? 'bg-[#8B9DFF]/15 border-[#8B9DFF]/30 text-[#8B9DFF]' : 'bg-indigo-50 border-indigo-200 text-indigo-700'
             }`}>
-              v0.6.0
+              v0.6.1
             </div>
             <div>
               <h3 className="text-base font-bold">Field Service Operations System</h3>
               <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600 font-medium'}`}>
-                Service Execution Foundation v0.6.0 — SOP Navigation Enhancement (ECO-20260801-022)
+                Workflow Navigator Polish v0.6.1 — Unified SOP Presentation (ECO-20260801-022A)
               </p>
             </div>
           </div>
-          <Badge variant="blue">v0.6.0 OPERATIONAL</Badge>
+          <Badge variant="blue">v0.6.1 OPERATIONAL</Badge>
         </div>
       </Card>
 
