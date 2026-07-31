@@ -23,9 +23,10 @@ import {
   Copy,
   Archive,
   MapPin,
-  ShieldCheck
+  ShieldCheck,
+  MoreVertical
 } from 'lucide-react';
-import { Machine, MHCRecord, ExecutiveReport } from '../../types';
+import { Machine, MHCRecord, ExecutiveReport, Customer } from '../../types';
 import { INITIAL_CUSTOMERS } from '../../data/mockData';
 import { Card } from '../common/Card';
 import { Badge } from '../common/Badge';
@@ -61,12 +62,41 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
   const isDark = effectiveTheme === 'dark';
   const selectedMachine = machines.find((m) => m.id === selectedMachineId) || machines[0];
 
+  // Customer List State
+  const [customerList, setCustomerList] = useState<Customer[]>(() => {
+    const saved = localStorage.getItem('fsos_customer_list');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        // Fallback to initial
+      }
+    }
+    return INITIAL_CUSTOMERS;
+  });
+
+  // Persist Customer List to LocalStorage
+  React.useEffect(() => {
+    localStorage.setItem('fsos_customer_list', JSON.stringify(customerList));
+  }, [customerList]);
+
+  // Toast / System Alert Notice
+  const [systemAlert, setSystemAlert] = useState<string | null>(null);
+
+  const showAlert = (msg: string) => {
+    setSystemAlert(msg);
+    setTimeout(() => setSystemAlert(null), 4000);
+  };
+
   // Derive aggregated Customer Workspace Accounts
   const customers = React.useMemo(() => {
     const map = new Map<string, {
       id: string;
       name: string;
       site: string;
+      contactPerson?: string;
+      email?: string;
+      phone?: string;
       machineCount: number;
       avgHealth: number;
       pmDueCount: number;
@@ -74,12 +104,15 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
       status: 'OPTIMAL' | 'WARNING' | 'CRITICAL';
     }>();
 
-    // Seed initial customer records
-    INITIAL_CUSTOMERS.forEach((c) => {
+    // Seed customer records from customerList
+    customerList.forEach((c) => {
       map.set(c.id, {
         id: c.id,
         name: c.name,
         site: c.industry || 'Global Cleanroom Operations',
+        contactPerson: c.contactPerson,
+        email: c.email,
+        phone: c.phone,
         machineCount: 0,
         avgHealth: 0,
         pmDueCount: 0,
@@ -141,19 +174,19 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
     });
 
     return Array.from(map.values());
-  }, [machines]);
+  }, [customerList, machines]);
 
   // Active Selected Customer State
   const [activeCustomerId, setActiveCustomerId] = useState<string>(() => {
-    return selectedMachine?.customerId || 'cust-1';
+    return selectedMachine?.customerId || customerList[0]?.id || 'cust-1';
   });
 
   // Sync active customer if selectedMachine changes externally
   React.useEffect(() => {
-    if (selectedMachine?.customerId) {
+    if (selectedMachine?.customerId && customerList.some(c => c.id === selectedMachine.customerId)) {
       setActiveCustomerId(selectedMachine.customerId);
     }
-  }, [selectedMachine?.id, selectedMachine?.customerId]);
+  }, [selectedMachine?.id, selectedMachine?.customerId, customerList]);
 
   const activeCustomer = customers.find((c) => c.id === activeCustomerId) || customers[0];
 
@@ -174,6 +207,135 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
         onSelectMachine(custMachines[0].id);
       }
     }
+  };
+
+  // Customer Card Action Dropdown State
+  const [activeCustomerMenuId, setActiveCustomerMenuId] = useState<string | null>(null);
+
+  // Customer CRUD Modals State
+  const [isAddCustomerModalOpen, setIsAddCustomerModalOpen] = useState(false);
+  const [isEditCustomerModalOpen, setIsEditCustomerModalOpen] = useState(false);
+  const [isRenameCustomerModalOpen, setIsRenameCustomerModalOpen] = useState(false);
+  const [isDeleteCustomerModalOpen, setIsDeleteCustomerModalOpen] = useState(false);
+
+  const [customerToEdit, setCustomerToEdit] = useState<Customer | null>(null);
+  const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(null);
+
+  // Customer Form State
+  const [custForm, setCustForm] = useState({
+    name: '',
+    industry: '',
+    contactPerson: '',
+    email: '',
+    phone: ''
+  });
+
+  // Customer Actions Handlers
+  const handleOpenAddCustomer = () => {
+    setCustForm({
+      name: '',
+      industry: 'Semiconductor & Optics Facility',
+      contactPerson: 'Lead Operations Engineer',
+      email: 'ops@cleanroom.com',
+      phone: '+1 (555) 019-2831'
+    });
+    setIsAddCustomerModalOpen(true);
+  };
+
+  const handleSaveAddCustomer = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!custForm.name.trim()) return;
+    const newCust: Customer = {
+      id: `cust-${Date.now()}`,
+      name: custForm.name.trim(),
+      industry: custForm.industry.trim() || 'Precision Laser Cleanroom',
+      contactPerson: custForm.contactPerson.trim() || 'Lead Operations Engineer',
+      email: custForm.email.trim() || 'ops@cleanroom.com',
+      phone: custForm.phone.trim() || '+1 (555) 019-2831',
+      plantsCount: 1,
+      activeContractsCount: 1
+    };
+    setCustomerList((prev) => [...prev, newCust]);
+    setActiveCustomerId(newCust.id);
+    setIsAddCustomerModalOpen(false);
+    showAlert(`Customer account "${newCust.name}" created successfully.`);
+  };
+
+  const handleOpenEditCustomer = (c: Customer) => {
+    setCustomerToEdit(c);
+    setCustForm({
+      name: c.name || '',
+      industry: c.industry || '',
+      contactPerson: c.contactPerson || '',
+      email: c.email || '',
+      phone: c.phone || ''
+    });
+    setIsEditCustomerModalOpen(true);
+  };
+
+  const handleSaveEditCustomer = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!customerToEdit || !custForm.name.trim()) return;
+    const updatedName = custForm.name.trim();
+    setCustomerList((prev) =>
+      prev.map((c) =>
+        c.id === customerToEdit.id
+          ? {
+              ...c,
+              name: updatedName,
+              industry: custForm.industry.trim(),
+              contactPerson: custForm.contactPerson.trim(),
+              email: custForm.email.trim(),
+              phone: custForm.phone.trim()
+            }
+          : c
+      )
+    );
+    setIsEditCustomerModalOpen(false);
+    showAlert(`Customer account "${updatedName}" updated successfully.`);
+  };
+
+  const handleOpenRenameCustomer = (c: Customer) => {
+    setCustomerToEdit(c);
+    setCustForm((prev) => ({ ...prev, name: c.name }));
+    setIsRenameCustomerModalOpen(true);
+  };
+
+  const handleSaveRenameCustomer = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!customerToEdit || !custForm.name.trim()) return;
+    const updatedName = custForm.name.trim();
+    setCustomerList((prev) =>
+      prev.map((c) => (c.id === customerToEdit.id ? { ...c, name: updatedName } : c))
+    );
+    setIsRenameCustomerModalOpen(false);
+    showAlert(`Customer account renamed to "${updatedName}".`);
+  };
+
+  const handleOpenDeleteCustomer = (c: Customer) => {
+    setCustomerToDelete(c);
+    setIsDeleteCustomerModalOpen(true);
+  };
+
+  const handleConfirmDeleteCustomer = () => {
+    if (!customerToDelete) return;
+    const deletedId = customerToDelete.id;
+    const deletedName = customerToDelete.name;
+
+    setCustomerList((prev) => prev.filter((c) => c.id !== deletedId));
+
+    if (activeCustomerId === deletedId) {
+      const remaining = customerList.filter((c) => c.id !== deletedId);
+      if (remaining.length > 0) {
+        setActiveCustomerId(remaining[0].id);
+      }
+    }
+    setIsDeleteCustomerModalOpen(false);
+    showAlert(`Customer account "${deletedName}" deleted.`);
+  };
+
+  const handleArchiveCustomer = (c: Customer) => {
+    showAlert(`Customer account "${c.name}" marked as archived (placeholder).`);
   };
 
   // Action Menu Dropdown State
@@ -437,6 +599,24 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
 
   return (
     <div className="space-y-6 pb-12">
+      {/* System Toast / Alert Banner */}
+      {systemAlert && (
+        <div className={`p-3.5 rounded-xl border flex items-center justify-between text-xs font-semibold shadow-md ${
+          isDark ? 'bg-indigo-950/80 border-[#8B9DFF]/40 text-[#8B9DFF]' : 'bg-indigo-50 border-indigo-200 text-indigo-900'
+        }`}>
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+            <span>{systemAlert}</span>
+          </div>
+          <button
+            onClick={() => setSystemAlert(null)}
+            className="p-1 hover:opacity-75 transition-opacity"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       {/* Layer 1 — Customer Workspace */}
       <div className="space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -451,20 +631,30 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
               {customers.length} Accounts
             </span>
           </div>
-          <span className={`text-xs font-mono ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-            Select Customer Account to inspect plant equipment
-          </span>
+          <div className="flex items-center gap-2">
+            <span className={`text-xs font-mono hidden md:inline ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+              Select Customer Account to inspect plant equipment
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              icon={<Plus className="w-3.5 h-3.5" />}
+              onClick={handleOpenAddCustomer}
+            >
+              Add Customer
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {customers.map((c) => {
             const isSelected = c.id === activeCustomerId;
+            const isMenuOpen = activeCustomerMenuId === c.id;
             return (
-              <button
+              <div
                 key={c.id}
-                type="button"
                 onClick={() => handleSelectCustomer(c.id)}
-                className={`p-4 rounded-2xl border text-left transition-all duration-200 relative overflow-hidden group ${
+                className={`p-4 rounded-2xl border text-left transition-all duration-200 relative group cursor-pointer ${
                   isSelected
                     ? isDark
                       ? 'bg-gradient-to-br from-[#1E2228] to-[#16181C] border-[#8B9DFF] shadow-lg shadow-[#8B9DFF]/10 ring-1 ring-[#8B9DFF]/50'
@@ -475,13 +665,13 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
                 }`}
               >
                 {isSelected && (
-                  <div className={`absolute top-0 right-0 w-16 h-16 pointer-events-none opacity-20 ${
+                  <div className={`absolute top-0 right-0 w-16 h-16 pointer-events-none opacity-20 rounded-tr-2xl overflow-hidden ${
                     isDark ? 'bg-[#8B9DFF] blur-xl' : 'bg-indigo-500 blur-xl'
                   }`} />
                 )}
 
                 <div className="flex items-start justify-between gap-2 mb-2">
-                  <div className="min-w-0 flex-1">
+                  <div className="min-w-0 flex-1 pr-1">
                     <h3 className={`text-sm font-bold truncate ${
                       isSelected
                         ? isDark ? 'text-white' : 'text-slate-900'
@@ -496,15 +686,115 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
                       <span className="truncate">{c.site}</span>
                     </p>
                   </div>
-                  <span className={`px-2 py-0.5 text-[10px] font-mono font-bold rounded-md border shrink-0 ${
-                    c.status === 'OPTIMAL'
-                      ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30'
-                      : c.status === 'WARNING'
-                        ? 'bg-amber-500/10 text-amber-500 border-amber-500/30'
-                        : 'bg-rose-500/10 text-rose-500 border-rose-500/30'
-                  }`}>
-                    {c.status}
-                  </span>
+
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className={`px-2 py-0.5 text-[10px] font-mono font-bold rounded-md border ${
+                      c.status === 'OPTIMAL'
+                        ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30'
+                        : c.status === 'WARNING'
+                          ? 'bg-amber-500/10 text-amber-500 border-amber-500/30'
+                          : 'bg-rose-500/10 text-rose-500 border-rose-500/30'
+                    }`}>
+                      {c.status}
+                    </span>
+
+                    {/* Customer Overflow Menu Button (⋮) */}
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveCustomerMenuId(isMenuOpen ? null : c.id);
+                        }}
+                        className={`p-1 rounded-lg border transition-colors ${
+                          isDark
+                            ? 'bg-[#1E2227] border-[#2B323A] text-slate-300 hover:text-white hover:bg-[#282E36]'
+                            : 'bg-white border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                        }`}
+                        title="Customer Actions"
+                      >
+                        <MoreVertical className="w-3.5 h-3.5" />
+                      </button>
+
+                      {/* Customer Actions Dropdown Menu */}
+                      {isMenuOpen && (
+                        <>
+                          <div
+                            className="fixed inset-0 z-20"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveCustomerMenuId(null);
+                            }}
+                          />
+                          <div
+                            className={`absolute right-0 top-8 w-48 rounded-xl border shadow-xl z-30 py-1 text-xs font-semibold ${
+                              isDark
+                                ? 'bg-[#1E2227] border-[#2B323A] text-slate-200 divide-y divide-[#2B323A]'
+                                : 'bg-white border-slate-200 text-slate-800 divide-y divide-slate-100 shadow-xl'
+                            }`}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <div className="py-1">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setActiveCustomerMenuId(null);
+                                  handleOpenEditCustomer(c);
+                                }}
+                                className={`w-full px-3 py-2 text-left flex items-center gap-2 transition-colors ${
+                                  isDark ? 'hover:bg-[#282E36] hover:text-white' : 'hover:bg-slate-100 hover:text-slate-900'
+                                }`}
+                              >
+                                <Edit3 className="w-3.5 h-3.5 text-[#8B9DFF]" />
+                                Edit Customer
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setActiveCustomerMenuId(null);
+                                  handleOpenRenameCustomer(c);
+                                }}
+                                className={`w-full px-3 py-2 text-left flex items-center gap-2 transition-colors ${
+                                  isDark ? 'hover:bg-[#282E36] hover:text-white' : 'hover:bg-slate-100 hover:text-slate-900'
+                                }`}
+                              >
+                                <Type className="w-3.5 h-3.5 text-[#8ECDF7]" />
+                                Rename Customer
+                              </button>
+                            </div>
+                            <div className="py-1">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setActiveCustomerMenuId(null);
+                                  handleArchiveCustomer(c);
+                                }}
+                                className={`w-full px-3 py-2 text-left flex items-center gap-2 transition-colors ${
+                                  isDark ? 'hover:bg-[#282E36] hover:text-white' : 'hover:bg-slate-100 hover:text-slate-900'
+                                }`}
+                              >
+                                <Archive className="w-3.5 h-3.5 text-amber-500" />
+                                Archive Account
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setActiveCustomerMenuId(null);
+                                  handleOpenDeleteCustomer(c);
+                                }}
+                                className={`w-full px-3 py-2 text-left flex items-center gap-2 text-rose-500 transition-colors ${
+                                  isDark ? 'hover:bg-rose-500/10' : 'hover:bg-rose-50'
+                                }`}
+                              >
+                                <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                                Delete Customer
+                              </button>
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 <div className={`pt-2.5 mt-2 border-t flex items-center justify-between text-xs font-mono ${
@@ -523,9 +813,31 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
                     )}
                   </div>
                 </div>
-              </button>
+              </div>
             );
           })}
+
+          {/* Part 4 — Add Customer Card */}
+          <button
+            type="button"
+            onClick={handleOpenAddCustomer}
+            className={`p-4 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-2 min-h-[110px] transition-all group ${
+              isDark
+                ? 'border-[#2B323A] hover:border-[#8B9DFF] bg-[#14171A]/40 hover:bg-[#1A1D21]'
+                : 'border-slate-300 hover:border-indigo-500 bg-slate-50/50 hover:bg-white'
+            }`}
+          >
+            <div className={`p-2 rounded-full transition-transform group-hover:scale-110 ${
+              isDark ? 'bg-[#8B9DFF]/10 text-[#8B9DFF]' : 'bg-indigo-50 text-indigo-600'
+            }`}>
+              <Plus className="w-4 h-4" />
+            </div>
+            <span className={`text-xs font-bold font-mono ${
+              isDark ? 'text-slate-300 group-hover:text-white' : 'text-slate-700 group-hover:text-indigo-600'
+            }`}>
+              + Add Customer
+            </span>
+          </button>
         </div>
       </div>
 
@@ -623,16 +935,18 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
         )}
       </div>
 
-      {/* Layer 2 & 3 & 4 — Machine Hero Cockpit */}
-      <div className={`p-6 rounded-2xl border relative overflow-hidden transition-all ${
+      {/* Layer 2 & 3 & 4 — Machine Hero Cockpit (MP-001 Clipping Fix: container uses relative without overflow-hidden) */}
+      <div className={`p-6 rounded-2xl border relative transition-all ${
         isDark
           ? 'bg-gradient-to-br from-[#1A1D21] via-[#16181C] to-[#121417] border-[#2B323A] shadow-xl'
           : 'bg-gradient-to-br from-white via-slate-50/80 to-slate-100/60 border-slate-200/90 shadow-md'
       }`}>
-        {/* Accent background mesh */}
-        <div className={`absolute -right-12 -top-12 w-64 h-64 rounded-full blur-3xl pointer-events-none ${
-          isDark ? 'bg-[#8B9DFF]/5' : 'bg-indigo-500/5'
-        }`} />
+        {/* Accent background mesh wrapper with overflow-hidden */}
+        <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
+          <div className={`absolute -right-12 -top-12 w-64 h-64 rounded-full blur-3xl ${
+            isDark ? 'bg-[#8B9DFF]/5' : 'bg-indigo-500/5'
+          }`} />
+        </div>
 
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
           {/* Machine Core Identity (Layer 5 Rank 1 & 2) */}
@@ -1447,6 +1761,281 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
               onClick={handleConfirmDelete}
             >
               Confirm Delete
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* 5. Add Customer Modal */}
+      <Modal
+        isOpen={isAddCustomerModalOpen}
+        onClose={() => setIsAddCustomerModalOpen(false)}
+        title="Create Customer Account"
+        subtitle="Add a new customer account to FSOS Customer Workspace"
+        maxWidth="md"
+      >
+        <form onSubmit={handleSaveAddCustomer} className="space-y-4 p-4">
+          <div>
+            <label className={`block text-xs font-semibold mb-1 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+              Customer Account Name *
+            </label>
+            <input
+              type="text"
+              required
+              placeholder="e.g., TSMC Fab 21 Cleanroom"
+              value={custForm.name}
+              onChange={(e) => setCustForm({ ...custForm, name: e.target.value })}
+              className={`w-full px-3 py-2 rounded-xl text-xs border ${
+                isDark ? 'bg-[#111315] border-[#2B323A] text-slate-100' : 'bg-white border-slate-300 text-slate-900'
+              }`}
+            />
+          </div>
+
+          <div>
+            <label className={`block text-xs font-semibold mb-1 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+              Facility / Industry Site
+            </label>
+            <input
+              type="text"
+              placeholder="e.g., EUV Wafer Dicing Facility"
+              value={custForm.industry}
+              onChange={(e) => setCustForm({ ...custForm, industry: e.target.value })}
+              className={`w-full px-3 py-2 rounded-xl text-xs border ${
+                isDark ? 'bg-[#111315] border-[#2B323A] text-slate-100' : 'bg-white border-slate-300 text-slate-900'
+              }`}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className={`block text-xs font-semibold mb-1 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                Contact Person
+              </label>
+              <input
+                type="text"
+                placeholder="Dr. Alex Rivera"
+                value={custForm.contactPerson}
+                onChange={(e) => setCustForm({ ...custForm, contactPerson: e.target.value })}
+                className={`w-full px-3 py-2 rounded-xl text-xs border ${
+                  isDark ? 'bg-[#111315] border-[#2B323A] text-slate-100' : 'bg-white border-slate-300 text-slate-900'
+                }`}
+              />
+            </div>
+
+            <div>
+              <label className={`block text-xs font-semibold mb-1 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                Contact Email
+              </label>
+              <input
+                type="email"
+                placeholder="a.rivera@fab.com"
+                value={custForm.email}
+                onChange={(e) => setCustForm({ ...custForm, email: e.target.value })}
+                className={`w-full px-3 py-2 rounded-xl text-xs border ${
+                  isDark ? 'bg-[#111315] border-[#2B323A] text-slate-100' : 'bg-white border-slate-300 text-slate-900'
+                }`}
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-200 dark:border-slate-800">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsAddCustomerModalOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              size="sm"
+              icon={<Plus className="w-4 h-4" />}
+            >
+              Create Account
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* 6. Edit Customer Modal */}
+      <Modal
+        isOpen={isEditCustomerModalOpen}
+        onClose={() => setIsEditCustomerModalOpen(false)}
+        title="Edit Customer Details"
+        subtitle={`Modify account information for ${customerToEdit?.name}`}
+        maxWidth="md"
+      >
+        <form onSubmit={handleSaveEditCustomer} className="space-y-4 p-4">
+          <div>
+            <label className={`block text-xs font-semibold mb-1 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+              Customer Account Name *
+            </label>
+            <input
+              type="text"
+              required
+              value={custForm.name}
+              onChange={(e) => setCustForm({ ...custForm, name: e.target.value })}
+              className={`w-full px-3 py-2 rounded-xl text-xs border ${
+                isDark ? 'bg-[#111315] border-[#2B323A] text-slate-100' : 'bg-white border-slate-300 text-slate-900'
+              }`}
+            />
+          </div>
+
+          <div>
+            <label className={`block text-xs font-semibold mb-1 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+              Facility / Industry Site
+            </label>
+            <input
+              type="text"
+              value={custForm.industry}
+              onChange={(e) => setCustForm({ ...custForm, industry: e.target.value })}
+              className={`w-full px-3 py-2 rounded-xl text-xs border ${
+                isDark ? 'bg-[#111315] border-[#2B323A] text-slate-100' : 'bg-white border-slate-300 text-slate-900'
+              }`}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className={`block text-xs font-semibold mb-1 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                Contact Person
+              </label>
+              <input
+                type="text"
+                value={custForm.contactPerson}
+                onChange={(e) => setCustForm({ ...custForm, contactPerson: e.target.value })}
+                className={`w-full px-3 py-2 rounded-xl text-xs border ${
+                  isDark ? 'bg-[#111315] border-[#2B323A] text-slate-100' : 'bg-white border-slate-300 text-slate-900'
+                }`}
+              />
+            </div>
+
+            <div>
+              <label className={`block text-xs font-semibold mb-1 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                Contact Email
+              </label>
+              <input
+                type="email"
+                value={custForm.email}
+                onChange={(e) => setCustForm({ ...custForm, email: e.target.value })}
+                className={`w-full px-3 py-2 rounded-xl text-xs border ${
+                  isDark ? 'bg-[#111315] border-[#2B323A] text-slate-100' : 'bg-white border-slate-300 text-slate-900'
+                }`}
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-200 dark:border-slate-800">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsEditCustomerModalOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              size="sm"
+              icon={<Edit3 className="w-4 h-4" />}
+            >
+              Save Details
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* 7. Rename Customer Modal */}
+      <Modal
+        isOpen={isRenameCustomerModalOpen}
+        onClose={() => setIsRenameCustomerModalOpen(false)}
+        title="Rename Customer Account"
+        subtitle={`Update account name for ${customerToEdit?.name}`}
+        maxWidth="sm"
+      >
+        <form onSubmit={handleSaveRenameCustomer} className="space-y-4 p-4">
+          <div>
+            <label className={`block text-xs font-semibold mb-1 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+              New Customer Name
+            </label>
+            <input
+              type="text"
+              required
+              value={custForm.name}
+              onChange={(e) => setCustForm({ ...custForm, name: e.target.value })}
+              className={`w-full px-3 py-2 rounded-xl text-xs border ${
+                isDark ? 'bg-[#111315] border-[#2B323A] text-slate-100' : 'bg-white border-slate-300 text-slate-900'
+              }`}
+            />
+          </div>
+
+          <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-200 dark:border-slate-800">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsRenameCustomerModalOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              size="sm"
+              icon={<Type className="w-4 h-4" />}
+            >
+              Rename Customer
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* 8. Delete Customer Confirmation Modal */}
+      <Modal
+        isOpen={isDeleteCustomerModalOpen}
+        onClose={() => setIsDeleteCustomerModalOpen(false)}
+        title="Confirm Delete Customer Account"
+        subtitle="This action will remove the customer account."
+        maxWidth="md"
+      >
+        <div className="p-4 space-y-4">
+          <div className={`p-4 rounded-xl border flex items-start gap-3 ${
+            isDark ? 'bg-rose-950/20 border-rose-800/40 text-rose-200' : 'bg-rose-50 border-rose-200 text-rose-800'
+          }`}>
+            <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5 text-rose-500" />
+            <div className="text-xs space-y-1">
+              <p className="font-bold">Are you sure you want to delete this customer account?</p>
+              <p>
+                Account: <strong className="font-mono">{customerToDelete?.name}</strong>
+              </p>
+              <p className="text-[11px] opacity-80 pt-1">
+                Facility: {customerToDelete?.industry || 'Cleanroom Operations'}
+              </p>
+            </div>
+          </div>
+
+          <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+            Deleting this customer account will remove it from the Customer Workspace navigation hierarchy.
+          </p>
+
+          <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-200 dark:border-slate-800">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsDeleteCustomerModalOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              size="sm"
+              icon={<Trash2 className="w-4 h-4" />}
+              onClick={handleConfirmDeleteCustomer}
+            >
+              Confirm Delete Customer
             </Button>
           </div>
         </div>
