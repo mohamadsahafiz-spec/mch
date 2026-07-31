@@ -15,12 +15,14 @@ import {
   LineChart, 
   BookOpen, 
   Settings, 
+  Users,
   ShieldCheck,
   ChevronRight,
   ChevronDown
 } from 'lucide-react';
 import { NavigationTab, EngineerProfile } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
+import { UserAvatar } from '../common/UserAvatar';
 
 interface SidebarProps {
   activeTab: NavigationTab;
@@ -94,6 +96,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       key: 'system',
       title: 'SYSTEM',
       items: [
+        { id: 'users', label: 'Users', icon: <Users className="w-4 h-4" /> },
         { id: 'settings', label: 'Settings', icon: <Settings className="w-4 h-4" /> },
       ]
     }
@@ -155,7 +158,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <span className={`text-[9px] font-mono px-1.5 py-0.2 rounded border font-semibold ${
                 isDark ? 'bg-[#8B9DFF]/10 text-[#8B9DFF] border-[#8B9DFF]/30' : 'bg-indigo-50 text-indigo-700 border-indigo-200'
               }`}>
-                v0.7.2
+                v0.7.4
               </span>
             </div>
             <p className={`text-[10px] font-mono ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Precision Laser Eng</p>
@@ -163,15 +166,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </div>
 
-      {/* Engineer Status Pill */}
+      {/* Engineer Status Card with Avatar */}
       <div className={`px-3 py-2 border-b ${isDark ? 'border-[#2B323A]/40' : 'border-slate-100'}`}>
         <div className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg border text-xs ${
           isDark ? 'bg-[#1A1D21]/60 border-[#2B323A]/60 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-800'
         }`}>
           <div className="flex items-center gap-2 overflow-hidden">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+            <UserAvatar user={profile} size="sm" showStatus={true} status="Online" />
             <div className="truncate">
-              <p className="text-[11px] font-semibold truncate">{profile?.name || 'Engineer'}</p>
+              <p className="text-[11px] font-semibold truncate">{profile?.name || 'Sahafiz'}</p>
               <p className={`text-[9px] truncate ${isDark ? 'text-slate-400' : 'text-slate-500 font-medium'}`}>{profile?.role || 'Field Service Engineer'}</p>
             </div>
           </div>
@@ -264,7 +267,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
           <span>FSO Engine Online</span>
         </div>
-        <span className="font-semibold">v0.7.2</span>
+        <span className="font-semibold">v0.7.4</span>
       </div>
     </aside>
   );

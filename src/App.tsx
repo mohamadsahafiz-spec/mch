@@ -19,7 +19,8 @@ import {
   QualityInvestigation, 
   BaselineCheck,
   EngineerProfile,
-  NotificationItem
+  NotificationItem,
+  SystemUser
 } from './types';
 import { StorageService } from './utils/persistence';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
@@ -41,6 +42,7 @@ import { QualityInvestigationModule } from './components/modules/QualityInvestig
 import { ReportsModule } from './components/modules/ReportsModule';
 import { AnalyticsModule } from './components/modules/AnalyticsModule';
 import { KnowledgeBaseModule } from './components/modules/KnowledgeBaseModule';
+import { UsersModule } from './components/modules/UsersModule';
 import { SettingsModule } from './components/modules/SettingsModule';
 
 function AppLayout() {
@@ -63,9 +65,24 @@ function AppLayout() {
   const [baselines, setBaselines] = useState<BaselineCheck[]>([]);
   const [profile, setProfile] = useState<EngineerProfile>(StorageService.getProfile());
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
-
-  // Selected Machine context
+  const [users, setUsers] = useState<SystemUser[]>([]);
   const [selectedMachineId, setSelectedMachineId] = useState<string>('mch-101');
+  const [activeUser, setActiveUser] = useState<SystemUser>({
+    id: 'usr-8801',
+    employeeId: 'EMP-EO-8801',
+    fullName: 'Sahafiz',
+    email: 'sahafiz@eotechnics.com',
+    phone: '+60 12-882 1042',
+    company: 'EO Technics',
+    department: 'Service Operations',
+    role: 'Field Service Engineer',
+    status: 'Online',
+    lastLogin: 'Active now',
+    timezone: 'Asia/Kuala_Lumpur (UTC+08:00)',
+    language: 'English (US)',
+    accountStatus: 'Active',
+    bio: 'Lead Field Engineer specialized in TRUMPFTruMicro ultra-fast laser systems.'
+  });
 
   // Load state from StorageService on mount
   useEffect(() => {
@@ -83,7 +100,48 @@ function AppLayout() {
     setBaselines(StorageService.getBaselines());
     setProfile(StorageService.getProfile());
     setNotifications(StorageService.getNotifications());
+
+    const loadedUsers = StorageService.getUsers();
+    setUsers(loadedUsers);
+    if (loadedUsers.length > 0) {
+      setActiveUser(loadedUsers[0]);
+    }
   }, []);
+
+  const handleSetActiveUser = (user: SystemUser) => {
+    setActiveUser(user);
+    const newProfile: EngineerProfile = {
+      name: user.fullName,
+      company: user.company,
+      role: user.role,
+      department: user.department,
+      email: user.email,
+      phone: user.phone
+    };
+    setProfile(newProfile);
+    StorageService.saveProfile(newProfile);
+  };
+
+  const handleAddUser = (newUser: SystemUser) => {
+    const updated = [newUser, ...users];
+    setUsers(updated);
+    StorageService.saveUsers(updated);
+  };
+
+  const handleUpdateUser = (updatedUser: SystemUser) => {
+    const updated = users.map(u => u.id === updatedUser.id ? updatedUser : u);
+    setUsers(updated);
+    StorageService.saveUsers(updated);
+    if (activeUser.id === updatedUser.id) {
+      handleSetActiveUser(updatedUser);
+    }
+  };
+
+  const handleDeleteUser = (userId: string) => {
+    const updated = users.filter(u => u.id !== userId);
+    setUsers(updated);
+    StorageService.saveUsers(updated);
+  };
 
   const handleSaveProfile = (newProfile: EngineerProfile) => {
     setProfile(newProfile);
@@ -207,6 +265,7 @@ function AppLayout() {
           setActiveTab={setActiveTab}
           alerts={alerts}
           notifications={notifications}
+          activeUser={activeUser}
           onMarkAsRead={handleMarkNotificationAsRead}
           onMarkAllAsRead={handleMarkAllNotificationsAsRead}
           onClearAllNotifications={handleClearAllNotifications}
@@ -340,6 +399,18 @@ function AppLayout() {
 
           {activeTab === 'knowledge_base' && (
             <KnowledgeBaseModule />
+          )}
+
+          {activeTab === 'users' && (
+            <UsersModule
+              users={users}
+              activeUser={activeUser}
+              onSetActiveUser={handleSetActiveUser}
+              onAddUser={handleAddUser}
+              onUpdateUser={handleUpdateUser}
+              onDeleteUser={handleDeleteUser}
+              onNavigate={setActiveTab}
+            />
           )}
 
           {activeTab === 'settings' && (

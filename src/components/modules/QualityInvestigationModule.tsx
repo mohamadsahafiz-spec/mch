@@ -43,7 +43,7 @@ export const QualityInvestigationModule: React.FC<QualityInvestigationProps> = (
       correctiveActionsTaken: form.correctiveActionsTaken || '',
       severity: form.severity as any || 'MAJOR',
       status: form.status as any || 'INVESTIGATING',
-      engineerAssigned: 'Alex Mercer'
+      engineerAssigned: 'Sahafiz'
     };
     onAddInvestigation(item);
     setIsModalOpen(false);

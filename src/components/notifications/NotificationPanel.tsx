@@ -17,6 +17,7 @@ import {
   Inbox
 } from 'lucide-react';
 import { NotificationItem, NotificationCategory, NavigationTab } from '../../types';
+import { UserAvatar } from '../common/UserAvatar';
 
 interface NotificationPanelProps {
   isOpen: boolean;
@@ -229,11 +230,17 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
                 }`}
               >
                 <div className="flex items-start gap-3">
-                  {/* Category Icon */}
-                  <div className={`p-2 rounded-xl border shrink-0 mt-0.5 ${
-                    isDark ? 'bg-[#181B1E] border-[#2B323A]' : 'bg-white border-slate-200 shadow-2xs'
-                  }`}>
-                    {getCategoryIcon(notif.category)}
+                  {/* Category Icon or User Avatar */}
+                  <div className="shrink-0 mt-0.5">
+                    {notif.category === 'MISSION_ASSIGNED' ? (
+                      <UserAvatar user={{ fullName: 'Sahafiz' }} size="sm" showStatus={true} status="Online" />
+                    ) : (
+                      <div className={`p-2 rounded-xl border ${
+                        isDark ? 'bg-[#181B1E] border-[#2B323A]' : 'bg-white border-slate-200 shadow-2xs'
+                      }`}>
+                        {getCategoryIcon(notif.category)}
+                      </div>
+                    )}
                   </div>
 
                   {/* Main Content */}

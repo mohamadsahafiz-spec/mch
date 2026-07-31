@@ -5,6 +5,7 @@ import {
   Plus, 
   CheckCircle2, 
   AlertCircle, 
+  AlertTriangle,
   User, 
   Cpu, 
   Sliders, 
@@ -21,6 +22,7 @@ import { Card } from '../common/Card';
 import { Badge } from '../common/Badge';
 import { Button } from '../common/Button';
 import { Modal } from '../common/Modal';
+import { UserAvatar } from '../common/UserAvatar';
 import { useTheme } from '../../context/ThemeContext';
 
 interface ExecutionPlannerProps {
@@ -50,6 +52,7 @@ export const ExecutionPlannerModule: React.FC<ExecutionPlannerProps> = ({
   // Modal states
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<ExecutionScheduleItem | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<ExecutionScheduleItem | null>(null);
 
   // New item form state
   const [newItemForm, setNewItemForm] = useState<Partial<ExecutionScheduleItem>>({
@@ -58,7 +61,7 @@ export const ExecutionPlannerModule: React.FC<ExecutionPlannerProps> = ({
     type: 'QUARTERLY_MHC',
     status: 'SCHEDULED',
     scheduledDate: '2026-08-25',
-    engineerName: 'Alex Mercer',
+    engineerName: 'Sahafiz',
     estimatedHours: 6
   });
 
@@ -95,7 +98,7 @@ export const ExecutionPlannerModule: React.FC<ExecutionPlannerProps> = ({
       plantName: newItemForm.plantName || contracts[0]?.plantName || 'Fab 18A Cleanroom',
       machineId: newItemForm.machineId || machines[0]?.id || 'mch-101',
       machineName: newItemForm.machineName || machines[0]?.model || 'TRUMPF TruMicro 7000',
-      engineerName: newItemForm.engineerName || 'Alex Mercer',
+      engineerName: newItemForm.engineerName || 'Sahafiz',
       title: newItemForm.title || 'Quarterly MHC',
       scheduledDate: newItemForm.scheduledDate || '2026-08-25',
       quarter: (newItemForm.quarter as any) || 'Q7',
@@ -252,9 +255,12 @@ export const ExecutionPlannerModule: React.FC<ExecutionPlannerProps> = ({
                 }`}>
                   <div className="text-right">
                     <span className={`text-xs font-mono font-bold block ${isDark ? 'text-[#8ECDF7]' : 'text-sky-800'}`}>{item.scheduledDate}</span>
-                    <span className={`text-[10px] font-mono ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                      {isWeekend(item.scheduledDate) ? '⚠️ Weekend' : 'Engineer: ' + item.engineerName}
-                    </span>
+                    <div className="flex items-center justify-end gap-1.5 mt-0.5">
+                      <UserAvatar user={{ fullName: item.engineerName }} size="xs" />
+                      <span className={`text-[11px] font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                        {item.engineerName}
+                      </span>
+                    </div>
                   </div>
 
                   <Badge
@@ -273,7 +279,8 @@ export const ExecutionPlannerModule: React.FC<ExecutionPlannerProps> = ({
                       <Edit2 className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={() => onDeleteScheduleItem(item.id)}
+                      onClick={() => setItemToDelete(item)}
+                      title="Delete scheduled intervention"
                       className={`p-1.5 rounded transition-colors ${
                         isDark ? 'text-slate-400 hover:text-rose-400 hover:bg-slate-800' : 'text-slate-500 hover:text-rose-600 hover:bg-slate-200'
                       }`}
@@ -490,6 +497,73 @@ export const ExecutionPlannerModule: React.FC<ExecutionPlannerProps> = ({
             </div>
           </div>
         </Modal>
+      )}
+
+      {/* Delete Confirmation Modal (ENGINEERING RULE #001) */}
+      {itemToDelete && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className={`w-full max-w-md rounded-2xl border p-6 shadow-2xl transition-all animate-in fade-in zoom-in-95 ${
+            isDark ? 'bg-[#181B1E] border-[#2B323A] text-slate-100' : 'bg-white border-slate-200 text-slate-900'
+          }`}>
+            <div className="flex items-center gap-3 pb-4 border-b border-[#2B323A]">
+              <div className="p-2.5 rounded-xl bg-rose-500/10 text-rose-500 border border-rose-500/30">
+                <AlertTriangle className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="font-bold text-base text-rose-500">Confirm Schedule Item Deletion</h3>
+                <p className="text-xs text-slate-400">FSOS Engineering Rule #001 — Confirmation Required</p>
+              </div>
+            </div>
+
+            <div className="py-4 space-y-3 text-xs">
+              <div className={`p-3 rounded-xl border ${
+                isDark ? 'bg-[#111315] border-[#2B323A]' : 'bg-slate-50 border-slate-200'
+              }`}>
+                <span className="text-[10px] font-mono text-slate-400 uppercase font-bold block mb-1">
+                  INTERVENTION TO BE DELETED
+                </span>
+                <p className="font-bold text-sm text-slate-100 dark:text-white">
+                  {itemToDelete.title}
+                </p>
+                <div className="mt-1 flex flex-wrap items-center gap-2 font-mono text-[11px] text-slate-400">
+                  <span>Customer: <strong className="text-slate-200">{itemToDelete.customerName}</strong></span>
+                  <span>•</span>
+                  <span>Machine: <strong className="text-slate-200">{itemToDelete.machineName}</strong></span>
+                  <span>•</span>
+                  <span>Scheduled: <strong className="text-[#8ECDF7]">{itemToDelete.scheduledDate}</strong></span>
+                </div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                <p className="leading-relaxed">
+                  <strong>Warning:</strong> Deleting this scheduled intervention will remove it from the two-year field execution planner timeline and workload calculations. This action is <strong>irreversible</strong>.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#2B323A]">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setItemToDelete(null)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="danger"
+                size="sm"
+                icon={<Trash2 className="w-3.5 h-3.5" />}
+                onClick={() => {
+                  onDeleteScheduleItem(itemToDelete.id);
+                  setItemToDelete(null);
+                }}
+              >
+                Permanently Delete Schedule Item
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

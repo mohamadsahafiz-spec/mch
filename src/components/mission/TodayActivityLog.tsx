@@ -2,17 +2,20 @@ import React from 'react';
 import { FileText } from 'lucide-react';
 import { MHCRecord, NavigationTab } from '../../types';
 import { Button } from '../common/Button';
+import { UserAvatar } from '../common/UserAvatar';
 import { useTheme } from '../../context/ThemeContext';
 import { getThemeClasses } from '../../theme/tokens';
 
 interface TodayActivityLogProps {
   recentMhcs: MHCRecord[];
   onNavigate: (tab: NavigationTab) => void;
+  engineerName?: string;
 }
 
 export const TodayActivityLog: React.FC<TodayActivityLogProps> = ({
   recentMhcs,
-  onNavigate
+  onNavigate,
+  engineerName = 'Sahafiz'
 }) => {
   const { effectiveTheme } = useTheme();
   const isDark = effectiveTheme === 'dark';
@@ -22,21 +25,21 @@ export const TodayActivityLog: React.FC<TodayActivityLogProps> = ({
     {
       time: '08:50 AM UTC',
       title: 'Galvo Servo Gain Test Diode Fired (635nm @ 1% Power)',
-      engineer: 'Alex Mercer',
+      engineer: engineerName,
       details: 'Mounted 9-point quartz target grid. Detected 2.1µs step latency delta on X-galvo motor.',
       type: 'CALIBRATION'
     },
     {
       time: '08:35 AM UTC',
       title: 'DI Water Cooling Filter Cartridge Swapped & System Bled',
-      engineer: 'Alex Mercer',
+      engineer: engineerName,
       details: 'Replaced spent 0.2µm filter. De-aerated laser head cooling jacket. Pressure stable at 3.2 bar.',
       type: 'MAINTENANCE'
     },
     {
       time: '08:10 AM UTC',
       title: 'ISO Class 4 Cleanroom Gowning & Safety Interlock Verified',
-      engineer: 'Alex Mercer',
+      engineer: engineerName,
       details: 'Air shower cycle complete. Particle count 4/m³. Class 4 laser safety curtains secured.',
       type: 'SAFETY'
     }
@@ -74,7 +77,12 @@ export const TodayActivityLog: React.FC<TodayActivityLogProps> = ({
               <span className={`text-[10px] font-mono ${isDark ? 'text-slate-400' : 'text-slate-600 font-semibold'}`}>{log.time}</span>
             </div>
             <p className={`text-xs font-sans leading-relaxed ${isDark ? 'text-slate-400' : 'text-slate-700 font-medium'}`}>{log.details}</p>
-            <p className={`text-[10px] font-mono ${isDark ? 'text-slate-500' : 'text-slate-600 font-medium'}`}>Engineer: {log.engineer}</p>
+            <div className="flex items-center gap-1.5 pt-0.5">
+              <UserAvatar user={{ fullName: log.engineer }} size="xs" />
+              <span className={`text-[10px] font-mono ${isDark ? 'text-slate-400' : 'text-slate-600 font-medium'}`}>
+                {log.engineer}
+              </span>
+            </div>
           </div>
         ))}
       </div>

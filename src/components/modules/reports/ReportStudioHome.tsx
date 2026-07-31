@@ -13,7 +13,9 @@ import {
   Trash2,
   BookOpen,
   Zap,
-  ArrowRight
+  ArrowRight,
+  AlertTriangle,
+  AlertCircle
 } from 'lucide-react';
 import { ReportTemplate, ReportDraft, FounderBrandingConfig } from '../../../types';
 import { Button } from '../../common/Button';
@@ -47,6 +49,7 @@ export const ReportStudioHome: React.FC<ReportStudioHomeProps> = ({
   const isDark = effectiveTheme === 'dark';
 
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
+  const [draftToDelete, setDraftToDelete] = useState<ReportDraft | null>(null);
 
   const categories = ['ALL', 'Preventive Maintenance', 'Corrective Maintenance', 'Commissioning', 'Emergency', 'Internal', 'Quick Visit'];
 
@@ -229,11 +232,11 @@ export const ReportStudioHome: React.FC<ReportStudioHomeProps> = ({
 
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => onDeleteDraft(draft.id)}
+                      onClick={() => setDraftToDelete(draft)}
                       className={`p-1.5 rounded-lg transition-colors ${
                         isDark ? 'hover:bg-rose-950/40 text-rose-400' : 'hover:bg-rose-50 text-rose-600'
                       }`}
-                      title="Delete draft"
+                      title="Delete report layout draft"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -380,6 +383,73 @@ export const ReportStudioHome: React.FC<ReportStudioHomeProps> = ({
           View Executive Report Document
         </Button>
       </div>
+
+      {/* Delete Draft Confirmation Modal (ENGINEERING RULE #001) */}
+      {draftToDelete && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className={`w-full max-w-md rounded-2xl border p-6 shadow-2xl transition-all animate-in fade-in zoom-in-95 ${
+            isDark ? 'bg-[#181B1E] border-[#2B323A] text-slate-100' : 'bg-white border-slate-200 text-slate-900'
+          }`}>
+            <div className="flex items-center gap-3 pb-4 border-b border-[#2B323A]">
+              <div className="p-2.5 rounded-xl bg-rose-500/10 text-rose-500 border border-rose-500/30">
+                <AlertTriangle className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="font-bold text-base text-rose-500">Confirm Report Draft Deletion</h3>
+                <p className="text-xs text-slate-400">FSOS Engineering Rule #001 — Confirmation Required</p>
+              </div>
+            </div>
+
+            <div className="py-4 space-y-3 text-xs">
+              <div className={`p-3 rounded-xl border ${
+                isDark ? 'bg-[#111315] border-[#2B323A]' : 'bg-slate-50 border-slate-200'
+              }`}>
+                <span className="text-[10px] font-mono text-slate-400 uppercase font-bold block mb-1">
+                  REPORT DRAFT TO BE REMOVED
+                </span>
+                <p className="font-bold text-sm text-slate-100 dark:text-white">
+                  {draftToDelete.reportTitle}
+                </p>
+                <div className="mt-1 flex flex-wrap items-center gap-2 font-mono text-[11px] text-slate-400">
+                  <span>Template: <strong className="text-slate-200">{draftToDelete.templateName || 'Custom'}</strong></span>
+                  <span>•</span>
+                  <span>Sections: <strong className="text-slate-200">{draftToDelete.sections.length}</strong></span>
+                  <span>•</span>
+                  <span>Saved: <strong className="text-slate-200">{draftToDelete.updatedAt}</strong></span>
+                </div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                <p className="leading-relaxed">
+                  <strong>Warning:</strong> Deleting this configured report draft will permanently remove all section arrangements, field notes, and custom section visibility settings for this draft. This action is <strong>irreversible</strong>.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#2B323A]">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setDraftToDelete(null)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="danger"
+                size="sm"
+                icon={<Trash2 className="w-3.5 h-3.5" />}
+                onClick={() => {
+                  onDeleteDraft(draftToDelete.id);
+                  setDraftToDelete(null);
+                }}
+              >
+                Permanently Delete Draft
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

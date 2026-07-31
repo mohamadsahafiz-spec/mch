@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { Settings as SettingsIcon, ShieldCheck, Database, RefreshCw, Bot, User, History, CheckCircle2, FileText, Info, Compass, AlertCircle, Cpu, Calendar, Tag, Activity, Bell, Save } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Settings as SettingsIcon, ShieldCheck, Database, RefreshCw, Bot, User, History, CheckCircle2, FileText, Info, Compass, AlertCircle, Cpu, Calendar, Tag, Activity, Bell, Save, Upload, Camera, Trash2, RotateCcw, Image as ImageIcon } from 'lucide-react';
 import { Card } from '../common/Card';
 import { Badge } from '../common/Badge';
 import { Button } from '../common/Button';
 import { useTheme } from '../../context/ThemeContext';
 import { EngineerProfile } from '../../types';
+import { UserAvatar } from '../common/UserAvatar';
 
 interface SettingsProps {
   onResetData: () => void;
@@ -16,6 +17,9 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData, profile, 
   const { effectiveTheme } = useTheme();
   const isDark = effectiveTheme === 'dark';
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+
   const [editProfile, setEditProfile] = useState<EngineerProfile>({
     name: profile?.name || 'Sahafiz',
     company: profile?.company || 'EO Technics',
@@ -24,6 +28,41 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData, profile, 
     avatarUrl: profile?.avatarUrl || ''
   });
   const [profileSaved, setProfileSaved] = useState(false);
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    setPhotoError(null);
+    if (!file) return;
+
+    // Accepted formats check: JPG, JPEG, PNG, WEBP
+    const validFormats = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!validFormats.includes(file.type.toLowerCase())) {
+      setPhotoError('Invalid format. Accepted formats: JPG, JPEG, PNG, WEBP.');
+      return;
+    }
+
+    // Maximum file size: 5 MB
+    if (file.size > 5 * 1024 * 1024) {
+      setPhotoError('File size exceeds 5 MB limit. Please select a smaller photo.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (event.target?.result) {
+        setEditProfile(prev => ({ ...prev, avatarUrl: event.target!.result as string }));
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemovePhoto = () => {
+    setEditProfile(prev => ({ ...prev, avatarUrl: '' }));
+    setPhotoError(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
   const handleSaveProfileSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,6 +74,37 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData, profile, 
   };
 
   const changelog = [
+    {
+      version: 'v0.7.4',
+      date: '2026-08-03',
+      type: 'Engineer Profile Photos & Identity System (ECO-20260802-028)',
+      highlights: [
+        'NEW: Individual Engineer Profile Photos for multi-engineer system readiness.',
+        'NEW: Photo Upload, Change Photo, Remove Photo, and Restore Default Avatar controls in My Profile.',
+        'NEW: Instant photo preview with 5MB file size validation and JPG/JPEG/PNG/WEBP format checks.',
+        'NEW: Automatic system-wide photo propagation across Sidebar, Header Account Menu, Users Directory, Profile Drawer, Activity Log, and Report Studio.',
+        'NEW: Clean Initials Avatar generator fallback (e.g. Sahafiz -> SA) ensuring zero broken image icons.',
+        'NEW: Users Table now begins every engineer row with [Avatar] | Full Name | Role | Company | Department | Status.',
+        'NEW: Report Studio includes engineer avatars beside Prepared By, Approved By, and Reviewed By signatures.',
+        'NEW: Activity Log renders [Avatar] Sahafiz updated Machine Passport for high-fidelity accountability.',
+        'FSOS RULE #001: Enforced CRUD consistency & version synchronization to v0.7.4 across all workspaces.'
+      ]
+    },
+    {
+      version: 'v0.7.3',
+      date: '2026-08-03',
+      type: 'Identity & User Management (ECO-20260802-027)',
+      highlights: [
+        'NEW: First-class "Users" module positioned in main sidebar above Settings for comprehensive team & identity governance.',
+        'NEW: System Users directory table displaying Avatar, Full Name, Employee ID, Company, Department, Role, Status, and Last Login.',
+        'NEW: Multi-Role hierarchy support with custom styled badges: Administrator, Field Service Engineer, Senior Engineer, Supervisor, Manager, and Viewer.',
+        'NEW: Dynamic Real-time User Status tracking: Online, Offline, On Leave, Busy, and Inactive.',
+        'NEW: Detailed User Profile drawer & editor with contact details, regional timezone/language settings, bio, and identity metadata.',
+        'NEW: Top-right Header User Account menu with avatar, quick identity switch, notifications, appearance, and settings shortcuts.',
+        'NEW: Multi-Engineer foundation enabling seamless active signed-in user switching with zero hardcoded engineer names remaining.',
+        'SYSTEM HARMONIZATION: Version updated to v0.7.3 across Sidebar, Settings, About System, Release Notes, and Product Evolution Log.'
+      ]
+    },
     {
       version: 'v0.7.2',
       date: '2026-08-03',
@@ -393,16 +463,16 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData, profile, 
             <div className={`p-3 rounded-xl border font-mono font-bold text-lg ${
               isDark ? 'bg-[#8B9DFF]/15 border-[#8B9DFF]/30 text-[#8B9DFF]' : 'bg-indigo-50 border-indigo-200 text-indigo-700'
             }`}>
-              v0.7.1
+              v0.7.3
             </div>
             <div>
               <h3 className="text-base font-bold">Field Service Operations System</h3>
               <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600 font-medium'}`}>
-                Daily Work Orchestration v0.7.1 — Operational Entry Point (ECO-20260802-025)
+                Identity & User Management v0.7.3 — Multi-Engineer Foundation (ECO-20260802-027)
               </p>
             </div>
           </div>
-          <Badge variant="blue">v0.7.1 OPERATIONAL</Badge>
+          <Badge variant="blue">v0.7.3 OPERATIONAL</Badge>
         </div>
       </Card>
 
@@ -416,7 +486,7 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData, profile, 
               <Tag className="w-3.5 h-3.5 text-[#8B9DFF]" />
               <span className="font-mono uppercase text-[10px]">Version</span>
             </div>
-            <p className="font-mono font-bold text-sm text-[#8B9DFF]">v0.7.1</p>
+            <p className="font-mono font-bold text-sm text-[#8B9DFF]">v0.7.3</p>
           </div>
 
           <div className={`p-3.5 rounded-xl border space-y-1 ${
@@ -426,7 +496,7 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData, profile, 
               <Cpu className="w-3.5 h-3.5 text-[#8B9DFF]" />
               <span className="font-mono uppercase text-[10px]">Build ID</span>
             </div>
-            <p className="font-mono font-bold text-sm">ECO-20260802-025</p>
+            <p className="font-mono font-bold text-sm">ECO-20260802-027</p>
           </div>
 
           <div className={`p-3.5 rounded-xl border space-y-1 ${
@@ -613,6 +683,95 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData, profile, 
                   <CheckCircle2 className="w-3.5 h-3.5" /> Profile Updated
                 </span>
               )}
+            </div>
+
+            {/* Profile Photo Experience (Sprint ECO-20260802-028) */}
+            <div className={`p-4 rounded-xl border mb-5 ${
+              isDark ? 'bg-[#111315] border-[#2B323A]' : 'bg-white border-slate-200'
+            }`}>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <UserAvatar
+                    user={editProfile}
+                    size="xl"
+                    showStatus={true}
+                    status="Online"
+                  />
+                  <div>
+                    <h5 className="font-bold text-sm text-slate-100 dark:text-white flex items-center gap-2">
+                      Profile Photo
+                      {editProfile.avatarUrl && (
+                        <span className="text-[10px] font-mono text-emerald-400 font-semibold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                          Custom Photo Active
+                        </span>
+                      )}
+                    </h5>
+                    <p className="text-slate-400 text-[11px] mt-0.5">
+                      Accepted formats: <strong className="text-slate-300">JPG, JPEG, PNG, WEBP</strong> (Max <strong className="text-slate-300">5 MB</strong>). Instant preview before saving.
+                    </p>
+                    {photoError && (
+                      <p className="text-rose-400 text-[11px] font-semibold mt-1 flex items-center gap-1">
+                        <AlertCircle className="w-3.5 h-3.5 shrink-0" /> {photoError}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2 shrink-0">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/jpg,image/png,image/webp"
+                    onChange={handlePhotoUpload}
+                    className="hidden"
+                  />
+
+                  {!editProfile.avatarUrl ? (
+                    <Button
+                      type="button"
+                      variant="primary"
+                      size="sm"
+                      icon={<Upload className="w-3.5 h-3.5" />}
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      Upload Photo
+                    </Button>
+                  ) : (
+                    <>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        icon={<Camera className="w-3.5 h-3.5" />}
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        Change Photo
+                      </Button>
+
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        icon={<RotateCcw className="w-3.5 h-3.5 text-slate-400" />}
+                        onClick={handleRemovePhoto}
+                        title="Restore Default Initials Avatar"
+                      >
+                        Restore Default
+                      </Button>
+
+                      <Button
+                        type="button"
+                        variant="danger"
+                        size="sm"
+                        icon={<Trash2 className="w-3.5 h-3.5" />}
+                        onClick={handleRemovePhoto}
+                      >
+                        Remove
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* Profile Edit Form */}

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Building2, Cpu, Calendar, ShieldCheck, Zap, ArrowRight, Play, Clock, Sparkles } from 'lucide-react';
 import { Button } from '../common/Button';
+import { UserAvatar } from '../common/UserAvatar';
 import { NavigationTab } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
 import { getThemeClasses } from '../../theme/tokens';
@@ -8,11 +9,15 @@ import { getThemeClasses } from '../../theme/tokens';
 interface ActiveWorkOrderHeaderProps {
   onNavigate: (tab: NavigationTab) => void;
   onOpenQuickMhc: () => void;
+  engineerName?: string;
+  avatarUrl?: string;
 }
 
 export const ActiveWorkOrderHeader: React.FC<ActiveWorkOrderHeaderProps> = ({
   onNavigate,
-  onOpenQuickMhc
+  onOpenQuickMhc,
+  engineerName = 'Sahafiz',
+  avatarUrl
 }) => {
   const { effectiveTheme } = useTheme();
   const isDark = effectiveTheme === 'dark';
@@ -28,15 +33,23 @@ export const ActiveWorkOrderHeader: React.FC<ActiveWorkOrderHeaderProps> = ({
       <div className={`flex flex-wrap items-center justify-between gap-3 pb-5 border-b ${
         isDark ? 'border-[#2B323A]/50' : 'border-slate-200'
       }`}>
-        <div>
-          <span className={`text-[10px] font-mono tracking-wider font-bold uppercase block mb-0.5 ${
-            isDark ? 'text-[#8B9DFF]' : 'text-indigo-700'
-          }`}>
-            WORK ORDER #WO-20260729-TSMC
-          </span>
-          <h1 className="text-lg md:text-xl font-bold tracking-tight">
-            Good morning, Alex
-          </h1>
+        <div className="flex items-center gap-3">
+          <UserAvatar
+            user={{ fullName: engineerName, avatarUrl }}
+            size="lg"
+            showStatus={true}
+            status="Online"
+          />
+          <div>
+            <span className={`text-[10px] font-mono tracking-wider font-bold uppercase block mb-0.5 ${
+              isDark ? 'text-[#8B9DFF]' : 'text-indigo-700'
+            }`}>
+              WORK ORDER #WO-20260729-TSMC
+            </span>
+            <h1 className="text-lg md:text-xl font-bold tracking-tight">
+              Good morning, {engineerName}
+            </h1>
+          </div>
         </div>
 
         <div className="flex items-center gap-3 font-mono text-xs">

@@ -15,7 +15,8 @@ import {
   ReportDraft,
   FounderBrandingConfig,
   EngineerProfile,
-  NotificationItem
+  NotificationItem,
+  SystemUser
 } from '../types';
 import { 
   INITIAL_CUSTOMERS, 
@@ -34,7 +35,8 @@ import {
   INITIAL_REPORT_DRAFTS,
   INITIAL_FOUNDER_BRANDING,
   INITIAL_ENGINEER_PROFILE,
-  INITIAL_NOTIFICATIONS
+  INITIAL_NOTIFICATIONS,
+  INITIAL_USERS
 } from '../data/mockData';
 
 const KEYS = {
@@ -54,7 +56,8 @@ const KEYS = {
   DRAFTS: 'fso_v04_drafts',
   BRANDING: 'fso_v04_branding',
   PROFILE: 'fso_v072_profile',
-  NOTIFICATIONS: 'fso_v072_notifications'
+  NOTIFICATIONS: 'fso_v072_notifications',
+  USERS: 'fso_v073_users'
 };
 
 function getStorage<T>(key: string, defaultValue: T): T {
@@ -128,6 +131,9 @@ export const StorageService = {
 
   getNotifications: (): NotificationItem[] => getStorage(KEYS.NOTIFICATIONS, INITIAL_NOTIFICATIONS),
   saveNotifications: (data: NotificationItem[]) => setStorage(KEYS.NOTIFICATIONS, data),
+
+  getUsers: (): SystemUser[] => getStorage(KEYS.USERS, INITIAL_USERS),
+  saveUsers: (data: SystemUser[]) => setStorage(KEYS.USERS, data),
 
   resetToDefaults: () => {
     localStorage.clear();

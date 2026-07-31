@@ -1860,7 +1860,7 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
               </label>
               <input
                 type="text"
-                placeholder="Dr. Alex Rivera"
+                placeholder="Dr. Robert Chen"
                 value={custForm.contactPerson}
                 onChange={(e) => setCustForm({ ...custForm, contactPerson: e.target.value })}
                 className={`w-full px-3 py-2 rounded-xl text-xs border ${

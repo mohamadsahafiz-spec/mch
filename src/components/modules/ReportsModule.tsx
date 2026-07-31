@@ -28,6 +28,7 @@ import { ReportBuilder } from './reports/ReportBuilder';
 import { FounderBrandingModal } from './reports/FounderBrandingModal';
 import { Badge } from '../common/Badge';
 import { Button } from '../common/Button';
+import { UserAvatar } from '../common/UserAvatar';
 import { useTheme } from '../../context/ThemeContext';
 
 interface ReportsModuleProps {
@@ -430,24 +431,104 @@ export const ReportsModule: React.FC<ReportsModuleProps> = ({ reports }) => {
                 </ul>
               </div>
 
-              {/* Digital Signature Section */}
-              <div className={`pt-6 border-t flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 ${
-                isDark ? 'border-slate-800' : 'border-slate-200'
-              }`}>
-                {branding.engineerSignatureBlock && (
-                  <div className="space-y-1">
-                    <p className={`text-xs font-mono uppercase ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Field Operations Lead Engineer</p>
-                    <p className={`text-sm font-bold ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>{selectedReport.signatureName}</p>
-                    <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{selectedReport.signatureTitle}</p>
-                  </div>
-                )}
+              {/* Report Signatures & Approvals (ECO-20260802-028) */}
+              <div className="space-y-4 pt-6 border-t border-slate-200 dark:border-slate-800">
+                <h3 className={`text-xs font-bold font-mono uppercase tracking-wider ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                  4. Report Signatures & Governance Sign-Off
+                </h3>
 
-                <div className={`p-4 rounded-xl border text-right font-mono text-xs ${
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {/* Prepared By */}
+                  <div className={`p-3.5 rounded-xl border space-y-2 ${
+                    isDark ? 'bg-[#1A1D21] border-[#2B323A]' : 'bg-slate-50 border-slate-200'
+                  }`}>
+                    <span className="text-[10px] font-mono uppercase font-bold text-slate-400 block">
+                      PREPARED BY
+                    </span>
+                    <div className="flex items-center gap-2.5">
+                      <UserAvatar
+                        user={{ fullName: selectedReport.engineerName, role: 'Field Service Engineer' }}
+                        size="md"
+                      />
+                      <div className="min-w-0">
+                        <p className={`font-bold text-xs truncate ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
+                          {selectedReport.engineerName}
+                        </p>
+                        <p className={`text-[10px] truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                          {selectedReport.signatureTitle || 'Lead Service Engineer'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="pt-1.5 border-t border-[#2B323A]/50 flex items-center justify-between text-[10px] font-mono">
+                      <span className="text-emerald-400 font-bold">✓ Signed</span>
+                      <span className="text-slate-400">{selectedReport.signedDate}</span>
+                    </div>
+                  </div>
+
+                  {/* Reviewed By */}
+                  <div className={`p-3.5 rounded-xl border space-y-2 ${
+                    isDark ? 'bg-[#1A1D21] border-[#2B323A]' : 'bg-slate-50 border-slate-200'
+                  }`}>
+                    <span className="text-[10px] font-mono uppercase font-bold text-slate-400 block">
+                      REVIEWED BY
+                    </span>
+                    <div className="flex items-center gap-2.5">
+                      <UserAvatar
+                        user={{ fullName: 'Elena Rostova', role: 'Senior Operations Supervisor' }}
+                        size="md"
+                      />
+                      <div className="min-w-0">
+                        <p className={`font-bold text-xs truncate ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
+                          Elena Rostova
+                        </p>
+                        <p className={`text-[10px] truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                          Senior Service Supervisor
+                        </p>
+                      </div>
+                    </div>
+                    <div className="pt-1.5 border-t border-[#2B323A]/50 flex items-center justify-between text-[10px] font-mono">
+                      <span className="text-emerald-400 font-bold">✓ QA Verified</span>
+                      <span className="text-slate-400">{selectedReport.signedDate}</span>
+                    </div>
+                  </div>
+
+                  {/* Approved By */}
+                  <div className={`p-3.5 rounded-xl border space-y-2 ${
+                    isDark ? 'bg-[#1A1D21] border-[#2B323A]' : 'bg-slate-50 border-slate-200'
+                  }`}>
+                    <span className="text-[10px] font-mono uppercase font-bold text-slate-400 block">
+                      APPROVED BY
+                    </span>
+                    <div className="flex items-center gap-2.5">
+                      <UserAvatar
+                        user={{ fullName: 'Dr. Marcus Vance', role: 'Technical Operations Director' }}
+                        size="md"
+                      />
+                      <div className="min-w-0">
+                        <p className={`font-bold text-xs truncate ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
+                          Dr. Marcus Vance
+                        </p>
+                        <p className={`text-[10px] truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                          Director of Engineering
+                        </p>
+                      </div>
+                    </div>
+                    <div className="pt-1.5 border-t border-[#2B323A]/50 flex items-center justify-between text-[10px] font-mono">
+                      <span className="text-emerald-400 font-bold">✓ Executive Approved</span>
+                      <span className="text-slate-400">{selectedReport.signedDate}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className={`p-3 rounded-xl border flex flex-col sm:flex-row items-center justify-between gap-2 font-mono text-xs ${
                   isDark ? 'bg-[#1A1D21] border-[#2B323A]' : 'bg-slate-50 border-slate-200'
                 }`}>
-                  <span className={`text-[10px] font-bold block ${isDark ? 'text-[#7FD4A6]' : 'text-emerald-700'}`}>✓ DIGITAL SIGNATURE VERIFIED</span>
-                  <p className={`mt-1 font-bold ${isDark ? 'text-slate-100' : 'text-slate-800'}`}>SHA-256: 8a91c74f...009a2</p>
-                  <p className={`text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Signed Date: {selectedReport.signedDate}</p>
+                  <span className={`text-[10px] font-bold ${isDark ? 'text-[#7FD4A6]' : 'text-emerald-700'}`}>
+                    ✓ SHA-256 DIGITAL CHECKSUM VERIFIED
+                  </span>
+                  <p className={`text-[11px] font-bold ${isDark ? 'text-slate-100' : 'text-slate-800'}`}>
+                    8a91c74f7b2a9018e42f901129b87021109a2
+                  </p>
                 </div>
               </div>
 

@@ -1,16 +1,18 @@
-import React, { useState } from 'react';
-import { Search, Bell, AlertTriangle, Plus, Sparkles, Moon, Sun, Monitor } from 'lucide-react';
-import { NavigationTab, AlertItem, NotificationItem } from '../../types';
+import React, { useState, useRef, useEffect } from 'react';
+import { Search, Bell, AlertTriangle, Plus, Sparkles, Moon, Sun, Monitor, User, ChevronDown, UserCheck, Settings as SettingsIcon, LogOut, Palette, BellRing } from 'lucide-react';
+import { NavigationTab, AlertItem, NotificationItem, SystemUser } from '../../types';
 import { Button } from '../common/Button';
 import { useTheme } from '../../context/ThemeContext';
 import { getThemeClasses } from '../../theme/tokens';
 import { NotificationPanel } from '../notifications/NotificationPanel';
+import { UserAvatar } from '../common/UserAvatar';
 
 interface HeaderProps {
   activeTab: NavigationTab;
   setActiveTab: (tab: NavigationTab) => void;
   alerts: AlertItem[];
   notifications: NotificationItem[];
+  activeUser: SystemUser;
   onMarkAsRead: (id: string) => void;
   onMarkAllAsRead: () => void;
   onClearAllNotifications: () => void;
@@ -23,6 +25,7 @@ export const Header: React.FC<HeaderProps> = ({
   setActiveTab,
   alerts,
   notifications,
+  activeUser,
   onMarkAsRead,
   onMarkAllAsRead,
   onClearAllNotifications,
@@ -52,9 +55,30 @@ export const Header: React.FC<HeaderProps> = ({
       case 'reports': return 'Executive Reports';
       case 'analytics': return 'Operational Analytics';
       case 'knowledge_base': return 'Knowledge Base';
+      case 'users': return 'User Management & Multi-Engineer Directory';
       case 'settings': return 'System Settings';
       default: return 'Field Operations System';
     }
+  };
+
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setShowUserMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const getInitials = (name: string) => {
+    if (!name) return 'US';
+    const parts = name.trim().split(' ');
+    if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   };
 
   return (
@@ -184,6 +208,132 @@ export const Header: React.FC<HeaderProps> = ({
             onNavigateTab={setActiveTab}
             isDark={isDark}
           />
+        </div>
+
+        {/* User Account Menu Dropdown */}
+        <div className="relative" ref={userMenuRef}>
+          <button
+            onClick={() => setShowUserMenu(!showUserMenu)}
+            className={`flex items-center gap-2.5 p-1.5 pl-2 pr-3 rounded-xl border transition-all ${
+              showUserMenu
+                ? isDark 
+                  ? 'bg-[#20252B] border-[#8B9DFF] text-white' 
+                  : 'bg-indigo-50 border-indigo-300 text-indigo-900'
+                : isDark 
+                  ? 'bg-[#1A1D21] border-[#2B323A] text-slate-200 hover:bg-[#20252B]' 
+                  : 'bg-slate-100 border-slate-200 text-slate-800 hover:bg-slate-200'
+            }`}
+          >
+            <UserAvatar user={activeUser} size="sm" showStatus={true} />
+            <div className="text-left hidden sm:block">
+              <p className="text-xs font-bold leading-tight truncate max-w-[120px]">
+                {activeUser.fullName}
+              </p>
+              <p className={`text-[10px] font-mono leading-tight truncate max-w-[120px] ${
+                isDark ? 'text-slate-400' : 'text-slate-500'
+              }`}>
+                {activeUser.role}
+              </p>
+            </div>
+            <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showUserMenu ? 'rotate-180 text-[#8B9DFF]' : 'text-slate-400'}`} />
+          </button>
+
+          {/* Dropdown Menu */}
+          {showUserMenu && (
+            <div className={`absolute right-0 mt-2 w-64 rounded-2xl border shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95 ${
+              isDark ? 'bg-[#181B1E] border-[#2B323A] text-slate-100' : 'bg-white border-slate-200 text-slate-900'
+            }`}>
+              {/* User Header Info */}
+              <div className="p-2.5 border-b border-[#2B323A]/60 mb-1 flex items-center gap-3">
+                <UserAvatar user={activeUser} size="md" showStatus={true} />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-bold truncate">{activeUser.fullName}</p>
+                  <p className={`text-[10px] font-mono truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                    {activeUser.email}
+                  </p>
+                  <div className="mt-1 flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-[10px] font-mono text-emerald-400 font-semibold">Active Signed-In</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Menu Actions */}
+              <div className="space-y-0.5 text-xs">
+                <button
+                  onClick={() => {
+                    setActiveTab('users');
+                    setShowUserMenu(false);
+                  }}
+                  className={`w-full text-left px-3 py-2 rounded-xl flex items-center gap-2.5 font-medium transition-colors ${
+                    isDark ? 'hover:bg-[#20252B] text-slate-200' : 'hover:bg-slate-100 text-slate-700'
+                  }`}
+                >
+                  <User className="w-4 h-4 text-[#8B9DFF]" />
+                  <span>My Profile & Users</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setShowNotificationPanel(true);
+                    setShowUserMenu(false);
+                  }}
+                  className={`w-full text-left px-3 py-2 rounded-xl flex items-center justify-between font-medium transition-colors ${
+                    isDark ? 'hover:bg-[#20252B] text-slate-200' : 'hover:bg-slate-100 text-slate-700'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <BellRing className="w-4 h-4 text-amber-400" />
+                    <span>Notifications</span>
+                  </div>
+                  {unreadCount > 0 && (
+                    <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold bg-indigo-600 text-white">
+                      {unreadCount}
+                    </span>
+                  )}
+                </button>
+
+                <button
+                  onClick={() => {
+                    setActiveTab('settings');
+                    setShowUserMenu(false);
+                  }}
+                  className={`w-full text-left px-3 py-2 rounded-xl flex items-center gap-2.5 font-medium transition-colors ${
+                    isDark ? 'hover:bg-[#20252B] text-slate-200' : 'hover:bg-slate-100 text-slate-700'
+                  }`}
+                >
+                  <Palette className="w-4 h-4 text-sky-400" />
+                  <span>Appearance & Theme</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setActiveTab('settings');
+                    setShowUserMenu(false);
+                  }}
+                  className={`w-full text-left px-3 py-2 rounded-xl flex items-center gap-2.5 font-medium transition-colors ${
+                    isDark ? 'hover:bg-[#20252B] text-slate-200' : 'hover:bg-slate-100 text-slate-700'
+                  }`}
+                >
+                  <SettingsIcon className="w-4 h-4 text-slate-400" />
+                  <span>System Settings</span>
+                </button>
+              </div>
+
+              <div className="pt-1 mt-1 border-t border-[#2B323A]/60">
+                <button
+                  onClick={() => {
+                    setActiveTab('users');
+                    setShowUserMenu(false);
+                  }}
+                  className={`w-full text-left px-3 py-2 rounded-xl flex items-center gap-2.5 font-semibold transition-colors text-rose-400 hover:bg-rose-500/10`}
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Switch / Switch User</span>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </header>

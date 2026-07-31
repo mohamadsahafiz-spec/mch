@@ -13,7 +13,41 @@ export type NavigationTab =
   | 'reports'
   | 'analytics'
   | 'knowledge_base'
+  | 'users'
   | 'settings';
+
+export type UserRole =
+  | 'Administrator'
+  | 'Field Service Engineer'
+  | 'Senior Engineer'
+  | 'Supervisor'
+  | 'Manager'
+  | 'Viewer';
+
+export type UserStatus =
+  | 'Online'
+  | 'Offline'
+  | 'On Leave'
+  | 'Busy'
+  | 'Inactive';
+
+export interface SystemUser {
+  id: string;
+  employeeId: string;
+  fullName: string;
+  email: string;
+  phone: string;
+  company: string;
+  department: string;
+  role: UserRole;
+  status: UserStatus;
+  lastLogin: string;
+  timezone: string;
+  language: string;
+  accountStatus: 'Active' | 'Suspended' | 'Pending Activation';
+  avatarUrl?: string;
+  bio?: string;
+}
 
 export type ProductionReleaseStatus = 'APPROVED' | 'CONDITIONAL' | 'HALTED' | 'UNDER_INSPECTION';
 
@@ -271,6 +305,8 @@ export interface EngineerProfile {
   company: string;
   role: string;
   department: string;
+  email?: string;
+  phone?: string;
   avatarUrl?: string;
 }
 
