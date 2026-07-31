@@ -15,6 +15,18 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
 
   const changelog = [
     {
+      version: 'v0.6.3',
+      date: '2026-08-01',
+      type: 'Unified Workflow Layout (ECO-20260801-022C)',
+      highlights: [
+        'Founder Layout Refactor: Completely eliminated the separate Workflow Navigator column, merging navigation and SOP into one continuous engineering document.',
+        'Integrated Inline SOP Sequence Ribbon: Embedded quick-nav roadmap directly inside document flow, eliminating independent floating sidebar perception.',
+        'Maximized Engineering Content Space: Removed left workspace column so SOP section cards expand naturally across full container width.',
+        'Unified Scroll Architecture: Document content and embedded navigation scroll together naturally as a single operational manual.',
+        'PWA Architecture Foundation: Established PWA manifest, theme colors, display standards, and mobile icon configurations.'
+      ]
+    },
+    {
       version: 'v0.6.2',
       date: '2026-08-01',
       type: 'Workflow Navigator Follow Behaviour (ECO-20260801-022B)',
@@ -257,16 +269,16 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
             <div className={`p-3 rounded-xl border font-mono font-bold text-lg ${
               isDark ? 'bg-[#8B9DFF]/15 border-[#8B9DFF]/30 text-[#8B9DFF]' : 'bg-indigo-50 border-indigo-200 text-indigo-700'
             }`}>
-              v0.6.2
+              v0.6.3
             </div>
             <div>
               <h3 className="text-base font-bold">Field Service Operations System</h3>
               <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600 font-medium'}`}>
-                Workflow Navigator Follow Behaviour v0.6.2 — SOP Guide Rail Companion (ECO-20260801-022B)
+                Unified Workflow Layout v0.6.3 — Single Operational Workspace (ECO-20260801-022C)
               </p>
             </div>
           </div>
-          <Badge variant="blue">v0.6.2 OPERATIONAL</Badge>
+          <Badge variant="blue">v0.6.3 OPERATIONAL</Badge>
         </div>
       </Card>
 
