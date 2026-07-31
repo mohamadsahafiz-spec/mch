@@ -68,7 +68,7 @@ export const ReportStudioHome: React.FC<ReportStudioHomeProps> = ({
               <span className={`text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${
                 isDark ? 'bg-[#8B9DFF]/10 text-[#8B9DFF] border-[#8B9DFF]/30' : 'bg-indigo-100 text-indigo-700 border-indigo-200'
               }`}>
-                Report Studio Foundation v0.6.2
+                Report Studio Foundation v0.6.8
               </span>
               <span className="text-[10px] font-mono text-emerald-500 font-bold flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />

@@ -46,9 +46,9 @@ interface WorkflowNavigatorProps {
 }
 
 /**
- * Integrated SOP Sequence Ribbon & Quick Navigation Bar
- * Follows FSOS Unified Workflow Layout Principle: Embedded inside the document flow,
- * eliminating independent panels/sidebars to form one continuous operational manual.
+ * Vertical Sticky SOP Guide Rail Companion Component
+ * Follows FSOS Workflow Navigation Principle: Stays pinned alongside the SOP timeline as a working companion (`sticky top-4`),
+ * ensuring the engineer always knows current location, completed steps, next steps, and can jump instantly at any scroll depth.
  */
 export const WorkflowNavigator: React.FC<WorkflowNavigatorProps> = ({
   steps,
@@ -59,41 +59,47 @@ export const WorkflowNavigator: React.FC<WorkflowNavigatorProps> = ({
   const progressPercent = Math.round(((activeStepIndex + 1) / steps.length) * 100);
 
   return (
-    <div className={`p-4 rounded-2xl border transition-all ${
+    <div className={`p-3.5 md:p-4 rounded-2xl border transition-all ${
       isDark 
-        ? 'bg-[#181B1F] border-[#2B323A] text-slate-200' 
-        : 'bg-slate-50 border-slate-200 text-slate-900 shadow-2xs'
+        ? 'bg-[#16191D] border-[#282F37] text-slate-200' 
+        : 'bg-white border-slate-200 text-slate-900 shadow-sm'
     }`}>
-      {/* Sequence Bar Top Meta */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-200/80 dark:border-[#282F37]">
-        <div className="flex items-center gap-2">
-          <Layers className="w-4 h-4 text-[#8B9DFF]" />
-          <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-400">
-            SOP Execution Roadmap
-          </span>
-          <span className="text-slate-300 dark:text-slate-600">•</span>
-          <span className={`text-xs font-mono font-semibold ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
-            Active: <strong className="text-[#8B9DFF]">Step {activeStepIndex + 1}</strong> ({steps[activeStepIndex]?.title})
-          </span>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <div className="w-24 md:w-32 h-1.5 rounded-full overflow-hidden bg-slate-200 dark:bg-[#20252B]">
-            <div 
-              className="h-full bg-gradient-to-r from-[#8B9DFF] to-emerald-400 transition-all duration-300 ease-out"
-              style={{ width: `${progressPercent}%` }}
-            />
+      {/* Navigator Header */}
+      <div className="pb-3 border-b border-slate-200/80 dark:border-[#282F37] space-y-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <Layers className="w-3.5 h-3.5 text-[#8B9DFF]" />
+            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
+              Mission Companion
+            </span>
           </div>
-          <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded-md border ${
+          <span className={`text-[11px] font-mono font-bold px-2 py-0.5 rounded-md border ${
             isDark ? 'bg-[#8B9DFF]/10 text-[#8B9DFF] border-[#8B9DFF]/25' : 'bg-indigo-50 text-indigo-700 border-indigo-200'
           }`}>
             {progressPercent}% Complete
           </span>
         </div>
+
+        <div className="flex items-center justify-between text-xs font-mono">
+          <span className={isDark ? 'text-slate-300' : 'text-slate-700'}>
+            Step <strong className="font-bold text-[#8B9DFF]">{activeStepIndex + 1}</strong> of {steps.length}
+          </span>
+          <span className="text-[11px] text-slate-400 font-medium truncate max-w-[110px]">
+            {steps[activeStepIndex]?.shortLabel}
+          </span>
+        </div>
+
+        {/* Sleek Progress Bar */}
+        <div className={`w-full h-1 rounded-full overflow-hidden ${isDark ? 'bg-[#20252B]' : 'bg-slate-200/80'}`}>
+          <div 
+            className="h-full bg-gradient-to-r from-[#8B9DFF] to-emerald-400 transition-all duration-300 ease-out"
+            style={{ width: `${progressPercent}%` }}
+          />
+        </div>
       </div>
 
-      {/* Horizontal Step Ribbon Grid */}
-      <div className="pt-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+      {/* Steps Navigation List */}
+      <div className="pt-2.5 space-y-1">
         {steps.map((step, idx) => {
           const isCompleted = idx < activeStepIndex;
           const isActive = idx === activeStepIndex;
@@ -102,71 +108,92 @@ export const WorkflowNavigator: React.FC<WorkflowNavigatorProps> = ({
             <button
               key={step.id}
               onClick={() => onSelectStep(step.anchorId, idx)}
-              className={`p-2.5 rounded-xl text-left transition-all flex items-center gap-2.5 border group relative ${
+              className={`w-full text-left pl-2.5 pr-2 py-2 rounded-xl transition-all duration-150 flex items-center justify-between group relative border-l-2 ${
                 isActive
                   ? isDark
-                    ? 'bg-[#20252B] border-[#8B9DFF] text-white ring-1 ring-[#8B9DFF]/40 shadow-xs'
-                    : 'bg-white border-indigo-500 text-indigo-950 ring-1 ring-indigo-500/30 shadow-xs'
+                    ? 'border-l-[#8B9DFF] bg-[#20252B] text-white shadow-2xs'
+                    : 'border-l-indigo-600 bg-white text-indigo-950 shadow-2xs border-slate-200/60'
                   : isCompleted
                     ? isDark
-                      ? 'bg-[#14171A]/80 hover:bg-[#1F242A] border-emerald-500/30 text-slate-300'
-                      : 'bg-emerald-50/50 hover:bg-emerald-100/50 border-emerald-200 text-slate-800'
+                      ? 'border-l-emerald-500/50 hover:bg-[#1F242A] border-y-transparent border-r-transparent text-slate-300'
+                      : 'border-l-emerald-500/60 hover:bg-slate-100/80 border-y-transparent border-r-transparent text-slate-800'
                     : isDark
-                      ? 'bg-[#14171A]/40 hover:bg-[#1F242A] border-[#2B323A]/60 text-slate-400'
-                      : 'bg-white/60 hover:bg-slate-100 border-slate-200 text-slate-600'
+                      ? 'border-l-transparent hover:bg-[#1F242A] text-slate-400'
+                      : 'border-l-transparent hover:bg-slate-100/60 text-slate-600'
               }`}
             >
-              {/* Step Badge */}
-              <div className={`w-5 h-5 rounded-lg flex items-center justify-center shrink-0 text-[10px] font-mono font-bold ${
-                isCompleted
-                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
-                  : isActive
-                    ? isDark
-                      ? 'bg-[#8B9DFF] text-slate-950'
-                      : 'bg-indigo-600 text-white'
-                    : isDark
-                      ? 'bg-[#20252B] text-slate-400 border border-[#2B323A]'
-                      : 'bg-slate-100 text-slate-600 border border-slate-300/60'
-              }`}>
-                {isCompleted ? (
-                  <Check className="w-3 h-3 stroke-[3]" />
-                ) : (
-                  <span>{step.stepNumber}</span>
-                )}
-              </div>
+              <div className="flex items-center gap-2.5 min-w-0">
+                {/* Status Indicator Icon */}
+                <div className={`w-5 h-5 rounded-lg flex items-center justify-center shrink-0 text-[10px] font-mono font-bold transition-transform group-hover:scale-105 ${
+                  isCompleted
+                    ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                    : isActive
+                      ? isDark
+                        ? 'bg-[#8B9DFF] text-slate-950 font-extrabold'
+                        : 'bg-indigo-600 text-white font-extrabold'
+                      : isDark
+                        ? 'bg-[#20252B] text-slate-400 border border-[#2B323A]'
+                        : 'bg-slate-200/70 text-slate-600 border border-slate-300/60'
+                }`}>
+                  {isCompleted ? (
+                    <Check className="w-3 h-3 stroke-[3]" />
+                  ) : (
+                    <span>{step.stepNumber}</span>
+                  )}
+                </div>
 
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-1">
-                  <span className={`text-[10px] font-mono font-bold ${
-                    isActive
-                      ? isDark ? 'text-[#8B9DFF]' : 'text-indigo-600'
-                      : isCompleted ? 'text-emerald-500' : 'text-slate-400'
-                  }`}>
-                    0{step.stepNumber}
-                  </span>
-                  <span className={`text-xs font-bold truncate ${
-                    isActive 
-                      ? isDark ? 'text-white' : 'text-slate-900' 
-                      : 'text-slate-700 dark:text-slate-300'
-                  }`}>
-                    {step.shortLabel}
-                  </span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <span className={`text-[10px] font-mono font-bold ${
+                      isActive 
+                        ? isDark ? 'text-[#8B9DFF]' : 'text-indigo-600'
+                        : isCompleted
+                          ? 'text-emerald-500'
+                          : 'text-slate-400'
+                    }`}>
+                      0{step.stepNumber}
+                    </span>
+                    <span className={`text-xs font-bold truncate ${
+                      isActive 
+                        ? isDark ? 'text-white' : 'text-slate-900'
+                        : 'text-slate-700 dark:text-slate-300'
+                    }`}>
+                      {step.shortLabel}
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              {/* Active Indicator */}
-              <div className="shrink-0">
+              {/* Status Indicator */}
+              <div className="shrink-0 pl-1">
                 {isCompleted ? (
-                  <span className="text-[10px] font-mono text-emerald-500 font-bold">✓</span>
+                  <span className="text-[10px] font-mono font-bold text-emerald-500">
+                    ✓
+                  </span>
                 ) : isActive ? (
-                  <span className={`text-[10px] font-mono font-bold ${isDark ? 'text-[#8B9DFF]' : 'text-indigo-600'}`}>►</span>
+                  <span className={`text-[10px] font-mono font-bold ${
+                    isDark ? 'text-[#8B9DFF]' : 'text-indigo-600'
+                  }`}>
+                    ►
+                  </span>
                 ) : (
-                  <Circle className="w-2.5 h-2.5 text-slate-300 dark:text-slate-600" />
+                  <Circle className="w-3 h-3 text-slate-300 dark:text-slate-600" />
                 )}
               </div>
             </button>
           );
         })}
+      </div>
+
+      {/* Footer hint */}
+      <div className={`mt-3 pt-2.5 border-t text-[10px] font-mono flex items-center justify-between ${
+        isDark ? 'border-[#282F37] text-slate-400' : 'border-slate-200 text-slate-500'
+      }`}>
+        <span className="flex items-center gap-1">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          Live SOP Sync
+        </span>
+        <span>FSOS v0.6.8</span>
       </div>
     </div>
   );
@@ -362,7 +389,7 @@ export const WorkflowGuideModule: React.FC<WorkflowGuideModuleProps> = ({ onNavi
   };
 
   return (
-    <div className="max-w-5xl mx-auto py-2 md:py-6 space-y-6">
+    <div className="max-w-6xl mx-auto py-2 md:py-6 space-y-6">
       
       {/* Page Header */}
       <div className={`p-6 md:p-8 rounded-3xl border transition-all ${
@@ -380,14 +407,14 @@ export const WorkflowGuideModule: React.FC<WorkflowGuideModuleProps> = ({ onNavi
               }`}>
                 STANDARD OPERATING PROCEDURE (SOP)
               </span>
-              <span className="text-xs font-mono text-slate-400">FSOS Field Guide v0.6.3</span>
+              <span className="text-xs font-mono text-slate-400">FSOS Field Guide v0.6.8</span>
             </div>
             <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100 flex items-center gap-2.5">
               <BookOpen className="w-7 h-7 text-[#8B9DFF]" />
               Workflow Guide
             </h1>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-2xl">
-              The end-to-end operational roadmap for Field Service Engineers — integrated into a single continuous workspace.
+              The end-to-end operational roadmap for Field Service Engineers — integrated with the ambient Mission Companion.
             </p>
           </div>
 
@@ -400,27 +427,32 @@ export const WorkflowGuideModule: React.FC<WorkflowGuideModuleProps> = ({ onNavi
         </div>
       </div>
 
-      {/* Integrated Inline SOP Sequence Ribbon */}
-      <WorkflowNavigator
-        steps={steps}
-        activeStepIndex={activeStepIndex}
-        onSelectStep={scrollToStep}
-        isDark={isDark}
-      />
-
-      {/* Unified Document SOP Timeline Stream */}
-      <div className="space-y-6 pt-2">
-        <div className="flex items-center justify-between px-1">
-          <h2 className={`text-xs font-mono uppercase tracking-wider font-semibold ${
-            isDark ? 'text-slate-400' : 'text-slate-600'
-          }`}>
-            Unified Operational Manual
-          </h2>
-          <span className="text-xs font-mono text-slate-400 flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            Continuous Operational Document Flow
-          </span>
+      {/* 2-Column Integrated Document Architecture: Left Mission Companion Navigation Column & Right SOP Content Stream belong to ONE workspace document sheet */}
+      <div className="flex flex-col lg:flex-row gap-5 items-start">
+        
+        {/* Left Column — Mission Companion Navigation Column (Workflow Navigator remains visible while scrolling SOP timeline) */}
+        <div className="w-full lg:w-64 lg:shrink-0 lg:sticky lg:top-4 z-20">
+          <WorkflowNavigator
+            steps={steps}
+            activeStepIndex={activeStepIndex}
+            onSelectStep={scrollToStep}
+            isDark={isDark}
+          />
         </div>
+
+        {/* Right Column — SOP Timeline Content Stream */}
+        <div className="flex-1 min-w-0 space-y-6">
+          <div className="flex items-center justify-between px-1">
+            <h2 className={`text-xs font-mono uppercase tracking-wider font-semibold ${
+              isDark ? 'text-slate-400' : 'text-slate-600'
+            }`}>
+              Standard Operating Procedure Timeline
+            </h2>
+            <span className="text-xs font-mono text-slate-400 flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              Live SOP Scroll Sync
+            </span>
+          </div>
 
         <div className="relative pl-4 md:pl-8 space-y-8 before:absolute before:left-3 md:before:left-7 before:top-4 before:bottom-4 before:w-0.5 before:bg-slate-300 dark:before:bg-[#2B323A]">
           {steps.map((step, idx) => {
@@ -593,6 +625,8 @@ export const WorkflowGuideModule: React.FC<WorkflowGuideModuleProps> = ({ onNavi
       </div>
 
     </div>
+
+  </div>
   );
 };
 

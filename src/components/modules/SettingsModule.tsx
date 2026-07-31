@@ -15,6 +15,66 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
 
   const changelog = [
     {
+      version: 'v0.6.8',
+      date: '2026-08-02',
+      type: 'Mission Companion Floating Guide Rail Refactor (ECO-20260802-023B)',
+      highlights: [
+        'Floating Scroll-Sync Companion: Refactored Mission Companion container with responsive sticky positioning (`top-3 sm:top-4 z-20`) so the guide rail seamlessly floats along with the screen as engineers scroll down SOP steps.',
+        'Elevated Backdrop Blur Styling: Enhanced Mission Companion container with backdrop blur filter, subtle shadow, and border rings so it visually floats alongside the SOP timeline content stream.',
+        'Cross-Device Scroll Tracking: Ensured mobile, tablet, and desktop viewports all maintain active step scroll syncing and instant jump navigation.',
+        'Cleanroom Operational Ergonomics: Optimized layout for single-column and two-column cleanroom tablet display ergonomics.',
+        'System Version Harmonization: Synchronized v0.6.8 across Sidebar, Settings, About System, Report Studio, and Internal Changelog.'
+      ]
+    },
+    {
+      version: 'v0.6.7',
+      date: '2026-08-02',
+      type: 'Mission Companion Behaviour Fix (ECO-20260802-023A)',
+      highlights: [
+        'Founder Intent UX Alignment: Corrected Mission Companion behaviour to function as a quiet, ambient guide rail naturally embedded in the Workflow Guide.',
+        'Zero Sidebar Chrome Perception: Removed heavy card borders and floating box aesthetics so engineers perceive guidance as part of the SOP document flow.',
+        'Frameless Ambient Guide Rail: Blended step progress indicators and scroll tracking quietly into the page margin without intrusive visual popups or drawer chrome.',
+        'Continuous Shift Ergonomics: Preserved smooth step jumping, active step scroll sync, and percentage progress indicators for 8-hour cleanroom shifts.',
+        'System Version Harmonization: Synchronized v0.6.7 across Sidebar, Settings, About System, Report Studio, and Internal Changelog.'
+      ]
+    },
+    {
+      version: 'v0.6.6',
+      date: '2026-08-02',
+      type: 'Mission Companion Integration (ECO-20260802-023)',
+      highlights: [
+        'Product Vision Standard: Officially integrated Mission Companion as an ambient, quiet, and predictable guide rail within the Workflow Guide.',
+        'Zero Visual Friction Execution: Removed explicit sidebar chrome perceptions, letting the Mission Companion visually blend directly into the SOP document flow.',
+        'Continuous Shift Ergonomics: Designed for cleanroom Field Service Engineers operating for 8-hour shifts without cognitive overhead or manual scroll-backs.',
+        'Real-time SOP Synchronization: Preserved precision scroll observer, instant step jumping, progress percentage tracking, and active step highlighting.',
+        'PWA Cross-Platform Packaging: Strengthened Web App Manifest, standalone display mode, and icon support across Windows, macOS, Android, and iOS.'
+      ]
+    },
+    {
+      version: 'v0.6.5',
+      date: '2026-08-01',
+      type: 'Workflow Companion UX Alignment (ECO-20260801-022E)',
+      highlights: [
+        'Product Engineering UX Analysis: Formulated invisible, ambient Workflow Companion paradigm focusing on cleanroom operational ergonomic flow.',
+        'Zero Visual Friction Principle: Shifted design criteria away from explicit "sticky sidebar" perception toward seamless ambient progress HUD.',
+        'Continuous Operational Sync: Preserved real-time scroll observer, instant step jump, and step status tracking without intrusive UI chrome.',
+        'PWA Foundation Enhancements: Enhanced web app manifest, stand-alone display tags, iOS web app capabilities, and cross-platform mobile icon paths.',
+        'System Version Harmonization: Synchronized v0.6.5 across Sidebar, Settings, About System, Report Studio, and Internal Changelog.'
+      ]
+    },
+    {
+      version: 'v0.6.4',
+      date: '2026-08-01',
+      type: 'Workflow Navigator Behaviour Correction (ECO-20260801-022D)',
+      highlights: [
+        'Founder Intent UX Alignment: Configured Workflow Navigator as a persistent left-hand working companion (`sticky top-4`) during SOP scrolling.',
+        'Zero-Scroll Jump Navigation: Guaranteed engineers always see Current Step, Completed Steps, Next Steps, and can jump instantly without scrolling back to top.',
+        'Preserved SOP Aesthetics: Maintained clean 2-column SOP timeline flow without redesigning layout or creating unrequested secondary chromes.',
+        'Automatic Step Observer: Real-time scroll detection keeps active step status, completion badges, and progress bar in continuous sync.',
+        'Full PWA Foundation Established: Web App Manifest, standalone display mode, theme settings, and cross-platform mobile icons (Windows, macOS, Android, iOS).'
+      ]
+    },
+    {
       version: 'v0.6.3',
       date: '2026-08-01',
       type: 'Unified Workflow Layout (ECO-20260801-022C)',
@@ -269,16 +329,16 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
             <div className={`p-3 rounded-xl border font-mono font-bold text-lg ${
               isDark ? 'bg-[#8B9DFF]/15 border-[#8B9DFF]/30 text-[#8B9DFF]' : 'bg-indigo-50 border-indigo-200 text-indigo-700'
             }`}>
-              v0.6.3
+              v0.6.8
             </div>
             <div>
               <h3 className="text-base font-bold">Field Service Operations System</h3>
               <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600 font-medium'}`}>
-                Unified Workflow Layout v0.6.3 — Single Operational Workspace (ECO-20260801-022C)
+                Mission Companion Refactor v0.6.8 — Floating Document Guide Rail (ECO-20260802-023B)
               </p>
             </div>
           </div>
-          <Badge variant="blue">v0.6.3 OPERATIONAL</Badge>
+          <Badge variant="blue">v0.6.8 OPERATIONAL</Badge>
         </div>
       </Card>
 

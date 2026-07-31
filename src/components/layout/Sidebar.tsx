@@ -262,7 +262,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
           <span>FSO Engine Online</span>
         </div>
-        <span className="font-semibold">v0.6.3</span>
+        <span className="font-semibold">v0.6.8</span>
       </div>
     </aside>
   );
