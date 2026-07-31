@@ -13,7 +13,9 @@ import {
   AlertItem,
   ReportTemplate,
   ReportDraft,
-  FounderBrandingConfig
+  FounderBrandingConfig,
+  EngineerProfile,
+  NotificationItem
 } from '../types';
 import { 
   INITIAL_CUSTOMERS, 
@@ -30,7 +32,9 @@ import {
   INITIAL_BASELINES,
   INITIAL_REPORT_TEMPLATES,
   INITIAL_REPORT_DRAFTS,
-  INITIAL_FOUNDER_BRANDING
+  INITIAL_FOUNDER_BRANDING,
+  INITIAL_ENGINEER_PROFILE,
+  INITIAL_NOTIFICATIONS
 } from '../data/mockData';
 
 const KEYS = {
@@ -48,7 +52,9 @@ const KEYS = {
   BASELINES: 'fso_v04_baselines',
   TEMPLATES: 'fso_v04_templates',
   DRAFTS: 'fso_v04_drafts',
-  BRANDING: 'fso_v04_branding'
+  BRANDING: 'fso_v04_branding',
+  PROFILE: 'fso_v072_profile',
+  NOTIFICATIONS: 'fso_v072_notifications'
 };
 
 function getStorage<T>(key: string, defaultValue: T): T {
@@ -116,6 +122,12 @@ export const StorageService = {
 
   getBranding: (): FounderBrandingConfig => getStorage(KEYS.BRANDING, INITIAL_FOUNDER_BRANDING),
   saveBranding: (data: FounderBrandingConfig) => setStorage(KEYS.BRANDING, data),
+
+  getProfile: (): EngineerProfile => getStorage(KEYS.PROFILE, INITIAL_ENGINEER_PROFILE),
+  saveProfile: (data: EngineerProfile) => setStorage(KEYS.PROFILE, data),
+
+  getNotifications: (): NotificationItem[] => getStorage(KEYS.NOTIFICATIONS, INITIAL_NOTIFICATIONS),
+  saveNotifications: (data: NotificationItem[]) => setStorage(KEYS.NOTIFICATIONS, data),
 
   resetToDefaults: () => {
     localStorage.clear();

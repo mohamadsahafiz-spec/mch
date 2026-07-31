@@ -46,9 +46,9 @@ interface WorkflowNavigatorProps {
 }
 
 /**
- * Vertical Sticky SOP Guide Rail Companion Component
- * Follows FSOS Workflow Navigation Principle: Stays pinned alongside the SOP timeline as a working companion (`sticky top-4`),
- * ensuring the engineer always knows current location, completed steps, next steps, and can jump instantly at any scroll depth.
+ * Workflow Navigator Component
+ * Serves as the navigation column of the Workflow Guide document,
+ * enabling engineers to see current progress, completed steps, next steps, and jump directly to any step.
  */
 export const WorkflowNavigator: React.FC<WorkflowNavigatorProps> = ({
   steps,
@@ -193,7 +193,7 @@ export const WorkflowNavigator: React.FC<WorkflowNavigatorProps> = ({
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
           Live SOP Sync
         </span>
-        <span>FSOS v0.6.8</span>
+        <span>FSOS v0.7.1</span>
       </div>
     </div>
   );
@@ -323,17 +323,18 @@ export const WorkflowGuideModule: React.FC<WorkflowGuideModuleProps> = ({ onNavi
 
   const isManualScrollingRef = useRef(false);
   const manualScrollTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const sopScrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // Automatic Active Step Tracking using scroll position calculation
+  // Automatic Active Step Tracking listening directly to the SOP Timeline scroll container
   useEffect(() => {
-    const mainContainer = document.querySelector('main');
-    if (!mainContainer) return;
+    const container = sopScrollContainerRef.current;
+    if (!container) return;
 
     const calculateActiveStep = () => {
       if (isManualScrollingRef.current) return;
 
-      const mainRect = mainContainer.getBoundingClientRect();
-      const targetY = mainRect.top + 180;
+      const containerRect = container.getBoundingClientRect();
+      const targetY = containerRect.top + 140;
 
       let foundIndex = 0;
       for (let i = 0; i < steps.length; i++) {
@@ -357,11 +358,11 @@ export const WorkflowGuideModule: React.FC<WorkflowGuideModuleProps> = ({ onNavi
       calculateActiveStep();
     };
 
-    mainContainer.addEventListener('scroll', handleScroll, { passive: true });
+    container.addEventListener('scroll', handleScroll, { passive: true });
     window.addEventListener('resize', handleScroll, { passive: true });
 
     return () => {
-      mainContainer.removeEventListener('scroll', handleScroll);
+      container.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleScroll);
       if (manualScrollTimerRef.current) {
         clearTimeout(manualScrollTimerRef.current);
@@ -389,17 +390,17 @@ export const WorkflowGuideModule: React.FC<WorkflowGuideModuleProps> = ({ onNavi
   };
 
   return (
-    <div className="max-w-6xl mx-auto py-2 md:py-6 space-y-6">
+    <div className="max-w-6xl w-full mx-auto flex flex-col h-full overflow-hidden space-y-4">
       
       {/* Page Header */}
-      <div className={`p-6 md:p-8 rounded-3xl border transition-all ${
+      <div className={`p-5 md:p-6 rounded-3xl border shrink-0 transition-all ${
         isDark 
           ? 'bg-[#1A1D21] border-[#2B323A]/80 text-[#F3F4F6]' 
           : 'bg-white border-slate-200/80 text-slate-900 shadow-xs'
       }`}>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2 mb-1.5">
               <span className={`text-[10px] font-mono uppercase tracking-wider font-semibold px-2 py-0.5 rounded border ${
                 isDark 
                   ? 'bg-[#8B9DFF]/15 text-[#8B9DFF] border-[#8B9DFF]/30' 
@@ -407,7 +408,7 @@ export const WorkflowGuideModule: React.FC<WorkflowGuideModuleProps> = ({ onNavi
               }`}>
                 STANDARD OPERATING PROCEDURE (SOP)
               </span>
-              <span className="text-xs font-mono text-slate-400">FSOS Field Guide v0.6.8</span>
+              <span className="text-xs font-mono text-slate-400">FSOS Field Guide v0.7.1</span>
             </div>
             <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100 flex items-center gap-2.5">
               <BookOpen className="w-7 h-7 text-[#8B9DFF]" />
@@ -427,11 +428,11 @@ export const WorkflowGuideModule: React.FC<WorkflowGuideModuleProps> = ({ onNavi
         </div>
       </div>
 
-      {/* 2-Column Integrated Document Architecture: Left Mission Companion Navigation Column & Right SOP Content Stream belong to ONE workspace document sheet */}
-      <div className="flex flex-col lg:flex-row gap-5 items-start">
+      {/* 2-Column Integrated Document Architecture: Left Mission Companion Navigation Workspace Column & Right Scrollable SOP Timeline Container */}
+      <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-5 items-start overflow-hidden">
         
-        {/* Left Column — Mission Companion Navigation Column (Workflow Navigator remains visible while scrolling SOP timeline) */}
-        <div className="w-full lg:w-64 lg:shrink-0 lg:sticky lg:top-4 z-20">
+        {/* Left Column — Mission Companion Navigation Workspace Column (Stationary inside the workspace) */}
+        <div className="w-full lg:w-64 lg:shrink-0">
           <WorkflowNavigator
             steps={steps}
             activeStepIndex={activeStepIndex}
@@ -440,8 +441,8 @@ export const WorkflowGuideModule: React.FC<WorkflowGuideModuleProps> = ({ onNavi
           />
         </div>
 
-        {/* Right Column — SOP Timeline Content Stream */}
-        <div className="flex-1 min-w-0 space-y-6">
+        {/* Right Column — Scrollable SOP Timeline Reading Surface Container */}
+        <div ref={sopScrollContainerRef} className="flex-1 min-w-0 h-full overflow-y-auto pr-2 pb-6 space-y-6 scroll-smooth">
           <div className="flex items-center justify-between px-1">
             <h2 className={`text-xs font-mono uppercase tracking-wider font-semibold ${
               isDark ? 'text-slate-400' : 'text-slate-600'

@@ -10,7 +10,9 @@ import {
   QualityInvestigation, 
   BaselineCheck, 
   FieldEngineerTask, 
-  AlertItem 
+  AlertItem,
+  EngineerProfile,
+  NotificationItem
 } from '../types';
 
 export const INITIAL_CUSTOMERS: Customer[] = [
@@ -310,7 +312,7 @@ export const INITIAL_CONTRACTS: Contract[] = [
     totalWorkingDays: 522,
     remainingWorkingDays: 110,
     machinesCoveredIds: ['mch-101'],
-    engineerAssigned: 'Senior Engineer Alex Mercer, Lead Specialist',
+    engineerAssigned: 'Senior Engineer Sahafiz, Lead Specialist',
     deliverables: [
       'Quarterly 8-Point Machine Health Check (MHC)',
       'Laser Beam Profiling & Power Stability Calibration',
@@ -376,7 +378,7 @@ export const INITIAL_SCHEDULE_ITEMS: ExecutionScheduleItem[] = [
     plantName: 'Tainan Cleanroom Fab 18A',
     machineId: 'mch-101',
     machineName: 'TRUMPF TruMicro 7000 Series (MCH-TSMC-01)',
-    engineerName: 'Alex Mercer',
+    engineerName: 'Sahafiz',
     title: 'Q3 Machine Health Check & Laser Head B Audit',
     scheduledDate: '2026-08-12', // Wednesday
     quarter: 'Q7',
@@ -391,7 +393,7 @@ export const INITIAL_SCHEDULE_ITEMS: ExecutionScheduleItem[] = [
     plantName: 'Tainan Cleanroom Fab 18A',
     machineId: 'mch-101',
     machineName: 'TRUMPF TruMicro 7000 Series (MCH-TSMC-01)',
-    engineerName: 'Alex Mercer',
+    engineerName: 'Sahafiz',
     title: 'DI Water Cooling Filter Replacement & Flow Test',
     scheduledDate: '2026-08-05', // Wednesday
     quarter: 'Q7',
@@ -439,7 +441,7 @@ export const INITIAL_MHC_RECORDS: MHCRecord[] = [
     machineSerialNumber: 'SN-TRU-8849201-A',
     customerName: 'TSMC Microelectronics Fab 18',
     plantName: 'Tainan Cleanroom Fab 18A',
-    engineerName: 'Alex Mercer',
+    engineerName: 'Sahafiz',
     date: '2026-05-12',
     healthScores: {
       laserHead1: 94,
@@ -482,7 +484,7 @@ export const INITIAL_EXECUTIVE_REPORTS: ExecutiveReport[] = [
     machineModel: 'TRUMPF TruMicro 7000 Series',
     serialNumber: 'SN-TRU-8849201-A',
     date: '2026-05-12',
-    engineerName: 'Alex Mercer (Lead Field Engineer)',
+    engineerName: 'Sahafiz (Lead Field Engineer)',
     executiveSummary: 'The TRUMPF TruMicro 7000 system passed all critical operational baseline checks with an overall Machine Health Score of 94/100. Laser power stability and galvo stage positioning remain exceptional for sub-3nm annealing. DI cooling filter replacement is required to maintain laminar thermal control.',
     overallHealthScore: 94,
     productionReleaseStatus: 'APPROVED',
@@ -517,7 +519,7 @@ export const INITIAL_EXECUTIVE_REPORTS: ExecutiveReport[] = [
       'PREPARE SPARE LASER HEAD B (LH-9041-B) IN FAB CLEANROOM VAULT',
       'MAINTAIN AUTOMATED PURGE FLOW AT 5.0 L/MIN'
     ],
-    signatureName: 'Alex Mercer',
+    signatureName: 'Sahafiz',
     signatureTitle: 'Senior Field Service Engineer, Laser Systems',
     signedDate: '2026-05-12'
   }
@@ -622,7 +624,7 @@ export const INITIAL_BASELINES: BaselineCheck[] = [
     machineId: 'mch-101',
     machineName: 'TRUMPF TruMicro 7000 Series',
     date: '2023-03-20',
-    engineerName: 'Alex Mercer',
+    engineerName: 'Sahafiz',
     laserPowerBaselineWatts: 250,
     beamDiameterMm: 1.10,
     coolingFlowRateLpm: 15.5,
@@ -1038,6 +1040,62 @@ export const INITIAL_REPORT_DRAFTS: ReportDraft[] = [
     updatedAt: '2026-07-28 17:15',
     branding: INITIAL_FOUNDER_BRANDING,
     sections: INITIAL_REPORT_TEMPLATES[1].sections
+  }
+];
+
+export const INITIAL_ENGINEER_PROFILE: EngineerProfile = {
+  name: 'Sahafiz',
+  company: 'EO Technics',
+  role: 'Field Service Engineer',
+  department: 'Service Operations',
+  avatarUrl: ''
+};
+
+export const INITIAL_NOTIFICATIONS: NotificationItem[] = [
+  {
+    id: 'notif-1',
+    title: 'Mission Assigned',
+    description: 'Quarterly Machine Health Check for STMicroelectronics Muar (ASM Eagle XP-01) assigned.',
+    time: '10 mins ago',
+    category: 'MISSION_ASSIGNED',
+    read: false,
+    targetTab: 'start_page'
+  },
+  {
+    id: 'notif-2',
+    title: 'Machine Health Check Due',
+    description: 'ASM Eagle XP-01 scheduled for 8-Point MHC & Laser Profiling today at 09:00 AM.',
+    time: '1 hour ago',
+    category: 'MHC_DUE',
+    read: false,
+    targetTab: 'mhc'
+  },
+  {
+    id: 'notif-3',
+    title: 'System Update v0.7.2',
+    description: 'FSOS updated to v0.7.2 with Founder Identity & Notification Center.',
+    time: '2 hours ago',
+    category: 'SYSTEM_UPDATE',
+    read: false,
+    targetTab: 'settings'
+  },
+  {
+    id: 'notif-4',
+    title: 'Contract SLA Reminder',
+    description: 'STMicroelectronics Muar contract (FSC-2025-STM-014) has 68 days remaining.',
+    time: 'Yesterday',
+    category: 'CONTRACT_REMINDER',
+    read: true,
+    targetTab: 'contracts'
+  },
+  {
+    id: 'notif-5',
+    title: 'Pending Report Action',
+    description: 'Draft Executive Report for TSMC Fab 18A awaiting final engineer sign-off.',
+    time: '2 days ago',
+    category: 'PENDING_REPORT',
+    read: true,
+    targetTab: 'reports'
   }
 ];
 

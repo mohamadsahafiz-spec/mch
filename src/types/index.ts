@@ -266,6 +266,35 @@ export interface AlertItem {
   timestamp: string;
 }
 
+export interface EngineerProfile {
+  name: string;
+  company: string;
+  role: string;
+  department: string;
+  avatarUrl?: string;
+}
+
+export type NotificationCategory =
+  | 'MISSION_ASSIGNED'
+  | 'MHC_DUE'
+  | 'CONTRACT_REMINDER'
+  | 'PLANNER_REMINDER'
+  | 'PENDING_REPORT'
+  | 'COMPLETED_REPORT'
+  | 'CUSTOMER_ADDED'
+  | 'MACHINE_ADDED'
+  | 'SYSTEM_UPDATE';
+
+export interface NotificationItem {
+  id: string;
+  title: string;
+  description: string;
+  time: string;
+  category: NotificationCategory;
+  read: boolean;
+  targetTab?: NavigationTab;
+}
+
 // Report Studio Foundation Types (v0.5.0)
 export interface ReportSectionConfig {
   id: string;

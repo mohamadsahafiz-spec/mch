@@ -19,13 +19,14 @@ import {
   ChevronRight,
   ChevronDown
 } from 'lucide-react';
-import { NavigationTab } from '../../types';
+import { NavigationTab, EngineerProfile } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
 
 interface SidebarProps {
   activeTab: NavigationTab;
   setActiveTab: (tab: NavigationTab) => void;
   urgentAlertsCount: number;
+  profile?: EngineerProfile;
 }
 
 interface NavItem {
@@ -44,7 +45,8 @@ interface NavGroup {
 export const Sidebar: React.FC<SidebarProps> = ({
   activeTab,
   setActiveTab,
-  urgentAlertsCount
+  urgentAlertsCount,
+  profile
 }) => {
   const { effectiveTheme } = useTheme();
   const isDark = effectiveTheme === 'dark';
@@ -54,7 +56,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       key: 'daily_work',
       title: 'DAILY WORK',
       items: [
-        { id: 'start_page', label: 'Start Page', icon: <Compass className="w-4 h-4" /> },
+        { id: 'start_page', label: 'Daily Work', icon: <Compass className="w-4 h-4" /> },
         { id: 'mission_control', label: 'Mission Control', icon: <LayoutDashboard className="w-4 h-4" /> },
         { id: 'workflow_guide', label: 'Workflow Guide (SOP)', icon: <BookOpenCheck className="w-4 h-4" /> },
       ]
@@ -153,7 +155,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <span className={`text-[9px] font-mono px-1.5 py-0.2 rounded border font-semibold ${
                 isDark ? 'bg-[#8B9DFF]/10 text-[#8B9DFF] border-[#8B9DFF]/30' : 'bg-indigo-50 text-indigo-700 border-indigo-200'
               }`}>
-                v0.6.2
+                v0.7.2
               </span>
             </div>
             <p className={`text-[10px] font-mono ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Precision Laser Eng</p>
@@ -169,8 +171,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div className="flex items-center gap-2 overflow-hidden">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
             <div className="truncate">
-              <p className="text-[11px] font-semibold truncate">Alex Mercer</p>
-              <p className={`text-[9px] truncate ${isDark ? 'text-slate-400' : 'text-slate-500 font-medium'}`}>Lead Engineer</p>
+              <p className="text-[11px] font-semibold truncate">{profile?.name || 'Engineer'}</p>
+              <p className={`text-[9px] truncate ${isDark ? 'text-slate-400' : 'text-slate-500 font-medium'}`}>{profile?.role || 'Field Service Engineer'}</p>
             </div>
           </div>
           <ShieldCheck className={`w-3.5 h-3.5 shrink-0 ${isDark ? 'text-[#8B9DFF]' : 'text-indigo-600'}`} />
@@ -262,7 +264,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
           <span>FSO Engine Online</span>
         </div>
-        <span className="font-semibold">v0.6.8</span>
+        <span className="font-semibold">v0.7.2</span>
       </div>
     </aside>
   );

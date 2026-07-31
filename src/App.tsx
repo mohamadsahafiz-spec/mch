@@ -17,7 +17,9 @@ import {
   FieldEngineerTask, 
   AlertItem, 
   QualityInvestigation, 
-  BaselineCheck 
+  BaselineCheck,
+  EngineerProfile,
+  NotificationItem
 } from './types';
 import { StorageService } from './utils/persistence';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
@@ -59,6 +61,8 @@ function AppLayout() {
   const [alerts, setAlerts] = useState<AlertItem[]>([]);
   const [investigations, setInvestigations] = useState<QualityInvestigation[]>([]);
   const [baselines, setBaselines] = useState<BaselineCheck[]>([]);
+  const [profile, setProfile] = useState<EngineerProfile>(StorageService.getProfile());
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
 
   // Selected Machine context
   const [selectedMachineId, setSelectedMachineId] = useState<string>('mch-101');
@@ -77,7 +81,31 @@ function AppLayout() {
     setAlerts(StorageService.getAlerts());
     setInvestigations(StorageService.getInvestigations());
     setBaselines(StorageService.getBaselines());
+    setProfile(StorageService.getProfile());
+    setNotifications(StorageService.getNotifications());
   }, []);
+
+  const handleSaveProfile = (newProfile: EngineerProfile) => {
+    setProfile(newProfile);
+    StorageService.saveProfile(newProfile);
+  };
+
+  const handleMarkNotificationAsRead = (id: string) => {
+    const updated = notifications.map(n => n.id === id ? { ...n, read: true } : n);
+    setNotifications(updated);
+    StorageService.saveNotifications(updated);
+  };
+
+  const handleMarkAllNotificationsAsRead = () => {
+    const updated = notifications.map(n => ({ ...n, read: true }));
+    setNotifications(updated);
+    StorageService.saveNotifications(updated);
+  };
+
+  const handleClearAllNotifications = () => {
+    setNotifications([]);
+    StorageService.saveNotifications([]);
+  };
 
   // Machine Management Helpers
   const handleAddMachine = (newMachine: Machine) => {
@@ -169,6 +197,7 @@ function AppLayout() {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         urgentAlertsCount={alerts.filter((a) => a.severity === 'CRITICAL').length}
+        profile={profile}
       />
 
       {/* Main Workspace Area */}
@@ -177,17 +206,25 @@ function AppLayout() {
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           alerts={alerts}
+          notifications={notifications}
+          onMarkAsRead={handleMarkNotificationAsRead}
+          onMarkAllAsRead={handleMarkAllNotificationsAsRead}
+          onClearAllNotifications={handleClearAllNotifications}
           onOpenQuickMhc={() => setActiveTab('mhc')}
           nextPriorityAction={nextPriorityAction}
         />
 
-        <main className="flex-1 p-6 overflow-y-auto max-w-7xl w-full mx-auto">
+        <main className={`flex-1 p-4 md:p-6 max-w-7xl w-full mx-auto ${
+          activeTab === 'workflow_guide' ? 'overflow-hidden flex flex-col h-[calc(100vh-4rem)]' : 'overflow-y-auto'
+        }`}>
           {activeTab === 'start_page' && (
             <StartPageModule
               onNavigate={setActiveTab}
               schedule={schedule}
               machines={machines}
               tasks={tasks}
+              profile={profile}
+              unreadNotificationsCount={notifications.filter(n => !n.read).length}
               onSelectMachine={(id) => {
                 setSelectedMachineId(id);
                 setActiveTab('machines');
@@ -306,7 +343,11 @@ function AppLayout() {
           )}
 
           {activeTab === 'settings' && (
-            <SettingsModule onResetData={handleResetData} />
+            <SettingsModule 
+              onResetData={handleResetData} 
+              profile={profile}
+              onSaveProfile={handleSaveProfile}
+            />
           )}
         </main>
       </div>

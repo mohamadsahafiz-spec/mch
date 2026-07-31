@@ -1,19 +1,83 @@
-import React from 'react';
-import { Settings as SettingsIcon, ShieldCheck, Database, RefreshCw, Bot, User, History, CheckCircle2, FileText } from 'lucide-react';
+import React, { useState } from 'react';
+import { Settings as SettingsIcon, ShieldCheck, Database, RefreshCw, Bot, User, History, CheckCircle2, FileText, Info, Compass, AlertCircle, Cpu, Calendar, Tag, Activity, Bell, Save } from 'lucide-react';
 import { Card } from '../common/Card';
 import { Badge } from '../common/Badge';
 import { Button } from '../common/Button';
 import { useTheme } from '../../context/ThemeContext';
+import { EngineerProfile } from '../../types';
 
 interface SettingsProps {
   onResetData: () => void;
+  profile?: EngineerProfile;
+  onSaveProfile?: (profile: EngineerProfile) => void;
 }
 
-export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
+export const SettingsModule: React.FC<SettingsProps> = ({ onResetData, profile, onSaveProfile }) => {
   const { effectiveTheme } = useTheme();
   const isDark = effectiveTheme === 'dark';
 
+  const [editProfile, setEditProfile] = useState<EngineerProfile>({
+    name: profile?.name || 'Sahafiz',
+    company: profile?.company || 'EO Technics',
+    role: profile?.role || 'Field Service Engineer',
+    department: profile?.department || 'Service Operations',
+    avatarUrl: profile?.avatarUrl || ''
+  });
+  const [profileSaved, setProfileSaved] = useState(false);
+
+  const handleSaveProfileSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (onSaveProfile) {
+      onSaveProfile(editProfile);
+      setProfileSaved(true);
+      setTimeout(() => setProfileSaved(false), 3000);
+    }
+  };
+
   const changelog = [
+    {
+      version: 'v0.7.2',
+      date: '2026-08-03',
+      type: 'Founder Identity & Notification Center (ECO-20260802-026)',
+      highlights: [
+        'NEW: Founder Identity dynamic engineer profile greeting (e.g. "Good Morning, Sahafiz").',
+        'NEW: Functional Notification Center bell with real-time operational notifications, unread badge counter, category tags, and click-to-navigate capabilities.',
+        'NEW: Notification management controls including "Mark as Read", "Mark All as Read", and "Clear All".',
+        'NEW: Configurable Engineer Profile source in System Settings allowing instant customization of Name, Company, Role, and Department.',
+        'IMPROVED: Removed all remaining placeholder/demo engineer names ("Alex") across Machine Health Check, Execution Planner, Quality Investigation, Machine Passport, and Today\'s Activity Log.',
+        'IMPROVED: Operational realism and user identity continuity across all FSOS workspaces.',
+        'FIXED: Version and system build documentation synchronized to v0.7.2 across Sidebar, Settings, About System, and Report Studio.',
+        'KNOWN ISSUES: Workflow Navigator UX refinement deferred to a future sprint.'
+      ]
+    },
+    {
+      version: 'v0.7.1',
+      date: '2026-08-02',
+      type: 'Daily Work Orchestration (ECO-20260802-025)',
+      highlights: [
+        'NEW: Daily Work operational entry point serving as the engineer\'s primary operational home upon opening FSOS.',
+        'NEW: Mission orchestration providing unified visibility into customer (STMicroelectronics Muar), machine status (ASM Eagle XP-01), mission progress, and priority actions.',
+        'NEW: Start Mission workflow for seamless execution initialization on new field service assignments.',
+        'NEW: Continue Mission workflow enabling instant one-click resumption of active on-site work orders.',
+        'NEW: Integrated Today\'s Schedule timeline and 3-day Upcoming Work outlook directly into the operational home page.',
+        'NEW: Status KPI row tracking Machines Scheduled (2), Contract Days Remaining (68), Reports Pending (1), and Overdue Tasks (0).',
+        'IMPROVED: Quick Access shortcuts providing direct 1-click navigation to Machine Passport, Workflow Guide, Planner, and Report Studio.',
+        'IMPROVED: Navigation flow between existing modules, eliminating manual module searching and cognitive friction.'
+      ]
+    },
+    {
+      version: 'v0.7.0',
+      date: '2026-08-02',
+      type: 'Daily Work Operational Entry Point (ECO-20260802-025)',
+      highlights: [
+        'NEW: Daily Work operational entry point serving as the engineer\'s primary operational home upon opening FSOS.',
+        'NEW: Mission orchestration providing unified visibility into customer, machine status, mission progress, and priority actions.',
+        'NEW: Continue Mission workflow enabling instant one-click resumption of active on-site work orders.',
+        'NEW: Start Mission workflow for seamless execution initialization on new field service assignments.',
+        'IMPROVED: Navigation flow between existing modules (Dashboard, Machine Passport, Workflow Guide, Planner, Report Studio).',
+        'IMPROVED: Engineer workflow continuity, eliminating manual module searching and cognitive friction.'
+      ]
+    },
     {
       version: 'v0.6.8',
       date: '2026-08-02',
@@ -320,7 +384,7 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
 
   return (
     <div className="space-y-6 pb-12">
-      {/* Version Status Card */}
+      {/* Version Status Banner */}
       <Card title="System Version & Operational Build Status">
         <div className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border gap-4 ${
           isDark ? 'bg-[#1A1D21] border-[#2B323A]' : 'bg-slate-50 border-slate-200'
@@ -329,21 +393,172 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
             <div className={`p-3 rounded-xl border font-mono font-bold text-lg ${
               isDark ? 'bg-[#8B9DFF]/15 border-[#8B9DFF]/30 text-[#8B9DFF]' : 'bg-indigo-50 border-indigo-200 text-indigo-700'
             }`}>
-              v0.6.8
+              v0.7.1
             </div>
             <div>
               <h3 className="text-base font-bold">Field Service Operations System</h3>
               <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600 font-medium'}`}>
-                Mission Companion Refactor v0.6.8 — Floating Document Guide Rail (ECO-20260802-023B)
+                Daily Work Orchestration v0.7.1 — Operational Entry Point (ECO-20260802-025)
               </p>
             </div>
           </div>
-          <Badge variant="blue">v0.6.8 OPERATIONAL</Badge>
+          <Badge variant="blue">v0.7.1 OPERATIONAL</Badge>
+        </div>
+      </Card>
+
+      {/* About System Card */}
+      <Card title="About System — Operational Specification">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs">
+          <div className={`p-3.5 rounded-xl border space-y-1 ${
+            isDark ? 'bg-[#1A1D21] border-[#2B323A]' : 'bg-slate-50 border-slate-200'
+          }`}>
+            <div className="flex items-center gap-1.5 text-slate-400">
+              <Tag className="w-3.5 h-3.5 text-[#8B9DFF]" />
+              <span className="font-mono uppercase text-[10px]">Version</span>
+            </div>
+            <p className="font-mono font-bold text-sm text-[#8B9DFF]">v0.7.1</p>
+          </div>
+
+          <div className={`p-3.5 rounded-xl border space-y-1 ${
+            isDark ? 'bg-[#1A1D21] border-[#2B323A]' : 'bg-slate-50 border-slate-200'
+          }`}>
+            <div className="flex items-center gap-1.5 text-slate-400">
+              <Cpu className="w-3.5 h-3.5 text-[#8B9DFF]" />
+              <span className="font-mono uppercase text-[10px]">Build ID</span>
+            </div>
+            <p className="font-mono font-bold text-sm">ECO-20260802-025</p>
+          </div>
+
+          <div className={`p-3.5 rounded-xl border space-y-1 ${
+            isDark ? 'bg-[#1A1D21] border-[#2B323A]' : 'bg-slate-50 border-slate-200'
+          }`}>
+            <div className="flex items-center gap-1.5 text-slate-400">
+              <Compass className="w-3.5 h-3.5 text-[#8B9DFF]" />
+              <span className="font-mono uppercase text-[10px]">Release Codename</span>
+            </div>
+            <p className="font-semibold text-xs text-emerald-400">Daily Work Orchestration</p>
+          </div>
+
+          <div className={`p-3.5 rounded-xl border space-y-1 ${
+            isDark ? 'bg-[#1A1D21] border-[#2B323A]' : 'bg-slate-50 border-slate-200'
+          }`}>
+            <div className="flex items-center gap-1.5 text-slate-400">
+              <Calendar className="w-3.5 h-3.5 text-[#8B9DFF]" />
+              <span className="font-mono uppercase text-[10px]">Release Date</span>
+            </div>
+            <p className="font-mono text-xs">2026-08-02</p>
+          </div>
+
+          <div className={`p-3.5 rounded-xl border space-y-1 ${
+            isDark ? 'bg-[#1A1D21] border-[#2B323A]' : 'bg-slate-50 border-slate-200'
+          }`}>
+            <div className="flex items-center gap-1.5 text-slate-400">
+              <Activity className="w-3.5 h-3.5 text-[#8B9DFF]" />
+              <span className="font-mono uppercase text-[10px]">Build Status</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <p className="font-mono font-bold text-xs text-emerald-400">OPERATIONAL</p>
+            </div>
+          </div>
+
+          <div className={`p-3.5 rounded-xl border space-y-1 ${
+            isDark ? 'bg-[#1A1D21] border-[#2B323A]' : 'bg-slate-50 border-slate-200'
+          }`}>
+            <div className="flex items-center gap-1.5 text-slate-400">
+              <ShieldCheck className="w-3.5 h-3.5 text-[#8B9DFF]" />
+              <span className="font-mono uppercase text-[10px]">Target Deployment</span>
+            </div>
+            <p className="font-semibold text-xs">Cleanroom Field Ops (TRUMPF/ASML)</p>
+          </div>
+        </div>
+      </Card>
+
+      {/* CTO Strategic Directive & Product Evolution Log */}
+      <Card title="CTO Directive & Product Evolution Log">
+        <div className="space-y-4 text-xs">
+          {/* CTO Note */}
+          <div className={`p-4 rounded-xl border space-y-2 ${
+            isDark ? 'bg-[#8B9DFF]/10 border-[#8B9DFF]/30 text-slate-200' : 'bg-indigo-50/80 border-indigo-200 text-indigo-950'
+          }`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 font-bold text-sm text-[#8B9DFF]">
+                <Bot className="w-4 h-4" />
+                <span>CTO STRATEGIC DIRECTIVE</span>
+              </div>
+              <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-[#8B9DFF]/20 text-[#8B9DFF] border border-[#8B9DFF]/30 font-semibold">
+                v0.7.1 MANDATE
+              </span>
+            </div>
+            <p className="leading-relaxed">
+              Daily Work is now the operational starting point of FSOS and marks the transition from separate modules to a guided workflow. Field Service Engineers no longer open FSOS as a collection of disconnected utilities; they enter through a single operational door that orchestrates their entire shift.
+            </p>
+          </div>
+
+          {/* Product Evolution Log */}
+          <div className={`p-4 rounded-xl border space-y-3 ${
+            isDark ? 'bg-[#1A1D21] border-[#2B323A]' : 'bg-slate-50 border-slate-200'
+          }`}>
+            <div className="flex items-center gap-2 font-bold text-sm text-slate-200">
+              <History className="w-4 h-4 text-[#8B9DFF]" />
+              <span>Product Evolution Log: The Genesis of Daily Work</span>
+            </div>
+
+            <div className="space-y-3 text-slate-300 dark:text-slate-300">
+              <div className="space-y-1">
+                <p className="font-semibold text-[#8B9DFF]">1. Why Daily Work Was Introduced</p>
+                <p className="text-slate-400 leading-relaxed">
+                  Historically, FSOS presented field engineers with a set of standalone modules (Dashboard, Machine Passport, Workflow Guide, Planner, Report Studio). While each module excelled in its specific domain, engineers were forced to manually decide where to click first, leading to cognitive friction, lost context during shift handovers, and unnecessary navigation steps.
+                </p>
+              </div>
+
+              <div className="space-y-1">
+                <p className="font-semibold text-[#8B9DFF]">2. What Problem It Solves</p>
+                <p className="text-slate-400 leading-relaxed">
+                  Daily Work eliminates shift startup friction by immediately answering five core operational questions within 5 seconds: <i>Who am I visiting today? Which machine requires attention? What mission is assigned? Can I continue yesterday's work? What is my next action?</i>
+                </p>
+              </div>
+
+              <div className="space-y-1">
+                <p className="font-semibold text-[#8B9DFF]">3. How It Changes the Engineer's Daily Workflow</p>
+                <p className="text-slate-400 leading-relaxed">
+                  Daily Work transforms FSOS from a passive database into a proactive operational guide. The engineer opens FSOS, reviews today's pre-populated mission status, and clicks a single primary call-to-action (<b>"Start Today's Mission"</b> or <b>"Continue Mission"</b>) to launch directly into active execution with zero manual setup.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      {/* Release Notes Summary */}
+      <Card title="Release Notes — v0.7.1 Daily Work Orchestration">
+        <div className={`p-4 rounded-xl border space-y-3 text-xs ${
+          isDark ? 'bg-[#1A1D21] border-[#2B323A]' : 'bg-slate-50 border-slate-200'
+        }`}>
+          <div className="flex items-center justify-between border-b border-[#2B323A]/60 pb-2">
+            <span className="font-bold text-sm text-[#8B9DFF]">Release Summary (Sprint ECO-20260802-025)</span>
+            <span className="font-mono text-slate-400">Target: v0.7.1</span>
+          </div>
+
+          <p className="text-slate-300 leading-relaxed">
+            Sprint v0.7.0 delivers Daily Work Orchestration, unifying all existing FSOS capabilities into an engineer-first operational journey. Rather than functioning as isolated tools, Dashboard, Machine Passport, Workflow Guide, Planner, and Report Studio are now interconnected through Daily Work as the central operational home.
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+            <div className={`p-3 rounded-lg border ${isDark ? 'bg-[#111315] border-[#2B323A]/80' : 'bg-white border-slate-200'}`}>
+              <p className="font-bold text-[#7FD4A6] mb-1">✓ Primary Action Clarity</p>
+              <p className="text-slate-400 text-[11px]">One clear primary button ("Continue Mission" or "Start Mission") guides engineers without decision paralysis.</p>
+            </div>
+            <div className={`p-3 rounded-lg border ${isDark ? 'bg-[#111315] border-[#2B323A]/80' : 'bg-white border-slate-200'}`}>
+              <p className="font-bold text-[#8ECDF7] mb-1">✓ Seamless Module Routing</p>
+              <p className="text-slate-400 text-[11px]">Direct contextual routing into Workflow Guide, Machine Passport, and Execution Planner with zero lost state.</p>
+            </div>
+          </div>
         </div>
       </Card>
 
       {/* Structured Changelog */}
-      <Card title="System Architecture Milestone Changelog">
+      <Card title="Internal Architecture Milestone Changelog">
         <div className="space-y-4">
           {changelog.map((entry) => (
             <div key={entry.version} className={`p-4 rounded-xl border text-xs space-y-2 ${
@@ -367,19 +582,122 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
       </Card>
 
       {/* Engineer Profile & Reset */}
-      <Card title="Engineer Workspace & System Data Management">
-        <div className="space-y-4 text-xs">
-          <div className={`p-4 rounded-xl border flex items-center justify-between ${
+      <Card title="Engineer Profile & System Data Management">
+        <div className="space-y-6 text-xs">
+          {/* Active Profile Card & Editor */}
+          <div className={`p-5 rounded-2xl border ${
             isDark ? 'bg-[#1A1D21] border-[#2B323A]' : 'bg-slate-50 border-slate-200'
           }`}>
-            <div className="flex items-center gap-3">
-              <User className="w-5 h-5 text-[#8B9DFF]" />
-              <div>
-                <p className="font-bold text-sm">Alex Mercer</p>
-                <p className="text-slate-400">Lead Field Service Engineer • Certification: TRUMPF Tier 3 Laser Optics</p>
+            <div className="flex items-center justify-between pb-4 border-b border-[#2B323A]/60 mb-4">
+              <div className="flex items-center gap-3">
+                <div className={`p-2.5 rounded-xl border ${
+                  isDark ? 'bg-[#8B9DFF]/10 border-[#8B9DFF]/30 text-[#8B9DFF]' : 'bg-indigo-50 border-indigo-200 text-indigo-700'
+                }`}>
+                  <User className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-bold text-sm text-slate-100 dark:text-white">
+                      {profile?.name || editProfile.name || 'Engineer'}
+                    </h4>
+                    <Badge variant="emerald">ACTIVE ON-SITE</Badge>
+                  </div>
+                  <p className="text-slate-400 text-[11px]">
+                    {profile?.role || editProfile.role} • {profile?.company || editProfile.company} ({profile?.department || editProfile.department})
+                  </p>
+                </div>
               </div>
+
+              {profileSaved && (
+                <span className="text-xs font-semibold text-emerald-400 flex items-center gap-1 font-mono">
+                  <CheckCircle2 className="w-3.5 h-3.5" /> Profile Updated
+                </span>
+              )}
             </div>
-            <Badge variant="emerald">ACTIVE ON-SITE</Badge>
+
+            {/* Profile Edit Form */}
+            <form onSubmit={handleSaveProfileSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[11px] font-semibold mb-1 text-slate-300">
+                    Engineer Name
+                  </label>
+                  <input
+                    type="text"
+                    value={editProfile.name}
+                    onChange={(e) => setEditProfile({ ...editProfile, name: e.target.value })}
+                    placeholder="e.g. Sahafiz"
+                    className={`w-full px-3 py-1.5 rounded-lg border text-xs font-medium ${
+                      isDark 
+                        ? 'bg-[#111315] border-[#2B323A] text-slate-200 focus:border-[#8B9DFF]' 
+                        : 'bg-white border-slate-300 text-slate-900 focus:border-indigo-600'
+                    }`}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold mb-1 text-slate-300">
+                    Company
+                  </label>
+                  <input
+                    type="text"
+                    value={editProfile.company}
+                    onChange={(e) => setEditProfile({ ...editProfile, company: e.target.value })}
+                    placeholder="e.g. EO Technics"
+                    className={`w-full px-3 py-1.5 rounded-lg border text-xs font-medium ${
+                      isDark 
+                        ? 'bg-[#111315] border-[#2B323A] text-slate-200 focus:border-[#8B9DFF]' 
+                        : 'bg-white border-slate-300 text-slate-900 focus:border-indigo-600'
+                    }`}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold mb-1 text-slate-300">
+                    Role / Title
+                  </label>
+                  <input
+                    type="text"
+                    value={editProfile.role}
+                    onChange={(e) => setEditProfile({ ...editProfile, role: e.target.value })}
+                    placeholder="e.g. Field Service Engineer"
+                    className={`w-full px-3 py-1.5 rounded-lg border text-xs font-medium ${
+                      isDark 
+                        ? 'bg-[#111315] border-[#2B323A] text-slate-200 focus:border-[#8B9DFF]' 
+                        : 'bg-white border-slate-300 text-slate-900 focus:border-indigo-600'
+                    }`}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold mb-1 text-slate-300">
+                    Department
+                  </label>
+                  <input
+                    type="text"
+                    value={editProfile.department}
+                    onChange={(e) => setEditProfile({ ...editProfile, department: e.target.value })}
+                    placeholder="e.g. Service Operations"
+                    className={`w-full px-3 py-1.5 rounded-lg border text-xs font-medium ${
+                      isDark 
+                        ? 'bg-[#111315] border-[#2B323A] text-slate-200 focus:border-[#8B9DFF]' 
+                        : 'bg-white border-slate-300 text-slate-900 focus:border-indigo-600'
+                    }`}
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-1">
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="sm"
+                  icon={<Save className="w-3.5 h-3.5" />}
+                >
+                  Save Profile Settings
+                </Button>
+              </div>
+            </form>
           </div>
 
           <div className={`p-4 rounded-xl border flex items-center justify-between ${
