@@ -15,6 +15,19 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
 
   const changelog = [
     {
+      version: 'v0.4.2',
+      date: '2026-07-30',
+      type: 'Machine Passport UX Enhancement (ECO-20260730-016)',
+      highlights: [
+        'Redesigned Machine Passport top section into a high-precision industrial hero cockpit.',
+        'Created Fleet Navigator strip with Previous/Next machine controls and active status counts.',
+        'Promoted selected machine to prominent Hero Card displaying core identity, health gauge, and location.',
+        'Grouped all management functions (Add, Edit, Rename, Duplicate, Archive, Delete) into a sleek Machine Actions dropdown.',
+        'Streamlined primary workflow actions (Execute 8-Point MHC, View Reports) for immediate engineer clarity.',
+        'Maintained complete backward compatibility and system version discipline at v0.4.2.'
+      ]
+    },
+    {
       version: 'v0.4.1',
       date: '2026-07-30',
       type: 'Machine Passport Management (ECO-20260730-015)',
