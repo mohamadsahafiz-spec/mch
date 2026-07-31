@@ -17,13 +17,13 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
     {
       version: 'v0.6.2',
       date: '2026-08-01',
-      type: 'Workflow Navigator Document Flow Correction (ECO-20260801-022B)',
+      type: 'Workflow Navigator Follow Behaviour (ECO-20260801-022B)',
       highlights: [
-        'Enforced Document Flow Principle: Restored Workflow Navigator to natural document flow, removing viewport-locking and sticky offset.',
-        'Eliminated Independent Floating Sidebar Perception: Workflow Guide now scrolls as one unified engineering document.',
-        'Preserved Document-Based Step Jump Navigation: Smooth auto-scroll jumping remains instant while preserving unbroken vertical document flow.',
-        'Validated Operational Manual Presentation: Guaranteed that all SOP stages (Mission, Passport, MHC, Planner, Report, Complete) travel together.',
-        'Concluded Workflow Navigator refinement milestone in complete alignment with Founder UX standards.'
+        'Founder UX Correction: Configured Workflow Navigator to naturally follow the engineer while reading through long SOP sections.',
+        'SOP Working Companion: Styled navigator as a document guide rail (`sticky top-4`) attached to the SOP timeline left margin.',
+        'Eliminated Floating Sidebar Feeling: Preserved lightweight, calm document-rail visual identity without creating a secondary application chrome.',
+        'Unbroken Navigation Access: Guaranteed engineers never need to scroll back to the top to jump between SOP phases.',
+        'Maintained Real-Time Sync: Full support for active step scroll detection, step-jump smooth scrolling, and dark/light themes.'
       ]
     },
     {
@@ -262,7 +262,7 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
             <div>
               <h3 className="text-base font-bold">Field Service Operations System</h3>
               <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600 font-medium'}`}>
-                Workflow Navigator Document Flow v0.6.2 — Unified Document Manual (ECO-20260801-022B)
+                Workflow Navigator Follow Behaviour v0.6.2 — SOP Guide Rail Companion (ECO-20260801-022B)
               </p>
             </div>
           </div>

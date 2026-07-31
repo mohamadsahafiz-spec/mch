@@ -426,11 +426,11 @@ export const WorkflowGuideModule: React.FC<WorkflowGuideModuleProps> = ({ onNavi
         </div>
       </div>
 
-      {/* Main 2-Column Responsive Layout: Left Document-Flow Workflow Navigator, Right SOP Timeline */}
+      {/* Main 2-Column Responsive Layout: Left Sticky Workflow Navigator SOP Guide Rail, Right SOP Timeline */}
       <div className="flex flex-col lg:flex-row gap-5 items-start relative">
         
-        {/* Left Column — Natural Document-Flow Workflow Navigator Guide Rail (Desktop lg:) */}
-        <div className="w-full lg:w-64 lg:shrink-0">
+        {/* Left Column — Sticky SOP Guide Rail Companion (Follows engineer while reading) */}
+        <div className="w-full lg:w-64 lg:shrink-0 lg:sticky lg:top-4 z-20">
           <WorkflowNavigator
             steps={steps}
             activeStepIndex={activeStepIndex}
