@@ -579,12 +579,18 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
                 <span>CTO STRATEGIC DIRECTIVE</span>
               </div>
               <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-[#8B9DFF]/20 text-[#8B9DFF] border border-[#8B9DFF]/30 font-semibold">
-                v0.8.0 MISSION WORKSPACE
+                v0.8.0 MHC OPERATIONS WORKSPACE
               </span>
             </div>
-            <p className="leading-relaxed">
-              v0.8.0 marks a major architectural and product milestone for FSOS. Workspace Modes establish the foundation for future operational experiences including Machine Health Check, Laser Calibration, Field Service, and Reporting. The system should increasingly adapt to the engineer rather than forcing the engineer to adapt to the system.
+            <p className="leading-relaxed font-medium">
+              v0.8.0 establishes Machine Health Check as a core operational pillar of FSOS.
             </p>
+            <p className="leading-relaxed text-slate-300">
+              MHC now seamlessly connects:
+            </p>
+            <div className="font-mono text-[11px] font-bold text-emerald-400 bg-slate-950/60 p-2.5 rounded-lg border border-slate-800 tracking-wide">
+              Machine Identity → MHC Session → Engineering Evidence → MHC Summary → Report Draft → Customer Report
+            </div>
           </div>
 
           {/* Product Evolution Log */}
@@ -593,28 +599,29 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
           }`}>
             <div className="flex items-center gap-2 font-bold text-sm text-slate-200">
               <History className="w-4 h-4 text-[#8B9DFF]" />
-              <span>Product Evolution Log: Work-Adaptive Workspace Modes</span>
+              <span>Product Evolution Log: Dedicated MHC Operations Workspace</span>
             </div>
 
             <div className="space-y-3 text-slate-300 dark:text-slate-300">
               <div className="space-y-1">
-                <p className="font-semibold text-[#8B9DFF]">1. Shift from Module-Centric to Workflow-Centric Architecture</p>
-                <p className="text-slate-400 leading-relaxed">
-                  FSOS previously behaved primarily as a collection of modules. v0.8.0 introduces task-oriented Workspace Modes. Instead of requiring engineers to navigate the entire platform, FSOS can now adapt the interface around the work being performed.
+                <p className="font-semibold text-[#8B9DFF]">FROM: MHC as a secondary service function</p>
+                <p className="font-semibold text-emerald-400">TO: MHC as a dedicated first-class operational workspace</p>
+                <p className="text-slate-400 leading-relaxed pt-1">
+                  Machine Health Check has evolved from a secondary utility into a primary first-class operational workspace within FSOS. The 01–08 inspection workflow directly binds field inspection data (laser hours, laser output power, optics, chiller thermal loops, and quality samples) to live report draft generation.
                 </p>
               </div>
 
               <div className="space-y-1">
-                <p className="font-semibold text-[#8B9DFF]">2. Architectural Separation of Role vs Workspace Mode</p>
+                <p className="font-semibold text-[#8B9DFF]">2. Complete Data Pipeline from Inspection to Customer Certificate</p>
                 <p className="text-slate-400 leading-relaxed">
-                  Role determines what a user is allowed to access, while Workspace Mode determines what the user wants to focus on right now. A Founder or Lead Engineer can enter MHC Mode to eliminate distraction during cleanroom inspections, and switch back to Founder Mode at any time.
+                  Field service engineers can execute structured 8-stage inspections on active machine assets, persist session progress, review findings in the MHC Summary, customize sections in the Live Report Builder, manage report drafts, import/export CSV engineering data, and issue executive release certificates.
                 </p>
               </div>
 
               <div className="space-y-1">
-                <p className="font-semibold text-[#8B9DFF]">3. Zero Data Loss & Non-Destructive Visibility Control</p>
+                <p className="font-semibold text-[#8B9DFF]">3. Platform Support & Ergonomics</p>
                 <p className="text-slate-400 leading-relaxed">
-                  Workspace Mode controls visibility and focus only. Switching modes or logging out never destroys data, deletes active MHC draft progress, or alters database records.
+                  Login session management and MHC Workspace Mode serve as supporting platform capabilities, allowing cleanroom field service engineers to focus strictly on inspection execution without distraction.
                 </p>
               </div>
             </div>
@@ -623,31 +630,44 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
       </Card>
 
       {/* Release Notes Summary */}
-      <Card title="Release Notes — v0.8.0 Mission Workspace">
+      <Card title="Release Notes — v0.8.0 MHC Operations Workspace">
         <div className={`p-4 rounded-xl border space-y-3 text-xs ${
           isDark ? 'bg-[#1A1D21] border-[#2B323A]' : 'bg-slate-50 border-slate-200'
         }`}>
           <div className="flex items-center justify-between border-b border-[#2B323A]/60 pb-2">
-            <span className="font-bold text-sm text-[#8B9DFF]">Release Summary (Sprint ECO-20260803-033)</span>
+            <span className="font-bold text-sm text-[#8B9DFF]">Release Summary (Sprint ECO-20260803-034)</span>
             <span className="font-mono text-slate-400">Target: v0.8.0</span>
           </div>
 
           <p className="text-slate-300 leading-relaxed">
-            Sprint v0.8.0 introduces the Mission Workspace release. It features a dedicated FSOS login page, session persistence, a Workspace Mode selector (MHC Mode vs Founder Mode), a focused MHC operational home, and last mode memory across engineer logins.
+            Sprint v0.8.0 promotes Machine Health Check (MHC) to a primary first-class operational workspace in FSOS. Key deliverables include:
           </p>
+
+          <ul className="grid grid-cols-1 md:grid-cols-2 gap-1.5 text-slate-300 font-mono text-[11px] bg-slate-950/50 p-3 rounded-lg border border-slate-800/80">
+            <li>• MHC promoted to main sidebar category</li>
+            <li>• Full 01–08 MHC inspection workflow</li>
+            <li>• Machine-linked MHC Sessions & persistence</li>
+            <li>• Continue MHC & Quick Execution launcher</li>
+            <li>• MHC Summary & section status tracker</li>
+            <li>• Custom MHC Report Builder with Live Preview</li>
+            <li>• Saved Draft management (Load, Duplicate, Delete)</li>
+            <li>• CSV engineering data import & export</li>
+            <li>• Final customer report & certificate sign-off</li>
+            <li>• FSOS Login & Workspace Modes (supporting platform features)</li>
+          </ul>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
             <div className={`p-3 rounded-lg border ${isDark ? 'bg-[#111315] border-[#2B323A]/80' : 'bg-white border-slate-200'}`}>
               <p className="font-bold text-[#7FD4A6] mb-1">✓ What Changed</p>
-              <p className="text-slate-400 text-[11px]">Implemented FSOS Login Page, User Session architecture, Workspace Mode switching (MHC Mode / Founder Mode), and focused MHC entry point.</p>
+              <p className="text-slate-400 text-[11px]">Promoted MHC to primary category, built 01–08 inspection workflow, session persistence, live customer report builder with saved draft management, and CSV data import/export.</p>
             </div>
             <div className={`p-3 rounded-lg border ${isDark ? 'bg-[#111315] border-[#2B323A]/80' : 'bg-white border-slate-200'}`}>
               <p className="font-bold text-[#8ECDF7] mb-1">✓ Why It Changed</p>
-              <p className="text-slate-400 text-[11px]">Adapts the interface around field engineers' specific jobs, reducing cognitive friction while maintaining full administrative power in Founder Mode.</p>
+              <p className="text-slate-400 text-[11px]">Establishes a complete end-to-end operational pipeline from cleanroom machine inspection to customer-ready certificate generation while reducing engineer cognitive overhead.</p>
             </div>
             <div className={`p-3 rounded-lg border ${isDark ? 'bg-[#111315] border-[#2B323A]/80' : 'bg-white border-slate-200'}`}>
               <p className="font-bold text-[#EFCB7A] mb-1">✓ Remaining for Future</p>
-              <p className="text-slate-400 text-[11px]">Future operational modes (Calibration Mode, Reporting Mode, Service Mode), Workflow Navigator UX refinement, and AI Studio Git sync optimization.</p>
+              <p className="text-slate-400 text-[11px]">Future specialized operational modes (Calibration, Service), Workflow Navigator UX refinement, and AI Studio Git sync optimization.</p>
             </div>
           </div>
         </div>
