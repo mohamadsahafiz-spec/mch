@@ -19,7 +19,13 @@ import {
   User,
   ShieldCheck,
   ChevronRight,
-  ChevronDown
+  ChevronDown,
+  Clock,
+  Sliders,
+  Eye,
+  Thermometer,
+  CheckCircle2,
+  Package
 } from 'lucide-react';
 import { NavigationTab, EngineerProfile, WorkspaceMode } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
@@ -69,11 +75,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
       ]
     },
     {
+      key: 'mhc_category',
+      title: 'MACHINE HEALTH CHECK',
+      items: [
+        { id: 'mhc', label: 'MHC Workspace Overview', icon: <Activity className="w-4 h-4 text-emerald-500" /> },
+        { id: 'mhc_01', label: '01 Current Laser Hour', icon: <Clock className="w-4 h-4 text-sky-400" /> },
+        { id: 'mhc_02', label: '02 Laser Profile / Product', icon: <Sliders className="w-4 h-4 text-purple-400" /> },
+        { id: 'mhc_03', label: '03 Laser Output & Power', icon: <Zap className="w-4 h-4 text-amber-400" /> },
+        { id: 'mhc_04', label: '04 Optics & Beam Profile', icon: <Eye className="w-4 h-4 text-indigo-400" /> },
+        { id: 'mhc_05', label: '05 Cooling System', icon: <Thermometer className="w-4 h-4 text-cyan-400" /> },
+        { id: 'mhc_06', label: '06 Product Quality / Visual', icon: <CheckCircle2 className="w-4 h-4 text-emerald-400" /> },
+        { id: 'mhc_07', label: '07 Spare Parts & Consumable', icon: <Package className="w-4 h-4 text-orange-400" /> },
+        { id: 'mhc_08', label: '08 Engineer Remarks', icon: <FileText className="w-4 h-4 text-rose-400" /> },
+      ]
+    },
+    {
       key: 'service_execution',
       title: 'SERVICE EXECUTION',
       items: [
         { id: 'machines', label: 'Machine Passport', icon: <Cpu className="w-4 h-4" /> },
-        { id: 'mhc', label: 'Health Check (MHC)', icon: <Activity className="w-4 h-4" /> },
         { id: 'laser_calibration', label: 'Laser Calibration', icon: <Zap className="w-4 h-4" /> },
         { id: 'baseline_check', label: 'Baseline Checks', icon: <SlidersHorizontal className="w-4 h-4" /> },
         { id: 'quality_investigation', label: 'Quality Investigation', icon: <AlertOctagon className="w-4 h-4" />, badge: urgentAlertsCount },
@@ -116,8 +136,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
     let allowedIds: NavigationTab[] = [];
     if (group.key === 'daily_work') {
       allowedIds = ['start_page', 'mission_control'];
+    } else if (group.key === 'mhc_category') {
+      allowedIds = ['mhc', 'mhc_01', 'mhc_02', 'mhc_03', 'mhc_04', 'mhc_05', 'mhc_06', 'mhc_07', 'mhc_08'];
     } else if (group.key === 'service_execution') {
-      allowedIds = ['machines', 'mhc', 'reports'];
+      allowedIds = ['machines', 'reports'];
     } else if (group.key === 'system') {
       allowedIds = ['profile', 'settings'];
     }
@@ -133,6 +155,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     const activeGroup = navGroups.find(g => g.items.some(i => i.id === activeTab));
     const initialState: Record<string, boolean> = {
       daily_work: false,
+      mhc_category: true,
       service_execution: false,
       operations: false,
       smart_tools: false,
@@ -141,7 +164,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     if (activeGroup) {
       initialState[activeGroup.key] = true;
     } else {
-      initialState.daily_work = true;
+      initialState.mhc_category = true;
     }
     return initialState;
   });

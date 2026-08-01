@@ -18,7 +18,9 @@ import {
   NotificationItem,
   SystemUser,
   WorkspaceMode,
-  UserSession
+  UserSession,
+  MHCSession,
+  MHCReportDraftConfig
 } from '../types';
 import { 
   INITIAL_CUSTOMERS, 
@@ -38,7 +40,9 @@ import {
   INITIAL_FOUNDER_BRANDING,
   INITIAL_ENGINEER_PROFILE,
   INITIAL_NOTIFICATIONS,
-  INITIAL_USERS
+  INITIAL_USERS,
+  INITIAL_MHC_SESSIONS,
+  INITIAL_MHC_REPORT_DRAFTS
 } from '../data/mockData';
 
 const KEYS = {
@@ -61,7 +65,9 @@ const KEYS = {
   NOTIFICATIONS: 'fso_v072_notifications',
   USERS: 'fso_v073_users',
   AUTH: 'fso_v080_authenticated',
-  WORKSPACE_MODE: 'fso_v080_workspace_mode'
+  WORKSPACE_MODE: 'fso_v080_workspace_mode',
+  MHC_SESSIONS: 'fso_v080_mhc_sessions',
+  MHC_REPORT_DRAFTS: 'fso_v080_mhc_report_drafts'
 };
 
 function getStorage<T>(key: string, defaultValue: T): T {
@@ -145,6 +151,12 @@ export const StorageService = {
 
   getWorkspaceMode: (): WorkspaceMode => getStorage(KEYS.WORKSPACE_MODE, 'MHC_MODE'),
   saveWorkspaceMode: (mode: WorkspaceMode) => setStorage(KEYS.WORKSPACE_MODE, mode),
+
+  getMhcSessions: (): MHCSession[] => getStorage(KEYS.MHC_SESSIONS, INITIAL_MHC_SESSIONS),
+  saveMhcSessions: (data: MHCSession[]) => setStorage(KEYS.MHC_SESSIONS, data),
+
+  getMhcReportDrafts: (): MHCReportDraftConfig[] => getStorage(KEYS.MHC_REPORT_DRAFTS, INITIAL_MHC_REPORT_DRAFTS),
+  saveMhcReportDrafts: (data: MHCReportDraftConfig[]) => setStorage(KEYS.MHC_REPORT_DRAFTS, data),
 
   resetToDefaults: () => {
     localStorage.clear();

@@ -13,7 +13,9 @@ import {
   AlertItem,
   EngineerProfile,
   NotificationItem,
-  SystemUser
+  SystemUser,
+  MHCSession,
+  MHCReportDraftConfig
 } from '../types';
 
 export const INITIAL_CUSTOMERS: Customer[] = [
@@ -1212,6 +1214,231 @@ export const INITIAL_USERS: SystemUser[] = [
     language: 'English (UK)',
     accountStatus: 'Suspended',
     bio: 'Customer Quality Auditor with read-only access to Machine Health Check reports and SLAs.'
+  }
+];
+
+export const INITIAL_MHC_SESSIONS: MHCSession[] = [
+  {
+    id: 'MHC-2026-TSMC-001',
+    machineId: 'mch-101',
+    machineModel: 'TRUMPF TruMicro 7000 Series',
+    machineSerialNumber: 'SN-TRU-8849201-A',
+    machineName: 'TRUMPF TruMicro 7000 (MCH-TSMC-01)',
+    customerId: 'cust-1',
+    customerName: 'TSMC Microelectronics Fab 18',
+    plantName: 'Tainan Cleanroom Fab 18A',
+    engineerName: 'Sahafiz',
+    startDate: '2026-08-01',
+    startTime: '08:30',
+    lastUpdated: '2026-08-01 10:42 AM',
+    completionStatus: 'IN_PROGRESS',
+    currentSection: 3,
+    sectionStatuses: {
+      sec_01: 'COMPLETED',
+      sec_02: 'COMPLETED',
+      sec_03: 'IN_PROGRESS',
+      sec_04: 'NOT_STARTED',
+      sec_05: 'NOT_STARTED',
+      sec_06: 'NOT_STARTED',
+      sec_07: 'NOT_STARTED',
+      sec_08: 'NOT_STARTED'
+    },
+    stage01_laserHours: [
+      {
+        laserId: 'lh-101-1',
+        laserIdentifier: 'Laser Head #1 (Main Oscillator)',
+        recordedLaserHour: 10250,
+        readingDate: '2026-07-01',
+        readingTime: '08:30',
+        calculatedCurrentHour: 11480,
+        warningThreshold: 15000,
+        criticalThreshold: 18000,
+        runtimeStatus: 'NORMAL'
+      },
+      {
+        laserId: 'lh-101-2',
+        laserIdentifier: 'Laser Head #2 (Auxiliary Amplifier)',
+        recordedLaserHour: 14800,
+        readingDate: '2026-07-01',
+        readingTime: '08:30',
+        calculatedCurrentHour: 15620,
+        warningThreshold: 15000,
+        criticalThreshold: 18000,
+        runtimeStatus: 'WARNING'
+      }
+    ],
+    stage02_laserProfile: {
+      laserId: 'lh-101-1',
+      productName: '3nm Silicon Annealing Process Wafer V2',
+      recipeProgram: 'RECIPE_3NM_ANNEAL_SUB01',
+      profileInfo: 'TEM00 Gaussian Profile - Single Mode 1030nm',
+      measurementInfo: 'Spot Size: 42.5 µm, Rayleigh Length: 2.1 mm',
+      supportingEvidence: 'Beam shape ellipticity < 1.05. Energy density verified within ±0.8%.',
+      images: [
+        'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80'
+      ]
+    },
+    stage03_laserPower: [
+      {
+        laserId: 'lh-101-1',
+        laserIdentifier: 'Laser Head #1 (Main Oscillator)',
+        ratedPowerWatts: 250,
+        referenceValueWatts: 250,
+        beforeValueWatts: 246.5,
+        afterValueWatts: 249.2,
+        stabilityPercent: 99.6,
+        result: 'PASS',
+        notes: 'Optics cleaned; power output recovered to 249.2W at 100% duty cycle.',
+        evidenceImages: []
+      },
+      {
+        laserId: 'lh-101-2',
+        laserIdentifier: 'Laser Head #2 (Auxiliary Amplifier)',
+        ratedPowerWatts: 250,
+        referenceValueWatts: 250,
+        beforeValueWatts: 238.0,
+        afterValueWatts: 241.5,
+        stabilityPercent: 96.6,
+        result: 'WARNING',
+        notes: 'Minor power degradation observed; realignment scheduled for Q4 PM.',
+        evidenceImages: []
+      }
+    ],
+    stage04_opticsBeam: {
+      cleanlinessScore: 96,
+      beamWaistMm: 1.08,
+      focusOffsetMm: 0.02,
+      symmetryRatio: 0.98,
+      m2Value: 1.12,
+      beforeCondition: 'Slight dust deposition on outer protective window.',
+      afterCondition: 'Wiped with pure isopropyl & optical lint-free swab. Transmittance restored.',
+      inspectionResult: 'PASS',
+      images: [
+        'https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=800&q=80'
+      ],
+      notes: 'Protective window replacement not required this cycle.'
+    },
+    stage05_cooling: {
+      chillerTempCelsius: 20.2,
+      chillerFlowLpm: 18.5,
+      diConductivityUs: 0.35,
+      coolingCondition: 'DI water loop optimal, zero micro-leakage.',
+      thermalCondition: 'Thermal gradient across laser housing < 0.4°C.',
+      beforeCondition: 'Conductivity 0.48 µS/cm prior to DI resin filter change.',
+      afterCondition: 'Conductivity reduced to 0.35 µS/cm following resin cartridge refresh.',
+      result: 'PASS',
+      notes: 'DI Water Cooling Filter replaced successfully as scheduled.'
+    },
+    stage06_productQuality: {
+      sampleId: 'SAMPLE-TSMC-3NM-8812',
+      viaDiameterUm: 42.4,
+      viaShape: 'Circular (Roundness 0.99)',
+      viaOffsetUm: 0.3,
+      padQuality: 'Zero recast layer, zero thermal heat affect zone oxidation.',
+      visualVerification: 'High-magnification SEM inspection confirms uniform ablation depth.',
+      beforeInspectionNotes: 'Sample cut prior to power realignment exhibited minor edge micro-burrs.',
+      afterInspectionNotes: 'Post-calibration sample demonstrates clean cut edges matching litho target.',
+      beforeImages: [],
+      afterImages: [
+        'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80'
+      ],
+      result: 'PASS',
+      notes: 'Wafer yield test passed cleanroom quality assurance standard.'
+    },
+    stage07_spareParts: [
+      {
+        id: 'sp-801',
+        partName: 'DI Water Resin Filter Cartridge 10"',
+        partNumber: 'EO-FLT-9921',
+        category: 'Cooling Consumable',
+        quantity: 1,
+        reason: 'Scheduled quarterly preventive replacement',
+        action: 'REPLACED',
+        costIndicator: 'EO_SUPPORT',
+        notes: 'Cartridge replaced under active Service Contract SC-TSMC-2026-A.'
+      },
+      {
+        id: 'sp-802',
+        partName: 'Laser Window Fused Silica 50mm',
+        partNumber: 'EO-OPT-1044',
+        category: 'Optics Consumable',
+        quantity: 1,
+        reason: 'Recommended spare stock for cleanroom drawer',
+        action: 'RECOMMENDED',
+        costIndicator: 'CUSTOMER_COST',
+        notes: 'Recommended ordering 1 unit backup for Q4 operations.'
+      }
+    ],
+    stage08_engineerRemarks: {
+      generalFindings: 'TRUMPF TruMicro 7000 system overall condition is stable. Laser Head #1 operating within 99.6% stability.',
+      observedIssues: 'Laser Head #2 exhibits minor output power drop (241.5W vs 250W rated).',
+      correctiveActions: 'Cleaned protective optics window, replaced DI water resin filter, aligned oscillator beam waist.',
+      recommendations: 'Monitor Laser Head #2 power weekly. Plan diode array inspection during Q4 maintenance cycle.',
+      followUpRequired: true,
+      productionReleaseVerdict: 'APPROVED'
+    }
+  }
+];
+
+export const INITIAL_MHC_REPORT_DRAFTS: MHCReportDraftConfig[] = [
+  {
+    id: 'DRAFT-MHC-2026-001',
+    mhcSessionId: 'MHC-2026-TSMC-001',
+    reportTitle: 'OFFICIAL MACHINE HEALTH CHECK CERTIFICATE & FIELD INSPECTION REPORT',
+    reportNumber: 'EO-MHC-REP-2026-0881',
+    date: '2026-08-01',
+    customerName: 'TSMC Microelectronics Fab 18',
+    plantName: 'Tainan Cleanroom Fab 18A',
+    machineModel: 'TRUMPF TruMicro 7000 Series',
+    machineSerialNumber: 'SN-TRU-8849201-A',
+    machineName: 'TRUMPF TruMicro 7000 (MCH-TSMC-01)',
+    engineerName: 'Sahafiz',
+    engineerTitle: 'Senior Field Service Engineer (EO Technics)',
+    sectionsVisibility: {
+      cover: true,
+      passport: true,
+      summary: true,
+      sec_01: true,
+      sec_02: true,
+      sec_03: true,
+      sec_04: true,
+      sec_05: true,
+      sec_06: true,
+      sec_07: true,
+      sec_08: true,
+      evidence: true,
+      signoff: true
+    },
+    sectionsOrder: [
+      'cover',
+      'passport',
+      'summary',
+      'sec_01',
+      'sec_02',
+      'sec_03',
+      'sec_04',
+      'sec_05',
+      'sec_06',
+      'sec_07',
+      'sec_08',
+      'evidence',
+      'signoff'
+    ],
+    customComments: 'Comprehensive Machine Health Check executed in accordance with TSMC Fab 18 Cleanroom SOP and EO Technics Technical Standard. All key optical and thermal subsystems verified.',
+    selectedImages: [
+      {
+        id: 'img-1',
+        url: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80',
+        caption: 'Beam Profile Analysis - TEM00 Single Mode Spot Output',
+        sectionKey: 'sec_04'
+      }
+    ],
+    engineerConclusion: 'The machine is approved for continuous 24/7 semiconductor wafer annealing production under conditional monitoring for Laser Head #2.',
+    engineerSignatureName: 'Sahafiz',
+    engineerSignatureDate: '2026-08-01',
+    customerSignatureName: 'Dr. Marcus Vance',
+    customerSignatureDate: '2026-08-01',
+    lastSaved: '2026-08-01 10:45 AM'
   }
 ];
 

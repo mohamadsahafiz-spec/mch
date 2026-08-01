@@ -7,6 +7,14 @@ export type NavigationTab =
   | 'customers'
   | 'machines'
   | 'mhc'
+  | 'mhc_01'
+  | 'mhc_02'
+  | 'mhc_03'
+  | 'mhc_04'
+  | 'mhc_05'
+  | 'mhc_06'
+  | 'mhc_07'
+  | 'mhc_08'
   | 'laser_calibration'
   | 'baseline_check'
   | 'quality_investigation'
@@ -399,5 +407,154 @@ export interface ReportDraft {
   branding: FounderBrandingConfig;
   status: 'DRAFT' | 'READY_FOR_REVIEW' | 'SAVED';
   updatedAt: string;
+}
+
+// FSOS v0.8.0 MHC Workspace Types
+export interface MHCLaserHourItem {
+  laserId: string;
+  laserIdentifier: string;
+  recordedLaserHour: number;
+  readingDate: string;
+  readingTime: string;
+  calculatedCurrentHour: number;
+  warningThreshold: number;
+  criticalThreshold: number;
+  runtimeStatus: 'NORMAL' | 'WARNING' | 'CRITICAL';
+}
+
+export interface MHCLaserProfileData {
+  laserId: string;
+  productName: string;
+  recipeProgram: string;
+  profileInfo: string;
+  measurementInfo: string;
+  supportingEvidence: string;
+  images: string[];
+}
+
+export interface MHCLaserPowerItem {
+  laserId: string;
+  laserIdentifier: string;
+  ratedPowerWatts: number;
+  referenceValueWatts: number;
+  beforeValueWatts: number;
+  afterValueWatts: number;
+  stabilityPercent: number;
+  result: 'PASS' | 'WARNING' | 'FAIL';
+  notes: string;
+  evidenceImages: string[];
+}
+
+export interface MHCOpticsBeamData {
+  cleanlinessScore: number;
+  beamWaistMm: number;
+  focusOffsetMm: number;
+  symmetryRatio: number;
+  m2Value: number;
+  beforeCondition: string;
+  afterCondition: string;
+  inspectionResult: 'PASS' | 'WARNING' | 'FAIL';
+  images: string[];
+  notes: string;
+}
+
+export interface MHCCoolingData {
+  chillerTempCelsius: number;
+  chillerFlowLpm: number;
+  diConductivityUs: number;
+  coolingCondition: string;
+  thermalCondition: string;
+  beforeCondition: string;
+  afterCondition: string;
+  result: 'PASS' | 'ATTENTION' | 'FAIL';
+  notes: string;
+}
+
+export interface MHCProductQualityData {
+  sampleId: string;
+  viaDiameterUm: number;
+  viaShape: string;
+  viaOffsetUm: number;
+  padQuality: string;
+  visualVerification: string;
+  beforeInspectionNotes: string;
+  afterInspectionNotes: string;
+  beforeImages: string[];
+  afterImages: string[];
+  result: 'PASS' | 'ATTENTION' | 'FAIL';
+  notes: string;
+}
+
+export interface MHCSparePartItem {
+  id: string;
+  partName: string;
+  partNumber: string;
+  category: string;
+  quantity: number;
+  reason: string;
+  action: 'REPLACED' | 'USED' | 'RECOMMENDED';
+  costIndicator: 'CUSTOMER_COST' | 'EO_SUPPORT' | 'WARRANTY';
+  notes: string;
+}
+
+export interface MHCEngineerRemarksData {
+  generalFindings: string;
+  observedIssues: string;
+  correctiveActions: string;
+  recommendations: string;
+  followUpRequired: boolean;
+  productionReleaseVerdict: 'APPROVED' | 'CONDITIONAL_RELEASE' | 'HALTED';
+}
+
+export interface MHCSession {
+  id: string;
+  machineId: string;
+  machineModel: string;
+  machineSerialNumber: string;
+  machineName: string;
+  customerId: string;
+  customerName: string;
+  plantName: string;
+  engineerName: string;
+  startDate: string;
+  startTime: string;
+  lastUpdated: string;
+  completionStatus: 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED';
+  completedDate?: string;
+  currentSection: number;
+  sectionStatuses: Record<string, 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED'>;
+  stage01_laserHours: MHCLaserHourItem[];
+  stage02_laserProfile: MHCLaserProfileData;
+  stage03_laserPower: MHCLaserPowerItem[];
+  stage04_opticsBeam: MHCOpticsBeamData;
+  stage05_cooling: MHCCoolingData;
+  stage06_productQuality: MHCProductQualityData;
+  stage07_spareParts: MHCSparePartItem[];
+  stage08_engineerRemarks: MHCEngineerRemarksData;
+}
+
+export interface MHCReportDraftConfig {
+  id: string;
+  mhcSessionId: string;
+  reportTitle: string;
+  reportNumber: string;
+  date: string;
+  customerName: string;
+  plantName: string;
+  machineModel: string;
+  machineSerialNumber: string;
+  machineName: string;
+  engineerName: string;
+  engineerTitle: string;
+  sectionsVisibility: Record<string, boolean>;
+  sectionsOrder: string[];
+  customComments: string;
+  selectedImages: Array<{ id: string; url: string; caption: string; sectionKey: string }>;
+  engineerConclusion: string;
+  engineerSignatureName: string;
+  engineerSignatureDate: string;
+  customerSignatureName: string;
+  customerSignatureDate: string;
+  lastSaved: string;
 }
 

@@ -486,10 +486,11 @@ function AppLayout() {
             />
           )}
 
-          {activeTab === 'mhc' && (
+          {(activeTab === 'mhc' || activeTab.startsWith('mhc_')) && (
             <MachineHealthCheckModule
               machines={machines}
               initialMachineId={selectedMachineId}
+              activeSubTab={activeTab}
               onSaveMhcRecord={handleSaveMhcRecord}
               onGenerateReport={handleGenerateExecutiveReport}
             />
