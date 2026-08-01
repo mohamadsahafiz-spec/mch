@@ -380,6 +380,19 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
     const deletedId = customerToDelete.id;
     const deletedName = customerToDelete.name;
 
+    // Check if customer has assigned machines
+    const assignedMachines = machines.filter(
+      (m) => m.customerId === deletedId || m.customerName === deletedName
+    );
+
+    if (assignedMachines.length > 0) {
+      showAlert(
+        `Cannot delete customer "${deletedName}". ${assignedMachines.length} machine(s) are assigned to this customer. Delete or reassign all machines first.`
+      );
+      setIsDeleteCustomerModalOpen(false);
+      return;
+    }
+
     setCustomerList((prev) => prev.filter((c) => c.id !== deletedId));
     if (onDeleteCustomer) onDeleteCustomer(deletedId);
 
@@ -1270,7 +1283,7 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
                   <HealthGauge score={selectedMachine.healthScore} label="Overall Health Score" size="lg" />
                 </div>
 
-                {/* Primary Actions & Professional Dropdown */}
+                {/* Primary Actions */}
                 <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap justify-end w-full sm:w-auto">
                   <Button
                     variant="primary"
@@ -1280,105 +1293,6 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
                   >
                     Execute Health Check
                   </Button>
-
-                  {/* Machine Actions Menu Dropdown */}
-                  <div className="relative">
-                    <Button
-                      variant="outline"
-                      size="md"
-                      icon={<Settings className="w-4 h-4" />}
-                      onClick={() => setIsActionMenuOpen(!isActionMenuOpen)}
-                    >
-                      Machine Actions
-                      <ChevronDown className={`w-4 h-4 ml-1 transition-transform ${isActionMenuOpen ? 'rotate-180' : ''}`} />
-                    </Button>
-
-                    {isActionMenuOpen && (
-                      <>
-                        {/* Invisible backdrop to close dropdown on click outside */}
-                        <div
-                          className="fixed inset-0 z-20"
-                          onClick={() => setIsActionMenuOpen(false)}
-                        />
-
-                        {/* Dropdown Menu Popup */}
-                        <div className={`absolute right-0 mt-2 w-56 rounded-2xl border shadow-xl z-30 py-1 overflow-hidden transition-all ${
-                          isDark
-                            ? 'bg-[#1E2227] border-[#2B323A] text-slate-200 divide-y divide-[#2B323A]'
-                            : 'bg-white border-slate-200 text-slate-800 divide-y divide-slate-100 shadow-2xl'
-                        }`}>
-                          <div className="py-1">
-                            <button
-                              onClick={() => {
-                                setIsActionMenuOpen(false);
-                                handleOpenEdit();
-                              }}
-                              className={`w-full px-4 py-2 text-left text-xs font-semibold flex items-center gap-2.5 transition-colors ${
-                                isDark ? 'hover:bg-[#282E36] hover:text-white' : 'hover:bg-slate-100 hover:text-slate-900'
-                              }`}
-                            >
-                              <Edit3 className="w-4 h-4 text-[#8B9DFF]" />
-                              Edit Specifications
-                            </button>
-
-                            <button
-                              onClick={() => {
-                                setIsActionMenuOpen(false);
-                                handleOpenRename();
-                              }}
-                              className={`w-full px-4 py-2 text-left text-xs font-semibold flex items-center gap-2.5 transition-colors ${
-                                isDark ? 'hover:bg-[#282E36] hover:text-white' : 'hover:bg-slate-100 hover:text-slate-900'
-                              }`}
-                            >
-                              <Type className="w-4 h-4 text-[#8ECDF7]" />
-                              Rename Machine Code
-                            </button>
-                          </div>
-
-                          <div className="py-1">
-                            <button
-                              onClick={() => {
-                                handleDuplicateMachine();
-                              }}
-                              className={`w-full px-4 py-2 text-left text-xs font-semibold flex items-center gap-2.5 transition-colors ${
-                                isDark ? 'hover:bg-[#282E36] hover:text-white' : 'hover:bg-slate-100 hover:text-slate-900'
-                              }`}
-                            >
-                              <Copy className="w-4 h-4 text-amber-500" />
-                              Duplicate Machine Profile
-                            </button>
-
-                            <button
-                              onClick={() => {
-                                handleArchiveMachine();
-                              }}
-                              className={`w-full px-4 py-2 text-left text-xs font-semibold flex items-center gap-2.5 transition-colors ${
-                                isDark ? 'hover:bg-[#282E36] hover:text-white' : 'hover:bg-slate-100 hover:text-slate-900'
-                              }`}
-                            >
-                              <Archive className="w-4 h-4 text-slate-400" />
-                              Archive Machine
-                            </button>
-                          </div>
-
-                          <div className="py-1">
-                            <button
-                              onClick={() => {
-                                setIsActionMenuOpen(false);
-                                setIsDeleteModalOpen(true);
-                              }}
-                              className={`w-full px-4 py-2 text-left text-xs font-semibold flex items-center gap-2.5 text-rose-500 transition-colors ${
-                                isDark ? 'hover:bg-rose-950/30' : 'hover:bg-rose-50'
-                              }`}
-                            >
-                              <Trash2 className="w-4 h-4 text-rose-500" />
-                              Delete Machine
-                            </button>
-                          </div>
-                        </div>
-                      </>
-                    )}
-                  </div>
                 </div>
               </div>
             </div>
@@ -2259,52 +2173,70 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
       </Modal>
 
       {/* 8. Delete Customer Confirmation Modal */}
-      <Modal
-        isOpen={isDeleteCustomerModalOpen}
-        onClose={() => setIsDeleteCustomerModalOpen(false)}
-        title="Confirm Delete Customer Account"
-        subtitle="This action will remove the customer account."
-        maxWidth="md"
-      >
-        <div className="p-4 space-y-4">
-          <div className={`p-4 rounded-xl border flex items-start gap-3 ${
-            isDark ? 'bg-rose-950/20 border-rose-800/40 text-rose-200' : 'bg-rose-50 border-rose-200 text-rose-800'
-          }`}>
-            <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5 text-rose-500" />
-            <div className="text-xs space-y-1">
-              <p className="font-bold">Are you sure you want to delete this customer account?</p>
-              <p>
-                Account: <strong className="font-mono">{customerToDelete?.name}</strong>
-              </p>
-              <p className="text-[11px] opacity-80 pt-1">
-                Facility: {customerToDelete?.industry || 'Cleanroom Operations'}
-              </p>
+      {(() => {
+        const assignedMachinesCount = customerToDelete
+          ? machines.filter((m) => m.customerId === customerToDelete.id || m.customerName === customerToDelete.name).length
+          : 0;
+
+        return (
+          <Modal
+            isOpen={isDeleteCustomerModalOpen}
+            onClose={() => setIsDeleteCustomerModalOpen(false)}
+            title="Confirm Delete Customer Account"
+            subtitle="This action will remove the customer account."
+            maxWidth="md"
+          >
+            <div className="p-4 space-y-4">
+              <div className={`p-4 rounded-xl border flex items-start gap-3 ${
+                isDark ? 'bg-rose-950/20 border-rose-800/40 text-rose-200' : 'bg-rose-50 border-rose-200 text-rose-800'
+              }`}>
+                <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5 text-rose-500" />
+                <div className="text-xs space-y-1">
+                  <p className="font-bold">Are you sure you want to delete this customer account?</p>
+                  <p>
+                    Account: <strong className="font-mono">{customerToDelete?.name}</strong>
+                  </p>
+                  <p className="text-[11px] opacity-80 pt-1">
+                    Facility: {customerToDelete?.industry || 'Cleanroom Operations'}
+                  </p>
+                </div>
+              </div>
+
+              {assignedMachinesCount > 0 ? (
+                <div className="p-3 bg-amber-950/40 border border-amber-800/60 rounded-lg text-amber-300 text-xs flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 shrink-0 text-amber-400" />
+                  <span>
+                    <strong>Customer Deletion Blocked:</strong> {assignedMachinesCount} machine(s) are assigned to this customer. You must delete or reassign all machines before this customer account can be deleted.
+                  </span>
+                </div>
+              ) : (
+                <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                  Deleting this customer account will permanently remove it from the Customer Workspace navigation hierarchy.
+                </p>
+              )}
+
+              <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-200 dark:border-slate-800">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsDeleteCustomerModalOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="danger"
+                  size="sm"
+                  disabled={assignedMachinesCount > 0}
+                  icon={<Trash2 className="w-4 h-4" />}
+                  onClick={handleConfirmDeleteCustomer}
+                >
+                  Confirm Delete Customer
+                </Button>
+              </div>
             </div>
-          </div>
-
-          <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-            Deleting this customer account will remove it from the Customer Workspace navigation hierarchy.
-          </p>
-
-          <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-200 dark:border-slate-800">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsDeleteCustomerModalOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="danger"
-              size="sm"
-              icon={<Trash2 className="w-4 h-4" />}
-              onClick={handleConfirmDeleteCustomer}
-            >
-              Confirm Delete Customer
-            </Button>
-          </div>
-        </div>
-      </Modal>
+          </Modal>
+        );
+      })()}
     </div>
   );
 };

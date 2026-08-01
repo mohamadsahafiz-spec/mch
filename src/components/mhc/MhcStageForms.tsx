@@ -182,6 +182,42 @@ export const MhcStageForms: React.FC<MhcStageFormsProps> = ({
       return diffMs > 0 ? Math.floor(diffMs / (1000 * 60 * 60)) : 0;
     };
 
+    const handleAddLaser = () => {
+      const nextNum = laserHours.length + 1;
+      const newLaser: MHCLaserHourItem = {
+        laserId: `laser-${Date.now()}`,
+        laserIdentifier: `Laser Head ${nextNum}`,
+        recordedLaserHour: 1000,
+        readingDate: new Date().toISOString().split('T')[0],
+        readingTime: '09:00',
+        calculatedCurrentHour: 1000,
+        warningThreshold: 15000,
+        criticalThreshold: 18000,
+        runtimeStatus: 'NORMAL'
+      };
+      const updated = [...laserHours, newLaser];
+      onUpdateSession({
+        ...session,
+        stage01_laserHours: updated,
+        sectionStatuses: { ...session.sectionStatuses, sec_01: 'COMPLETED' },
+        lastUpdated: new Date().toLocaleString()
+      });
+    };
+
+    const handleDeleteLaser = (index: number) => {
+      if (laserHours.length <= 1) {
+        alert("At least one laser head must remain in the inspection protocol.");
+        return;
+      }
+      const updated = laserHours.filter((_, i) => i !== index);
+      onUpdateSession({
+        ...session,
+        stage01_laserHours: updated,
+        sectionStatuses: { ...session.sectionStatuses, sec_01: 'COMPLETED' },
+        lastUpdated: new Date().toLocaleString()
+      });
+    };
+
     const handleLaserHourChange = (
       index: number,
       field: keyof MHCLaserHourItem,
@@ -202,7 +238,7 @@ export const MhcStageForms: React.FC<MhcStageFormsProps> = ({
       }
 
       // Recalculate runtime status
-      const cur = Number(field === 'calculatedCurrentHour' ? (field === 'calculatedCurrentHour' ? value : item.calculatedCurrentHour) : item.calculatedCurrentHour);
+      const cur = Number(field === 'calculatedCurrentHour' ? value : item.calculatedCurrentHour);
       const warn = Number(field === 'warningThreshold' ? value : item.warningThreshold);
       const crit = Number(field === 'criticalThreshold' ? value : item.criticalThreshold);
 
@@ -226,7 +262,7 @@ export const MhcStageForms: React.FC<MhcStageFormsProps> = ({
 
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-800 pb-4 gap-3">
           <div>
             <h3 className="text-lg font-bold text-slate-100 flex items-center gap-2">
               <Clock className="w-5 h-5 text-sky-400" />
@@ -239,93 +275,152 @@ export const MhcStageForms: React.FC<MhcStageFormsProps> = ({
               Calculation Model: Recorded Laser Hour + Reading Date + Reading Time + Elapsed Runtime = Calculated Current Laser Hour
             </p>
           </div>
-          <Badge variant={session.sectionStatuses.sec_01 === 'COMPLETED' ? 'success' : 'warning'}>
-            {session.sectionStatuses.sec_01 || 'IN_PROGRESS'}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleAddLaser}
+              icon={<Plus className="w-4 h-4 text-sky-400" />}
+              className="text-xs border-sky-800/60 hover:bg-sky-950/50 text-sky-300"
+            >
+              Add Laser
+            </Button>
+            <Badge variant={session.sectionStatuses.sec_01 === 'COMPLETED' ? 'success' : 'warning'}>
+              {session.sectionStatuses.sec_01 || 'IN_PROGRESS'}
+            </Badge>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 gap-4">
-          {laserHours.map((lh, idx) => (
-            <Card key={lh.laserId || idx} className="border border-slate-800 bg-slate-900/60 p-5 space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-800/80">
-                <div className="font-bold text-slate-200 text-base flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-sky-400"></span>
-                  {lh.laserIdentifier}
-                </div>
-                <Badge
-                  variant={
-                    lh.runtimeStatus === 'CRITICAL'
-                      ? 'danger'
-                      : lh.runtimeStatus === 'WARNING'
-                      ? 'warning'
-                      : 'success'
-                  }
-                >
-                  RUNTIME: {lh.runtimeStatus}
-                </Badge>
-              </div>
+          {laserHours.map((lh, idx) => {
+            const crit = lh.criticalThreshold || 18000;
+            const warn = lh.warningThreshold || 15000;
+            const cur = lh.calculatedCurrentHour || 0;
+            const remainingHours = Math.max(0, crit - cur);
+            const isRemainingLow = remainingHours <= 500 || cur >= warn;
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
-                <div>
-                  <label className="block text-slate-400 mb-1 font-medium">Last Recorded Hour</label>
-                  <input
-                    type="number"
-                    value={lh.recordedLaserHour}
-                    onChange={(e) => handleLaserHourChange(idx, 'recordedLaserHour', Number(e.target.value))}
-                    className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-slate-200 font-mono"
-                  />
+            return (
+              <Card key={lh.laserId || idx} className={`border p-5 space-y-4 transition-all ${
+                isRemainingLow
+                  ? 'border-rose-800/80 bg-rose-950/20 shadow-lg'
+                  : 'border-slate-800 bg-slate-900/60'
+              }`}>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-800/80">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className={`w-2.5 h-2.5 rounded-full ${isRemainingLow ? 'bg-rose-500 animate-pulse' : 'bg-sky-400'}`}></span>
+                    <input
+                      type="text"
+                      value={lh.laserIdentifier}
+                      onChange={(e) => handleLaserHourChange(idx, 'laserIdentifier', e.target.value)}
+                      className="bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-slate-100 font-bold text-sm w-48 font-mono focus:border-sky-500"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge
+                      variant={
+                        lh.runtimeStatus === 'CRITICAL'
+                          ? 'danger'
+                          : lh.runtimeStatus === 'WARNING'
+                          ? 'warning'
+                          : 'success'
+                      }
+                    >
+                      RUNTIME: {lh.runtimeStatus}
+                    </Badge>
+                    <button
+                      onClick={() => handleDeleteLaser(idx)}
+                      className="p-1.5 text-rose-400 hover:text-rose-200 hover:bg-rose-950/60 rounded border border-rose-900/40 transition-colors"
+                      title="Delete Laser"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-slate-400 mb-1 font-medium">Calculated Current Hour</label>
-                  <input
-                    type="number"
-                    value={lh.calculatedCurrentHour}
-                    onChange={(e) => handleLaserHourChange(idx, 'calculatedCurrentHour', Number(e.target.value))}
-                    className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-slate-200 font-mono focus:border-sky-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-slate-400 mb-1 font-medium">Warning Threshold (hrs)</label>
-                  <input
-                    type="number"
-                    value={lh.warningThreshold}
-                    onChange={(e) => handleLaserHourChange(idx, 'warningThreshold', Number(e.target.value))}
-                    className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-amber-300 font-mono"
-                  />
-                </div>
-                <div>
-                  <label className="block text-slate-400 mb-1 font-medium">Critical Threshold (hrs)</label>
-                  <input
-                    type="number"
-                    value={lh.criticalThreshold}
-                    onChange={(e) => handleLaserHourChange(idx, 'criticalThreshold', Number(e.target.value))}
-                    className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-rose-400 font-mono"
-                  />
-                </div>
-              </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                <div>
-                  <label className="block text-slate-400 mb-1 font-medium">Reading Date</label>
-                  <input
-                    type="date"
-                    value={lh.readingDate}
-                    onChange={(e) => handleLaserHourChange(idx, 'readingDate', e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-slate-200"
-                  />
+                {/* Remaining Hours Banner */}
+                <div className={`p-3 rounded-lg border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs font-mono font-semibold ${
+                  isRemainingLow
+                    ? 'bg-rose-950/50 border-rose-800/80 text-rose-300'
+                    : 'bg-slate-950/80 border-slate-800 text-emerald-400'
+                }`}>
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-slate-400 shrink-0" />
+                    <span>Remaining Operating Hours: <strong className="text-white font-mono text-sm">{remainingHours.toLocaleString()} hrs</strong></span>
+                  </div>
+                  {isRemainingLow ? (
+                    <span className="text-xs text-rose-400 flex items-center gap-1 font-bold bg-rose-900/40 px-2 py-0.5 rounded border border-rose-700/50">
+                      <AlertTriangle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                      MAINTENANCE / SWAP DUE (≤500 hrs)
+                    </span>
+                  ) : (
+                    <span className="text-xs text-emerald-400 flex items-center gap-1 font-normal opacity-90">
+                      ✓ Optimal Runtime Capacity
+                    </span>
+                  )}
                 </div>
-                <div>
-                  <label className="block text-slate-400 mb-1 font-medium">Reading Time</label>
-                  <input
-                    type="time"
-                    value={lh.readingTime}
-                    onChange={(e) => handleLaserHourChange(idx, 'readingTime', e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-slate-200"
-                  />
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+                  <div>
+                    <label className="block text-slate-400 mb-1 font-medium">Last Recorded Hour</label>
+                    <input
+                      type="number"
+                      value={lh.recordedLaserHour}
+                      onChange={(e) => handleLaserHourChange(idx, 'recordedLaserHour', Number(e.target.value))}
+                      className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-slate-200 font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-400 mb-1 font-medium">Calculated Current Hour</label>
+                    <input
+                      type="number"
+                      value={lh.calculatedCurrentHour}
+                      onChange={(e) => handleLaserHourChange(idx, 'calculatedCurrentHour', Number(e.target.value))}
+                      className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-slate-200 font-mono focus:border-sky-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-400 mb-1 font-medium">Warning Threshold (hrs)</label>
+                    <input
+                      type="number"
+                      value={lh.warningThreshold}
+                      onChange={(e) => handleLaserHourChange(idx, 'warningThreshold', Number(e.target.value))}
+                      className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-amber-300 font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-400 mb-1 font-medium">Critical Threshold (hrs)</label>
+                    <input
+                      type="number"
+                      value={lh.criticalThreshold}
+                      onChange={(e) => handleLaserHourChange(idx, 'criticalThreshold', Number(e.target.value))}
+                      className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-rose-400 font-mono"
+                    />
+                  </div>
                 </div>
-              </div>
-            </Card>
-          ))}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                  <div>
+                    <label className="block text-slate-400 mb-1 font-medium">Reading Date</label>
+                    <input
+                      type="date"
+                      value={lh.readingDate}
+                      onChange={(e) => handleLaserHourChange(idx, 'readingDate', e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-slate-200"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-400 mb-1 font-medium">Reading Time</label>
+                    <input
+                      type="time"
+                      value={lh.readingTime}
+                      onChange={(e) => handleLaserHourChange(idx, 'readingTime', e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-slate-200"
+                    />
+                  </div>
+                </div>
+              </Card>
+            );
+          })}
         </div>
       </div>
     );
@@ -465,6 +560,42 @@ export const MhcStageForms: React.FC<MhcStageFormsProps> = ({
   if (activeStage === 3) {
     const powerItems = session.stage03_laserPower || [];
 
+    const handleAddPowerHead = () => {
+      const nextNum = powerItems.length + 1;
+      const newHead: MHCLaserPowerItem = {
+        laserId: `pwr-${Date.now()}`,
+        laserIdentifier: `Laser Head ${nextNum}`,
+        ratedPowerWatts: 100,
+        referenceValueWatts: 100,
+        beforeValueWatts: 92,
+        afterValueWatts: 99,
+        stabilityPercent: 99,
+        result: 'PASS',
+        notes: '',
+        evidenceImages: []
+      };
+      onUpdateSession({
+        ...session,
+        stage03_laserPower: [...powerItems, newHead],
+        sectionStatuses: { ...session.sectionStatuses, sec_03: 'COMPLETED' },
+        lastUpdated: new Date().toLocaleString()
+      });
+    };
+
+    const handleDeletePowerHead = (index: number) => {
+      if (powerItems.length <= 1) {
+        alert("At least one laser power measurement head must remain.");
+        return;
+      }
+      const updated = powerItems.filter((_, i) => i !== index);
+      onUpdateSession({
+        ...session,
+        stage03_laserPower: updated,
+        sectionStatuses: { ...session.sectionStatuses, sec_03: 'COMPLETED' },
+        lastUpdated: new Date().toLocaleString()
+      });
+    };
+
     const handlePowerChange = (
       index: number,
       field: keyof MHCLaserPowerItem,
@@ -500,7 +631,7 @@ export const MhcStageForms: React.FC<MhcStageFormsProps> = ({
 
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-800 pb-4 gap-3">
           <div>
             <h3 className="text-lg font-bold text-slate-100 flex items-center gap-2">
               <Zap className="w-5 h-5 text-amber-400" />
@@ -510,9 +641,20 @@ export const MhcStageForms: React.FC<MhcStageFormsProps> = ({
               Record power meter readings (Before & After maintenance) for all active laser heads.
             </p>
           </div>
-          <Badge variant={session.sectionStatuses.sec_03 === 'COMPLETED' ? 'success' : 'warning'}>
-            {session.sectionStatuses.sec_03 || 'IN_PROGRESS'}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleAddPowerHead}
+              icon={<Plus className="w-4 h-4 text-amber-400" />}
+              className="text-xs border-amber-800/60 hover:bg-amber-950/50 text-amber-300"
+            >
+              Add Power Head
+            </Button>
+            <Badge variant={session.sectionStatuses.sec_03 === 'COMPLETED' ? 'success' : 'warning'}>
+              {session.sectionStatuses.sec_03 || 'IN_PROGRESS'}
+            </Badge>
+          </div>
         </div>
 
         <div className="space-y-4">
@@ -521,7 +663,12 @@ export const MhcStageForms: React.FC<MhcStageFormsProps> = ({
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-800">
                 <div className="font-bold text-slate-200 text-sm flex items-center gap-2">
                   <span className="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
-                  {p.laserIdentifier}
+                  <input
+                    type="text"
+                    value={p.laserIdentifier}
+                    onChange={(e) => handlePowerChange(idx, 'laserIdentifier', e.target.value)}
+                    className="bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-slate-100 font-bold text-xs w-48 font-mono focus:border-amber-500"
+                  />
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="text-xs text-slate-400">
@@ -530,6 +677,13 @@ export const MhcStageForms: React.FC<MhcStageFormsProps> = ({
                   <Badge variant={p.result === 'PASS' ? 'success' : p.result === 'WARNING' ? 'warning' : 'danger'}>
                     {p.result}
                   </Badge>
+                  <button
+                    onClick={() => handleDeletePowerHead(idx)}
+                    className="p-1.5 text-rose-400 hover:text-rose-200 hover:bg-rose-950/60 rounded border border-rose-900/40 transition-colors"
+                    title="Delete Power Measurement Head"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               </div>
 
@@ -572,14 +726,54 @@ export const MhcStageForms: React.FC<MhcStageFormsProps> = ({
                 </div>
               </div>
 
-              <div className="text-xs">
-                <label className="block text-slate-400 mb-1 font-medium">Power Notes & Observations</label>
+              <div className="text-xs space-y-2">
+                <label className="block text-slate-400 font-medium">Power Notes & Observations</label>
                 <input
                   type="text"
                   value={p.notes}
                   onChange={(e) => handlePowerChange(idx, 'notes', e.target.value)}
                   className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-slate-200"
+                  placeholder="Record power meter sensor serial number, warm-up time, or power fluctuations..."
                 />
+              </div>
+
+              {/* Power Head Photos */}
+              <div className="pt-2 border-t border-slate-800/80">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs font-medium text-slate-400">Power Meter / Measurement Evidence Photos</label>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() =>
+                      handleSimulateImageUpload(p.evidenceImages || [], (imgs) =>
+                        handlePowerChange(idx, 'evidenceImages', imgs)
+                      )
+                    }
+                    className="text-xs flex items-center gap-1.5 py-1 text-amber-300 border-amber-900/50 hover:bg-amber-950/30"
+                  >
+                    <Upload className="w-3.5 h-3.5" />
+                    Add Photo
+                  </Button>
+                </div>
+                {p.evidenceImages && p.evidenceImages.length > 0 && (
+                  <div className="flex flex-wrap gap-3 pt-1">
+                    {p.evidenceImages.map((img, i) => (
+                      <div key={i} className="relative group w-20 h-20 rounded-lg overflow-hidden border border-slate-700 bg-slate-950">
+                        <img src={img} alt="Power Evidence" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                        <button
+                          onClick={() => {
+                            const updated = p.evidenceImages.filter((_, photoIdx) => photoIdx !== i);
+                            handlePowerChange(idx, 'evidenceImages', updated);
+                          }}
+                          className="absolute top-1 right-1 p-1 bg-rose-950/80 text-rose-300 rounded opacity-0 group-hover:opacity-100 transition"
+                          title="Delete Photo"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </Card>
           ))}

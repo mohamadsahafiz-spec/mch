@@ -15,6 +15,22 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
 
   const changelog = [
     {
+      version: 'v0.8.1',
+      date: '2026-08-03',
+      type: 'MHC CRUD & Machine Passport UX Refinement (ECO-20260803-035)',
+      highlights: [
+        'FIXED: Machine Passport Customer deletion logic — customer deletion is strictly blocked when machines are assigned.',
+        'FIXED: Machine Passport Machine deletion — deleting the last machine deletes ONLY that machine; customer account remains intact.',
+        'FIXED: Removed duplicate "Machine Actions" dropdown from the Machine Detail panel; retained 3-dot card menu as primary CRUD control.',
+        'NEW: Stage 01 (Current Laser Hour) CRUD controls — added "+ Add Laser" and per-laser "Delete Laser" actions with customizable identifiers.',
+        'NEW: Stage 01 Remaining Hours indicator — calculated dynamic remaining hours with prominent alert badge when ≤500 hrs remaining.',
+        'NEW: Stage 03 (Laser Output & Power) CRUD controls — added "+ Add Power Head" and per-head "Delete Laser Head" actions with customizable identifiers.',
+        'NEW: Stage 03 Evidence Photo Management — added photo upload and thumbnail deletion for each laser power head.',
+        'NEW: Photo evidence upload & instant thumbnail removal for Stages 02, 04, 05, and 06.',
+        'COMPLETED: Version bump to v0.8.1 with complete system documentation harmonization.'
+      ]
+    },
+    {
       version: 'v0.8.0',
       date: '2026-08-03',
       type: 'MHC Operations Workspace Release (ECO-20260803-034)',
@@ -485,16 +501,16 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
             <div className={`p-3 rounded-xl border font-mono font-bold text-lg ${
               isDark ? 'bg-[#8B9DFF]/15 border-[#8B9DFF]/30 text-[#8B9DFF]' : 'bg-indigo-50 border-indigo-200 text-indigo-800'
             }`}>
-              v0.8.0
+              v0.8.1
             </div>
             <div>
               <h3 className="text-base font-bold">Field Service Operations System</h3>
               <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600 font-medium'}`}>
-                MHC Operations Workspace v0.8.0 — Work-Adaptive Cleanroom Platform (ECO-20260803-034)
+                MHC Operations Workspace v0.8.1 — Work-Adaptive Cleanroom Platform (ECO-20260803-035)
               </p>
             </div>
           </div>
-          <Badge variant="blue">v0.8.0 OPERATIONAL</Badge>
+          <Badge variant="blue">v0.8.1 OPERATIONAL</Badge>
         </div>
       </Card>
 
@@ -508,7 +524,7 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
               <Tag className="w-3.5 h-3.5 text-[#8B9DFF]" />
               <span className="font-mono uppercase text-[10px]">Version</span>
             </div>
-            <p className="font-mono font-bold text-sm text-[#8B9DFF]">v0.8.0</p>
+            <p className="font-mono font-bold text-sm text-[#8B9DFF]">v0.8.1</p>
           </div>
 
           <div className={`p-3.5 rounded-xl border space-y-1 ${
@@ -518,7 +534,7 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
               <Cpu className="w-3.5 h-3.5 text-[#8B9DFF]" />
               <span className="font-mono uppercase text-[10px]">Build ID</span>
             </div>
-            <p className="font-mono font-bold text-sm">ECO-20260803-034</p>
+            <p className="font-mono font-bold text-sm">ECO-20260803-035</p>
           </div>
 
           <div className={`p-3.5 rounded-xl border space-y-1 ${
@@ -579,17 +595,17 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
                 <span>CTO STRATEGIC DIRECTIVE</span>
               </div>
               <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-[#8B9DFF]/20 text-[#8B9DFF] border border-[#8B9DFF]/30 font-semibold">
-                v0.8.0 MHC OPERATIONS WORKSPACE
+                v0.8.1 MHC CRUD & PASSPORT REFINEMENT
               </span>
             </div>
             <p className="leading-relaxed font-medium">
-              v0.8.0 establishes Machine Health Check as a core operational pillar of FSOS.
+              v0.8.1 solidifies Machine Passport customer data integrity and completes multi-laser & power-head CRUD flexibility within MHC inspection stages.
             </p>
             <p className="leading-relaxed text-slate-300">
               MHC now seamlessly connects:
             </p>
             <div className="font-mono text-[11px] font-bold text-emerald-400 bg-slate-950/60 p-2.5 rounded-lg border border-slate-800 tracking-wide">
-              Machine Identity → MHC Session → Engineering Evidence → MHC Summary → Report Draft → Customer Report
+              Machine Identity → MHC Session → Multi-Laser Evidence → MHC Summary → Report Draft → Customer Report
             </div>
           </div>
 
@@ -630,40 +646,39 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
       </Card>
 
       {/* Release Notes Summary */}
-      <Card title="Release Notes — v0.8.0 MHC Operations Workspace">
+      <Card title="Release Notes — v0.8.1 MHC CRUD & Machine Passport UX Refinement">
         <div className={`p-4 rounded-xl border space-y-3 text-xs ${
           isDark ? 'bg-[#1A1D21] border-[#2B323A]' : 'bg-slate-50 border-slate-200'
         }`}>
           <div className="flex items-center justify-between border-b border-[#2B323A]/60 pb-2">
-            <span className="font-bold text-sm text-[#8B9DFF]">Release Summary (Sprint ECO-20260803-034)</span>
-            <span className="font-mono text-slate-400">Target: v0.8.0</span>
+            <span className="font-bold text-sm text-[#8B9DFF]">Release Summary (Sprint ECO-20260803-035)</span>
+            <span className="font-mono text-slate-400">Target: v0.8.1</span>
           </div>
 
           <p className="text-slate-300 leading-relaxed">
-            Sprint v0.8.0 promotes Machine Health Check (MHC) to a primary first-class operational workspace in FSOS. Key deliverables include:
+            Sprint v0.8.1 delivers critical CRUD protections and multi-head inspection capabilities across Machine Passport and Machine Health Check (MHC). Key deliverables include:
           </p>
 
           <ul className="grid grid-cols-1 md:grid-cols-2 gap-1.5 text-slate-300 font-mono text-[11px] bg-slate-950/50 p-3 rounded-lg border border-slate-800/80">
-            <li>• MHC promoted to main sidebar category</li>
-            <li>• Full 01–08 MHC inspection workflow</li>
-            <li>• Machine-linked MHC Sessions & persistence</li>
-            <li>• Continue MHC & Quick Execution launcher</li>
-            <li>• MHC Summary & section status tracker</li>
-            <li>• Custom MHC Report Builder with Live Preview</li>
-            <li>• Saved Draft management (Load, Duplicate, Delete)</li>
-            <li>• CSV engineering data import & export</li>
-            <li>• Final customer report & certificate sign-off</li>
-            <li>• FSOS Login & Workspace Modes (supporting platform features)</li>
+            <li>• Customer delete protection when machines are assigned</li>
+            <li>• Machine deletion preserves parent customer account</li>
+            <li>• Single 3-dot card menu for Machine CRUD (duplicate removed)</li>
+            <li>• Stage 01 Add/Delete Laser controls & remaining hours alert</li>
+            <li>• Stage 03 Add/Delete Laser Power Head controls</li>
+            <li>• Stage 03 Evidence Photo upload & thumbnail deletion</li>
+            <li>• Stages 02, 04, 05, 06 Photo evidence uploads with deletion</li>
+            <li>• Stage 07 Spare Parts Add/Edit/Delete workflow</li>
+            <li>• Complete internal documentation & changelog update</li>
           </ul>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
             <div className={`p-3 rounded-lg border ${isDark ? 'bg-[#111315] border-[#2B323A]/80' : 'bg-white border-slate-200'}`}>
               <p className="font-bold text-[#7FD4A6] mb-1">✓ What Changed</p>
-              <p className="text-slate-400 text-[11px]">Promoted MHC to primary category, built 01–08 inspection workflow, session persistence, live customer report builder with saved draft management, and CSV data import/export.</p>
+              <p className="text-slate-400 text-[11px]">Protected Customer deletion, fixed machine deletion scoping, removed duplicate actions menu, added multi-laser/head CRUD in MHC Stages 01 and 03 with photo evidence management, and updated release documentation to v0.8.1.</p>
             </div>
             <div className={`p-3 rounded-lg border ${isDark ? 'bg-[#111315] border-[#2B323A]/80' : 'bg-white border-slate-200'}`}>
               <p className="font-bold text-[#8ECDF7] mb-1">✓ Why It Changed</p>
-              <p className="text-slate-400 text-[11px]">Establishes a complete end-to-end operational pipeline from cleanroom machine inspection to customer-ready certificate generation while reducing engineer cognitive overhead.</p>
+              <p className="text-slate-400 text-[11px]">Ensures customer accounts are never inadvertently lost when deleting machines, streamlines machine CRUD UI, and provides cleanroom engineers full flexibility to measure multi-head laser configurations.</p>
             </div>
             <div className={`p-3 rounded-lg border ${isDark ? 'bg-[#111315] border-[#2B323A]/80' : 'bg-white border-slate-200'}`}>
               <p className="font-bold text-[#EFCB7A] mb-1">✓ Remaining for Future</p>

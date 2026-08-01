@@ -266,7 +266,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             <Shield className="w-3.5 h-3.5 text-emerald-500" />
             CLEANROOM AUTH READY
           </span>
-          <span className="font-bold text-slate-400">System Version v0.8.0</span>
+          <span className="font-bold text-slate-400">System Version v0.8.1</span>
         </div>
       </div>
     </div>
