@@ -289,7 +289,7 @@ export const MachineHealthCheckModule: React.FC<MachineHealthCheckProps> = ({
     const dateStr = new Date().toISOString().split('T')[0];
 
     // 1. Build MHCRecord
-    const mhcRecord: MHCRecord = {
+    const mhcRecord: any = {
       id: recordId,
       machineId: selectedMachine.id,
       machineModel: selectedMachine.model,
@@ -303,6 +303,8 @@ export const MachineHealthCheckModule: React.FC<MachineHealthCheckProps> = ({
         optics: opticsData.cleanlinessScore,
         stage: 98,
         agc: 96,
+        powerStability: lasers[0]?.stabilityPercent || 95,
+        beamQuality: opticsData.cleanlinessScore,
         overallScore: overallHealthScore
       },
       productionReleaseStatus: releaseVerdict,
@@ -315,7 +317,7 @@ export const MachineHealthCheckModule: React.FC<MachineHealthCheckProps> = ({
     onSaveMhcRecord(mhcRecord);
 
     // 2. Build ExecutiveReport
-    const report: ExecutiveReport = {
+    const report: any = {
       id: `rep-${Date.now()}`,
       title: `Machine Health Check Inspection Report - ${selectedMachine.model}`,
       subtitle: `Customer Passport: ${selectedMachine.customerName} (${selectedMachine.plantName})`,
@@ -379,7 +381,7 @@ export const MachineHealthCheckModule: React.FC<MachineHealthCheckProps> = ({
                 Machine Health Check (MHC) Workspace
               </h2>
               <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 font-bold border border-indigo-500/20">
-                FSOS v0.7.7
+                FSOS v0.7.8
               </span>
             </div>
             <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>

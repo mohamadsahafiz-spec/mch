@@ -21,7 +21,7 @@ import {
   ChevronRight,
   ChevronDown
 } from 'lucide-react';
-import { NavigationTab, EngineerProfile } from '../../types';
+import { NavigationTab, EngineerProfile, WorkspaceMode } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
 import { UserAvatar } from '../common/UserAvatar';
 
@@ -30,6 +30,7 @@ interface SidebarProps {
   setActiveTab: (tab: NavigationTab) => void;
   urgentAlertsCount: number;
   profile?: EngineerProfile;
+  workspaceMode?: WorkspaceMode;
 }
 
 interface NavItem {
@@ -49,12 +50,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
   activeTab,
   setActiveTab,
   urgentAlertsCount,
-  profile
+  profile,
+  workspaceMode = 'MHC_MODE'
 }) => {
   const { effectiveTheme } = useTheme();
   const isDark = effectiveTheme === 'dark';
 
-  const navGroups: NavGroup[] = [
+  const isMhcMode = workspaceMode === 'MHC_MODE';
+
+  const rawNavGroups: NavGroup[] = [
     {
       key: 'daily_work',
       title: 'DAILY WORK',
@@ -103,6 +107,26 @@ export const Sidebar: React.FC<SidebarProps> = ({
       ]
     }
   ];
+
+  // Filter nav items based on Workspace Mode
+  const navGroups: NavGroup[] = rawNavGroups.map(group => {
+    if (!isMhcMode) return group;
+
+    // In MHC Mode, keep only operationally relevant tabs
+    let allowedIds: NavigationTab[] = [];
+    if (group.key === 'daily_work') {
+      allowedIds = ['start_page', 'mission_control'];
+    } else if (group.key === 'service_execution') {
+      allowedIds = ['machines', 'mhc', 'reports'];
+    } else if (group.key === 'system') {
+      allowedIds = ['profile', 'settings'];
+    }
+
+    return {
+      ...group,
+      items: group.items.filter(item => allowedIds.includes(item.id))
+    };
+  }).filter(group => group.items.length > 0);
 
   // Collapsible Groups State — Only group containing activeTab is expanded by default
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
@@ -160,7 +184,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <span className={`text-[9px] font-mono px-1.5 py-0.2 rounded border font-semibold ${
                 isDark ? 'bg-[#8B9DFF]/10 text-[#8B9DFF] border-[#8B9DFF]/30' : 'bg-indigo-50 text-indigo-800 border-indigo-200'
               }`}>
-                v0.7.7
+                v0.8.0
               </span>
             </div>
             <p className={`text-[10px] font-mono ${isDark ? 'text-slate-400' : 'text-slate-600 font-medium'}`}>Precision Laser Eng</p>
@@ -275,7 +299,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
           <span>FSO Engine Online</span>
         </div>
-        <span className="font-semibold text-slate-700 dark:text-slate-300">v0.7.7</span>
+        <span className="font-semibold text-slate-700 dark:text-slate-300">v0.8.0</span>
       </div>
     </aside>
   );

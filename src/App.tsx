@@ -20,15 +20,19 @@ import {
   BaselineCheck,
   EngineerProfile,
   NotificationItem,
-  SystemUser
+  SystemUser,
+  WorkspaceMode,
+  UserSession
 } from './types';
 import { StorageService } from './utils/persistence';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
+import { LoginPage } from './components/auth/LoginPage';
 
 // Modules
 import { StartPageModule } from './components/modules/StartPageModule';
+import { MHCModeHome } from './components/modules/MHCModeHome';
 import { WorkflowGuideModule } from './components/modules/WorkflowGuideModule';
 import { MissionControl } from './components/modules/MissionControl';
 import { ContractsModule } from './components/modules/ContractsModule';
@@ -50,6 +54,10 @@ function AppLayout() {
   const [activeTab, setActiveTab] = useState<NavigationTab>('start_page');
   const { effectiveTheme } = useTheme();
   const isDark = effectiveTheme === 'dark';
+
+  // Auth & Workspace Mode State
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [workspaceMode, setWorkspaceMode] = useState<WorkspaceMode>('MHC_MODE');
 
   // Operational State
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -87,6 +95,16 @@ function AppLayout() {
 
   // Load state from StorageService on mount
   useEffect(() => {
+    // Check Auth Session
+    const authSession = StorageService.getAuth();
+    if (authSession && authSession.isAuthenticated) {
+      setIsAuthenticated(true);
+      const storedMode = authSession.workspaceMode || StorageService.getWorkspaceMode() || 'MHC_MODE';
+      setWorkspaceMode(storedMode);
+    } else {
+      setIsAuthenticated(false);
+    }
+
     setCustomers(StorageService.getCustomers());
     setPlants(StorageService.getPlants());
     setLines(StorageService.getLines());
@@ -112,6 +130,44 @@ function AppLayout() {
       setActiveUser(loadedUsers[0]);
     }
   }, []);
+
+  // Auth & Workspace Mode Handlers
+  const handleLoginSuccess = (session: UserSession) => {
+    setIsAuthenticated(true);
+    setWorkspaceMode(session.workspaceMode);
+    StorageService.saveAuth(session);
+    
+    const matchedUser = users.find(u => u.id === session.userId);
+    if (matchedUser) {
+      setActiveUser(matchedUser);
+    }
+
+    if (session.workspaceMode === 'MHC_MODE') {
+      setActiveTab('start_page');
+    }
+  };
+
+  const handleLogout = () => {
+    StorageService.clearAuth();
+    setIsAuthenticated(false);
+  };
+
+  const handleModeChange = (newMode: WorkspaceMode) => {
+    setWorkspaceMode(newMode);
+    StorageService.saveWorkspaceMode(newMode);
+    const currentAuth = StorageService.getAuth();
+    if (currentAuth) {
+      StorageService.saveAuth({ ...currentAuth, workspaceMode: newMode });
+    }
+
+    // Auto-redirect to start page if current active tab is not visible in MHC Mode
+    if (newMode === 'MHC_MODE') {
+      const mhcAllowedTabs: NavigationTab[] = ['start_page', 'workflow_guide', 'machines', 'mhc', 'reports', 'profile'];
+      if (!mhcAllowedTabs.includes(activeTab)) {
+        setActiveTab('start_page');
+      }
+    }
+  };
 
   const handleSetActiveUser = (user: SystemUser) => {
     setActiveUser(user);
@@ -270,6 +326,20 @@ function AppLayout() {
 
   const nextPriorityAction = "Execute DI Water Cooling Filter replacement & Q3 MHC on TRUMPF TruMicro 7000 (MCH-TSMC-01) at TSMC Fab 18A Cleanroom.";
 
+  if (!isAuthenticated) {
+    return (
+      <LoginPage
+        users={users}
+        activeUser={activeUser}
+        savedWorkspaceMode={workspaceMode}
+        onLoginSuccess={handleLoginSuccess}
+        onLogin={(selectedUser) => {
+          setActiveUser(selectedUser);
+        }}
+      />
+    );
+  }
+
   return (
     <div className={`min-h-screen flex transition-colors duration-250 ${
       isDark ? 'bg-[#111315] text-[#F3F4F6]' : 'bg-slate-100/80 text-slate-900'
@@ -280,6 +350,7 @@ function AppLayout() {
         setActiveTab={setActiveTab}
         urgentAlertsCount={alerts.filter((a) => a.severity === 'CRITICAL').length}
         profile={profile}
+        workspaceMode={workspaceMode}
       />
 
       {/* Main Workspace Area */}
@@ -295,24 +366,47 @@ function AppLayout() {
           onClearAllNotifications={handleClearAllNotifications}
           onOpenQuickMhc={() => setActiveTab('mhc')}
           nextPriorityAction={nextPriorityAction}
+          workspaceMode={workspaceMode}
+          onModeChange={handleModeChange}
+          onLogout={handleLogout}
         />
 
         <main className={`flex-1 p-4 md:p-6 max-w-7xl w-full mx-auto ${
           activeTab === 'workflow_guide' ? 'overflow-hidden flex flex-col h-[calc(100vh-4rem)]' : 'overflow-y-auto'
         }`}>
           {activeTab === 'start_page' && (
-            <StartPageModule
-              onNavigate={setActiveTab}
-              schedule={schedule}
-              machines={machines}
-              tasks={tasks}
-              profile={profile}
-              unreadNotificationsCount={notifications.filter(n => !n.read).length}
-              onSelectMachine={(id) => {
-                setSelectedMachineId(id);
-                setActiveTab('machines');
-              }}
-            />
+            workspaceMode === 'MHC_MODE' ? (
+              <MHCModeHome
+                machines={machines}
+                mhcRecords={mhcRecords}
+                reports={reports}
+                selectedMachineId={selectedMachineId}
+                onSelectMachine={(id) => setSelectedMachineId(id)}
+                onOpenMhcInspection={(id) => {
+                  setSelectedMachineId(id);
+                  setActiveTab('mhc');
+                }}
+                onViewReport={(reportId) => {
+                  setActiveTab('reports');
+                }}
+                onAddMachine={() => {
+                  setActiveTab('machines');
+                }}
+              />
+            ) : (
+              <StartPageModule
+                onNavigate={setActiveTab}
+                schedule={schedule}
+                machines={machines}
+                tasks={tasks}
+                profile={profile}
+                unreadNotificationsCount={notifications.filter(n => !n.read).length}
+                onSelectMachine={(id) => {
+                  setSelectedMachineId(id);
+                  setActiveTab('machines');
+                }}
+              />
+            )
           )}
 
           {activeTab === 'workflow_guide' && (

@@ -15,6 +15,41 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
 
   const changelog = [
     {
+      version: 'v0.8.0',
+      date: '2026-08-03',
+      type: 'Mission Workspace Release (ECO-20260803-033)',
+      highlights: [
+        'NEW: Dedicated FSOS Login Page experience with cleanroom engineering aesthetics.',
+        'NEW: User Session Architecture supporting authenticated engineer identity persistence.',
+        'NEW: Workspace Mode Architecture introducing MHC Mode and Founder Mode.',
+        'NEW: Compact Workspace Mode Selector control allowing seamless context switching without logout.',
+        'NEW: MHC Mode Home focused entry point designed around 8-stage Machine Health Check operations.',
+        'NEW: Persistent Last Workspace Mode memory across login sessions.',
+        'NEW: Complete Architectural Separation between Role (permissions) and Workspace Mode (focus).',
+        'NEW: Clean Logout workflow returning to Login Page while preserving all operational data.',
+        'IMPROVED: Application navigation focus and field engineer cognitive load reduction.',
+        'IMPROVED: Empty state recovery paths for machines, health checks, and executive reports.',
+        'KNOWN ISSUES: Workflow Navigator UX refinement remains deferred.',
+        'KNOWN ISSUES: Google AI Studio Git synchronization may intermittently fail.'
+      ]
+    },
+    {
+      version: 'v0.7.8',
+      date: '2026-08-03',
+      type: 'Machine Passport Stability Sprint (ECO-20260803-032)',
+      highlights: [
+        'NEW: Adopted Engineering Rule #004 (Empty State Recovery) across FSOS.',
+        'IMPROVED: Machine Passport empty-state workflow and recovery.',
+        'IMPROVED: Add Machine creation flow and form state initialization.',
+        'IMPROVED: Machine management usability and layout consistency.',
+        'FIXED: Empty-state Add Machine button not responding when all machines are deleted.',
+        'FIXED: Duplicate "+" button in Add Machine interface.',
+        'KNOWN ISSUES: Machine Health Check workflow improvements scheduled for future sprint.',
+        'KNOWN ISSUES: Workflow Navigator UX refinement deferred.',
+        'KNOWN ISSUES: Google AI Studio Git synchronization may intermittently fail.'
+      ]
+    },
+    {
       version: 'v0.7.7',
       date: '2026-08-03',
       type: 'Machine Health Check Workflow Sprint (ECO-20260803-031)',
@@ -454,16 +489,16 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
             <div className={`p-3 rounded-xl border font-mono font-bold text-lg ${
               isDark ? 'bg-[#8B9DFF]/15 border-[#8B9DFF]/30 text-[#8B9DFF]' : 'bg-indigo-50 border-indigo-200 text-indigo-800'
             }`}>
-              v0.7.7
+              v0.8.0
             </div>
             <div>
               <h3 className="text-base font-bold">Field Service Operations System</h3>
               <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600 font-medium'}`}>
-                Machine Health Check Workflow v0.7.7 — Cleanroom Operations Standard (ECO-20260803-031)
+                Mission Workspace v0.8.0 — Work-Adaptive Cleanroom Platform (ECO-20260803-033)
               </p>
             </div>
           </div>
-          <Badge variant="blue">v0.7.7 OPERATIONAL</Badge>
+          <Badge variant="blue">v0.8.0 OPERATIONAL</Badge>
         </div>
       </Card>
 
@@ -477,7 +512,7 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
               <Tag className="w-3.5 h-3.5 text-[#8B9DFF]" />
               <span className="font-mono uppercase text-[10px]">Version</span>
             </div>
-            <p className="font-mono font-bold text-sm text-[#8B9DFF]">v0.7.7</p>
+            <p className="font-mono font-bold text-sm text-[#8B9DFF]">v0.8.0</p>
           </div>
 
           <div className={`p-3.5 rounded-xl border space-y-1 ${
@@ -487,7 +522,7 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
               <Cpu className="w-3.5 h-3.5 text-[#8B9DFF]" />
               <span className="font-mono uppercase text-[10px]">Build ID</span>
             </div>
-            <p className="font-mono font-bold text-sm">ECO-20260803-031</p>
+            <p className="font-mono font-bold text-sm">ECO-20260803-033</p>
           </div>
 
           <div className={`p-3.5 rounded-xl border space-y-1 ${
@@ -497,7 +532,7 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
               <Compass className="w-3.5 h-3.5 text-[#8B9DFF]" />
               <span className="font-mono uppercase text-[10px]">Release Codename</span>
             </div>
-            <p className="font-semibold text-xs text-emerald-400">Machine Health Check Workflow</p>
+            <p className="font-semibold text-xs text-indigo-400">Mission Workspace</p>
           </div>
 
           <div className={`p-3.5 rounded-xl border space-y-1 ${
@@ -548,11 +583,11 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
                 <span>CTO STRATEGIC DIRECTIVE</span>
               </div>
               <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-[#8B9DFF]/20 text-[#8B9DFF] border border-[#8B9DFF]/30 font-semibold">
-                v0.7.6 POLISH PHASE DIRECTIVE
+                v0.8.0 MISSION WORKSPACE
               </span>
             </div>
             <p className="leading-relaxed">
-              v0.7.6 marks the official beginning of the FSOS Product Polish phase. Having built the core feature capabilities, FSOS is now transitioning into UI/UX refinement. Future releases will continue improving usability, visual hierarchy, consistency, production readiness, and overall product quality while maintaining a stable architecture.
+              v0.8.0 marks a major architectural and product milestone for FSOS. Workspace Modes establish the foundation for future operational experiences including Machine Health Check, Laser Calibration, Field Service, and Reporting. The system should increasingly adapt to the engineer rather than forcing the engineer to adapt to the system.
             </p>
           </div>
 
@@ -562,28 +597,28 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
           }`}>
             <div className="flex items-center gap-2 font-bold text-sm text-slate-200">
               <History className="w-4 h-4 text-[#8B9DFF]" />
-              <span>Product Evolution Log: Transition to UI/UX Refinement & Product Polish</span>
+              <span>Product Evolution Log: Work-Adaptive Workspace Modes</span>
             </div>
 
             <div className="space-y-3 text-slate-300 dark:text-slate-300">
               <div className="space-y-1">
-                <p className="font-semibold text-[#8B9DFF]">1. Why the Premium Light Experience Sprint Was Introduced</p>
+                <p className="font-semibold text-[#8B9DFF]">1. Shift from Module-Centric to Workflow-Centric Architecture</p>
                 <p className="text-slate-400 leading-relaxed">
-                  While FSOS was functionally complete across contracts, passports, MHC, and daily work orchestration, the initial light theme suffered from low contrast, flat depth, and soft visual separation. This sprint was introduced to refine the visual ergonomics for high-brightness cleanroom environments.
+                  FSOS previously behaved primarily as a collection of modules. v0.8.0 introduces task-oriented Workspace Modes. Instead of requiring engineers to navigate the entire platform, FSOS can now adapt the interface around the work being performed.
                 </p>
               </div>
 
               <div className="space-y-1">
-                <p className="font-semibold text-[#8B9DFF]">2. Why FSOS Is Transitioning from Feature Development to Refinement</p>
+                <p className="font-semibold text-[#8B9DFF]">2. Architectural Separation of Role vs Workspace Mode</p>
                 <p className="text-slate-400 leading-relaxed">
-                  Unchecked feature volume without visual discipline leads to visual noise and cognitive friction. By pausing feature expansion to polish typography, card elevation, border separation, and text contrast, FSOS transforms from a functional prototype into an enterprise-ready software platform.
+                  Role determines what a user is allowed to access, while Workspace Mode determines what the user wants to focus on right now. A Founder or Lead Engineer can enter MHC Mode to eliminate distraction during cleanroom inspections, and switch back to Founder Mode at any time.
                 </p>
               </div>
 
               <div className="space-y-1">
-                <p className="font-semibold text-[#8B9DFF]">3. How This Sprint Improves Overall Product Maturity</p>
+                <p className="font-semibold text-[#8B9DFF]">3. Zero Data Loss & Non-Destructive Visibility Control</p>
                 <p className="text-slate-400 leading-relaxed">
-                  Refining color contrast, card hierarchy, and background depth ensures field engineers can operate FSOS effortlessly under cleanroom lighting. The user's visual focus now naturally follows a clear hierarchy: <b>Hero Greeting → Today's Mission → Schedule → Quick Actions</b>.
+                  Workspace Mode controls visibility and focus only. Switching modes or logging out never destroys data, deletes active MHC draft progress, or alters database records.
                 </p>
               </div>
             </div>
@@ -592,31 +627,31 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
       </Card>
 
       {/* Release Notes Summary */}
-      <Card title="Release Notes — v0.7.6 Premium Light Experience">
+      <Card title="Release Notes — v0.8.0 Mission Workspace">
         <div className={`p-4 rounded-xl border space-y-3 text-xs ${
           isDark ? 'bg-[#1A1D21] border-[#2B323A]' : 'bg-slate-50 border-slate-200'
         }`}>
           <div className="flex items-center justify-between border-b border-[#2B323A]/60 pb-2">
-            <span className="font-bold text-sm text-[#8B9DFF]">Release Summary (Sprint ECO-20260803-030)</span>
-            <span className="font-mono text-slate-400">Target: v0.7.6</span>
+            <span className="font-bold text-sm text-[#8B9DFF]">Release Summary (Sprint ECO-20260803-033)</span>
+            <span className="font-mono text-slate-400">Target: v0.8.0</span>
           </div>
 
           <p className="text-slate-300 leading-relaxed">
-            Sprint v0.7.6 delivers the Premium Light Experience refinement milestone. The Founder can immediately observe increased text contrast, subtle layer depth (off-white workspace background vs white cards), refined sidebar separation, and clear visual hierarchy across all operational dashboards.
+            Sprint v0.8.0 introduces the Mission Workspace release. It features a dedicated FSOS login page, session persistence, a Workspace Mode selector (MHC Mode vs Founder Mode), a focused MHC operational home, and last mode memory across engineer logins.
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
             <div className={`p-3 rounded-lg border ${isDark ? 'bg-[#111315] border-[#2B323A]/80' : 'bg-white border-slate-200'}`}>
               <p className="font-bold text-[#7FD4A6] mb-1">✓ What Changed</p>
-              <p className="text-slate-400 text-[11px]">Refined typography scale, elevated text contrast for WCAG compliance, distinct sidebar surface separation, and structured card elevation.</p>
+              <p className="text-slate-400 text-[11px]">Implemented FSOS Login Page, User Session architecture, Workspace Mode switching (MHC Mode / Founder Mode), and focused MHC entry point.</p>
             </div>
             <div className={`p-3 rounded-lg border ${isDark ? 'bg-[#111315] border-[#2B323A]/80' : 'bg-white border-slate-200'}`}>
               <p className="font-bold text-[#8ECDF7] mb-1">✓ Why It Changed</p>
-              <p className="text-slate-400 text-[11px]">Eliminates low-contrast readability issues in bright cleanroom environments and aligns FSOS with world-class enterprise design systems (Linear, Stripe, Apple).</p>
+              <p className="text-slate-400 text-[11px]">Adapts the interface around field engineers' specific jobs, reducing cognitive friction while maintaining full administrative power in Founder Mode.</p>
             </div>
             <div className={`p-3 rounded-lg border ${isDark ? 'bg-[#111315] border-[#2B323A]/80' : 'bg-white border-slate-200'}`}>
               <p className="font-bold text-[#EFCB7A] mb-1">✓ Remaining for Future</p>
-              <p className="text-slate-400 text-[11px]">Workflow Navigator UX refinement, Cloudflare deployment base path optimization, and continued component polish across secondary drawers.</p>
+              <p className="text-slate-400 text-[11px]">Future operational modes (Calibration Mode, Reporting Mode, Service Mode), Workflow Navigator UX refinement, and AI Studio Git sync optimization.</p>
             </div>
           </div>
         </div>

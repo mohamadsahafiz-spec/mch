@@ -17,6 +17,21 @@ export type NavigationTab =
   | 'settings'
   | 'profile';
 
+export type WorkspaceMode = 'MHC_MODE' | 'FOUNDER_MODE';
+
+export interface UserSession {
+  isAuthenticated: boolean;
+  userId: string;
+  engineerName: string;
+  profilePhoto?: string;
+  role: UserRole;
+  company: string;
+  department: string;
+  operationalStatus: string;
+  lastLogin: string;
+  workspaceMode: WorkspaceMode;
+}
+
 export type UserRole =
   | 'Administrator'
   | 'Field Service Engineer'

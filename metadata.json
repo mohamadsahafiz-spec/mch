@@ -1,6 +1,6 @@
 {
   "name": "Field Service Operations System",
-  "description": "Enterprise Field Service Operations System for Field Service Engineers managing contracts, customers, plants, machines, health checks, laser calibration, baseline checks, and executive engineering reports.",
+  "description": "Enterprise Field Service Operations System (FSOS v0.8.0 Mission Workspace) with Work-Adaptive Workspace Modes, cleanroom login session management, Machine Health Check, Machine Passport, and Executive Engineering Reports.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

@@ -1,11 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Search, Bell, AlertTriangle, Plus, Sparkles, Moon, Sun, Monitor, User, ChevronDown, UserCheck, Settings as SettingsIcon, LogOut, Palette, BellRing } from 'lucide-react';
-import { NavigationTab, AlertItem, NotificationItem, SystemUser } from '../../types';
+import { NavigationTab, AlertItem, NotificationItem, SystemUser, WorkspaceMode } from '../../types';
 import { Button } from '../common/Button';
 import { useTheme } from '../../context/ThemeContext';
 import { getThemeClasses } from '../../theme/tokens';
 import { NotificationPanel } from '../notifications/NotificationPanel';
 import { UserAvatar } from '../common/UserAvatar';
+import { WorkspaceModeSelector } from './WorkspaceModeSelector';
 
 interface HeaderProps {
   activeTab: NavigationTab;
@@ -18,6 +19,9 @@ interface HeaderProps {
   onClearAllNotifications: () => void;
   onOpenQuickMhc: () => void;
   nextPriorityAction: string;
+  workspaceMode: WorkspaceMode;
+  onModeChange: (mode: WorkspaceMode) => void;
+  onLogout: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -30,7 +34,10 @@ export const Header: React.FC<HeaderProps> = ({
   onMarkAllAsRead,
   onClearAllNotifications,
   onOpenQuickMhc,
-  nextPriorityAction
+  nextPriorityAction,
+  workspaceMode,
+  onModeChange,
+  onLogout
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showNotificationPanel, setShowNotificationPanel] = useState(false);
@@ -134,6 +141,13 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Right Controls */}
       <div className="flex items-center gap-2.5">
+        {/* Workspace Mode Selector Control */}
+        <WorkspaceModeSelector
+          currentMode={workspaceMode}
+          onModeChange={onModeChange}
+          userRole={activeUser?.role || 'Field Service Engineer'}
+        />
+
         {/* Theme Selector Controls */}
         <div className={`p-1 rounded-lg border flex items-center gap-0.5 ${
           isDark ? 'bg-[#1A1D21] border-[#2B323A]' : 'bg-slate-100 border-slate-300/80'
@@ -341,8 +355,8 @@ export const Header: React.FC<HeaderProps> = ({
               <div className="pt-1 mt-1 border-t border-[#2B323A]/60">
                 <button
                   onClick={() => {
-                    setActiveTab('users');
                     setShowUserMenu(false);
+                    onLogout();
                   }}
                   className={`w-full text-left px-3 py-2 rounded-xl flex items-center gap-2.5 font-semibold transition-colors text-rose-400 hover:bg-rose-500/10`}
                 >

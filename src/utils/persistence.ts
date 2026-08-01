@@ -16,7 +16,9 @@ import {
   FounderBrandingConfig,
   EngineerProfile,
   NotificationItem,
-  SystemUser
+  SystemUser,
+  WorkspaceMode,
+  UserSession
 } from '../types';
 import { 
   INITIAL_CUSTOMERS, 
@@ -57,7 +59,9 @@ const KEYS = {
   BRANDING: 'fso_v04_branding',
   PROFILE: 'fso_v072_profile',
   NOTIFICATIONS: 'fso_v072_notifications',
-  USERS: 'fso_v073_users'
+  USERS: 'fso_v073_users',
+  AUTH: 'fso_v080_authenticated',
+  WORKSPACE_MODE: 'fso_v080_workspace_mode'
 };
 
 function getStorage<T>(key: string, defaultValue: T): T {
@@ -134,6 +138,13 @@ export const StorageService = {
 
   getUsers: (): SystemUser[] => getStorage(KEYS.USERS, INITIAL_USERS),
   saveUsers: (data: SystemUser[]) => setStorage(KEYS.USERS, data),
+
+  getAuth: (): UserSession | null => getStorage(KEYS.AUTH, null),
+  saveAuth: (session: UserSession | null) => setStorage(KEYS.AUTH, session),
+  clearAuth: () => localStorage.removeItem(KEYS.AUTH),
+
+  getWorkspaceMode: (): WorkspaceMode => getStorage(KEYS.WORKSPACE_MODE, 'MHC_MODE'),
+  saveWorkspaceMode: (mode: WorkspaceMode) => setStorage(KEYS.WORKSPACE_MODE, mode),
 
   resetToDefaults: () => {
     localStorage.clear();

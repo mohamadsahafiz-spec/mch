@@ -440,42 +440,25 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
     serialNumber: ''
   });
 
-  if (!selectedMachine) {
-    return (
-      <div className="p-8 text-center space-y-4">
-        <Cpu className="w-12 h-12 mx-auto text-slate-400" />
-        <h2 className="text-lg font-bold">No Machines Available in Passport</h2>
-        <p className="text-sm text-slate-500">Create a machine to begin tracking passport telemetry.</p>
-        <Button
-          variant="primary"
-          size="md"
-          icon={<Plus className="w-4 h-4" />}
-          onClick={() => setIsAddModalOpen(true)}
-        >
-          + Add First Machine
-        </Button>
-      </div>
-    );
-  }
-
-  const machineMhcs = mhcRecords.filter((r) => r.machineId === selectedMachine.id);
-  const machineReports = reports.filter((r) => r.serialNumber === selectedMachine.serialNumber);
+  const machineMhcs = selectedMachine ? mhcRecords.filter((r) => r.machineId === selectedMachine.id) : [];
+  const machineReports = selectedMachine ? reports.filter((r) => r.serialNumber === selectedMachine.serialNumber) : [];
 
   // Fleet Navigator Handlers
-  const currentIndex = machines.findIndex((m) => m.id === selectedMachine.id);
+  const currentIndex = selectedMachine ? machines.findIndex((m) => m.id === selectedMachine.id) : -1;
   const handlePrevMachine = () => {
-    if (machines.length === 0) return;
+    if (machines.length === 0 || !selectedMachine) return;
     const prevIdx = (currentIndex - 1 + machines.length) % machines.length;
     onSelectMachine(machines[prevIdx].id);
   };
 
   const handleNextMachine = () => {
-    if (machines.length === 0) return;
+    if (machines.length === 0 || !selectedMachine) return;
     const nextIdx = (currentIndex + 1) % machines.length;
     onSelectMachine(machines[nextIdx].id);
   };
 
   const handleDuplicateMachine = () => {
+    if (!selectedMachine) return;
     const duplicate: Machine = {
       ...selectedMachine,
       id: `mch-${Date.now()}`,
@@ -491,6 +474,7 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
   };
 
   const handleArchiveMachine = () => {
+    if (!selectedMachine) return;
     const archived: Machine = {
       ...selectedMachine,
       status: 'OUT_OF_SERVICE'
@@ -499,6 +483,7 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
       onEditMachine(archived);
     }
     setIsActionMenuOpen(false);
+    showAlert(`Machine ${selectedMachine.machineNumber} status changed to OUT_OF_SERVICE.`);
   };
 
   // Handlers
@@ -595,23 +580,25 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
   };
 
   const handleOpenEdit = () => {
+    if (!selectedMachine) return;
     setEditForm({
-      model: selectedMachine.model,
-      machineNumber: selectedMachine.machineNumber,
-      serialNumber: selectedMachine.serialNumber,
-      customerName: selectedMachine.customerName,
-      plantName: selectedMachine.plantName,
-      productionLineName: selectedMachine.productionLineName,
-      status: selectedMachine.status,
-      healthScore: selectedMachine.healthScore,
-      installationDate: selectedMachine.installationDate,
-      baselineDate: selectedMachine.baselineDate
+      model: selectedMachine.model || '',
+      machineNumber: selectedMachine.machineNumber || '',
+      serialNumber: selectedMachine.serialNumber || '',
+      customerName: selectedMachine.customerName || '',
+      plantName: selectedMachine.plantName || '',
+      productionLineName: selectedMachine.productionLineName || '',
+      status: selectedMachine.status || 'OPERATIONAL',
+      healthScore: selectedMachine.healthScore || 100,
+      installationDate: selectedMachine.installationDate || '',
+      baselineDate: selectedMachine.baselineDate || ''
     });
     setIsEditModalOpen(true);
   };
 
   const handleSaveEdit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selectedMachine) return;
     const updated: Machine = {
       ...selectedMachine,
       model: editForm.model,
@@ -633,16 +620,18 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
   };
 
   const handleOpenRename = () => {
+    if (!selectedMachine) return;
     setRenameForm({
-      model: selectedMachine.model,
-      machineNumber: selectedMachine.machineNumber,
-      serialNumber: selectedMachine.serialNumber
+      model: selectedMachine.model || '',
+      machineNumber: selectedMachine.machineNumber || '',
+      serialNumber: selectedMachine.serialNumber || ''
     });
     setIsRenameModalOpen(true);
   };
 
   const handleSaveRename = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selectedMachine) return;
     const updated: Machine = {
       ...selectedMachine,
       model: renameForm.model,
@@ -657,7 +646,7 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
   };
 
   const handleConfirmDelete = () => {
-    if (onDeleteMachine) {
+    if (selectedMachine && onDeleteMachine) {
       onDeleteMachine(selectedMachine.id);
     }
     setIsDeleteModalOpen(false);
@@ -901,7 +890,7 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
             <span className={`text-xs font-bold font-mono ${
               isDark ? 'text-slate-300 group-hover:text-white' : 'text-slate-700 group-hover:text-indigo-600'
             }`}>
-              + Add Customer
+              Add Customer
             </span>
           </button>
         </div>
@@ -966,7 +955,7 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
               <span className={`text-xs font-bold font-mono ${
                 isDark ? 'text-slate-300 group-hover:text-white' : 'text-slate-700 group-hover:text-indigo-600'
               }`}>
-                + Add Machine
+                Add Machine
               </span>
             </button>
           </div>
@@ -1155,226 +1144,247 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
               <span className={`text-xs font-bold font-mono ${
                 isDark ? 'text-slate-300 group-hover:text-white' : 'text-slate-700 group-hover:text-indigo-600'
               }`}>
-                + Add Machine
+                Add Machine
               </span>
             </button>
           </div>
         )}
       </div>
 
-      {/* Layer 2 & 3 & 4 — Machine Hero Cockpit (MP-001 Clipping Fix: container uses relative without overflow-hidden) */}
-      <div className={`p-6 rounded-2xl border relative transition-all ${
-        isDark
-          ? 'bg-gradient-to-br from-[#1A1D21] via-[#16181C] to-[#121417] border-[#2B323A] shadow-xl'
-          : 'bg-gradient-to-br from-white via-slate-50/80 to-slate-100/60 border-slate-200/90 shadow-md'
-      }`}>
-        {/* Accent background mesh wrapper with overflow-hidden */}
-        <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
-          <div className={`absolute -right-12 -top-12 w-64 h-64 rounded-full blur-3xl ${
-            isDark ? 'bg-[#8B9DFF]/5' : 'bg-indigo-500/5'
-          }`} />
-        </div>
-
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
-          {/* Machine Core Identity (Layer 5 Rank 1 & 2) */}
-          <div className="space-y-3 flex-1 min-w-0">
-            <div className="flex items-center gap-2.5 flex-wrap">
-              <span className={`px-2.5 py-1 rounded-lg font-mono text-xs font-bold border tracking-wide ${
-                isDark ? 'bg-[#8ECDF7]/15 border-[#8ECDF7]/40 text-[#8ECDF7]' : 'bg-sky-50 border-sky-300 text-sky-800 font-bold'
-              }`}>
-                {selectedMachine.machineNumber}
-              </span>
-              <Badge
-                variant={
-                  selectedMachine.status === 'OPERATIONAL'
-                    ? 'emerald'
-                    : selectedMachine.status === 'NEEDS_CALIBRATION'
-                    ? 'amber'
-                    : 'rose'
-                }
-                size="md"
-              >
-                {selectedMachine.status}
-              </Badge>
-              <span className={`text-xs font-mono flex items-center gap-1 ${isDark ? 'text-slate-400' : 'text-slate-600 font-medium'}`}>
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-                SN: <strong className={isDark ? 'text-slate-200' : 'text-slate-900'}>{selectedMachine.serialNumber}</strong>
-              </span>
-            </div>
-
-            <div>
-              <h1 className={`text-2xl sm:text-3xl font-extrabold tracking-tight ${isDark ? 'text-slate-50' : 'text-slate-900'}`}>
-                {selectedMachine.model}
-              </h1>
-              <div className={`flex items-center gap-2 mt-1 text-xs font-medium flex-wrap ${
-                isDark ? 'text-slate-400' : 'text-slate-600'
-              }`}>
-                <span className="flex items-center gap-1">
-                  <Building2 className="w-3.5 h-3.5 text-[#8B9DFF]" />
-                  {selectedMachine.customerName}
-                </span>
-                <span className="opacity-40">•</span>
-                <span className="flex items-center gap-1">
-                  <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                  {selectedMachine.plantName}
-                </span>
-                <span className="opacity-40">•</span>
-                <span className="font-mono text-[11px] opacity-90">{selectedMachine.productionLineName}</span>
-              </div>
-            </div>
-
-            {/* Quick Machine Summary Telemetry Strip */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
-              <div className={`p-2.5 rounded-xl border text-xs ${
-                isDark ? 'bg-[#111315]/80 border-[#2B323A]' : 'bg-white/80 border-slate-200 shadow-2xs'
-              }`}>
-                <span className={`text-[10px] uppercase font-mono block ${isDark ? 'text-slate-500' : 'text-slate-600 font-semibold'}`}>Installed</span>
-                <span className={`font-mono font-bold ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>{selectedMachine.installationDate}</span>
-              </div>
-              <div className={`p-2.5 rounded-xl border text-xs ${
-                isDark ? 'bg-[#111315]/80 border-[#2B323A]' : 'bg-white/80 border-slate-200 shadow-2xs'
-              }`}>
-                <span className={`text-[10px] uppercase font-mono block ${isDark ? 'text-slate-500' : 'text-slate-600 font-semibold'}`}>Next MHC</span>
-                <span className={`font-mono font-bold ${isDark ? 'text-[#8ECDF7]' : 'text-sky-800'}`}>{selectedMachine.nextMhcDate}</span>
-              </div>
-              <div className={`p-2.5 rounded-xl border text-xs ${
-                isDark ? 'bg-[#111315]/80 border-[#2B323A]' : 'bg-white/80 border-slate-200 shadow-2xs'
-              }`}>
-                <span className={`text-[10px] uppercase font-mono block ${isDark ? 'text-slate-500' : 'text-slate-600 font-semibold'}`}>Laser Heads</span>
-                <span className={`font-mono font-bold ${isDark ? 'text-amber-300' : 'text-amber-800'}`}>{selectedMachine.laserHeads?.length || 0} Active Unit(s)</span>
-              </div>
-              <div className={`p-2.5 rounded-xl border text-xs ${
-                isDark ? 'bg-[#111315]/80 border-[#2B323A]' : 'bg-white/80 border-slate-200 shadow-2xs'
-              }`}>
-                <span className={`text-[10px] uppercase font-mono block ${isDark ? 'text-slate-500' : 'text-slate-600 font-semibold'}`}>MHC Logs</span>
-                <span className={`font-mono font-bold ${isDark ? 'text-emerald-400' : 'text-emerald-800'}`}>{machineMhcs.length} Recorded</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Health Gauge & Primary Workflow Actions (Layer 5 Rank 3, 4, 5) */}
-          <div className={`flex flex-col sm:flex-row lg:flex-col items-center lg:items-end justify-between gap-5 p-4 lg:p-0 rounded-2xl lg:bg-transparent ${
-            isDark ? 'bg-[#111315]/50 border lg:border-0 border-[#2B323A]' : 'bg-white/60 border lg:border-0 border-slate-200'
+      {/* Layer 2 & 3 & 4 — Machine Hero Cockpit / Empty State */}
+      {!selectedMachine ? (
+        <Card className="p-8 text-center space-y-4">
+          <Cpu className="w-12 h-12 mx-auto text-slate-400 opacity-60" />
+          <h2 className={`text-base font-bold ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>
+            No Machine Selected / Available in Passport
+          </h2>
+          <p className={`text-xs max-w-md mx-auto ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+            Register a new machine asset or select a customer workspace to track laser telemetry, health scores, and maintenance history.
+          </p>
+          <Button
+            variant="primary"
+            size="md"
+            icon={<Plus className="w-4 h-4" />}
+            onClick={handleOpenAdd}
+          >
+            Add Machine
+          </Button>
+        </Card>
+      ) : (
+        <>
+          <div className={`p-6 rounded-2xl border relative transition-all ${
+            isDark
+              ? 'bg-gradient-to-br from-[#1A1D21] via-[#16181C] to-[#121417] border-[#2B323A] shadow-xl'
+              : 'bg-gradient-to-br from-white via-slate-50/80 to-slate-100/60 border-slate-200/90 shadow-md'
           }`}>
-            {/* Overall Health Score */}
-            <div className="flex items-center gap-3">
-              <HealthGauge score={selectedMachine.healthScore} label="Overall Health Score" size="lg" />
+            {/* Accent background mesh wrapper with overflow-hidden */}
+            <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
+              <div className={`absolute -right-12 -top-12 w-64 h-64 rounded-full blur-3xl ${
+                isDark ? 'bg-[#8B9DFF]/5' : 'bg-indigo-500/5'
+              }`} />
             </div>
 
-            {/* Primary Actions & Professional Dropdown */}
-            <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap justify-end w-full sm:w-auto">
-              <Button
-                variant="primary"
-                size="md"
-                icon={<Activity className="w-4 h-4" />}
-                onClick={() => onOpenMhcForMachine(selectedMachine.id)}
-              >
-                Execute Health Check
-              </Button>
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+              {/* Machine Core Identity (Layer 5 Rank 1 & 2) */}
+              <div className="space-y-3 flex-1 min-w-0">
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <span className={`px-2.5 py-1 rounded-lg font-mono text-xs font-bold border tracking-wide ${
+                    isDark ? 'bg-[#8ECDF7]/15 border-[#8ECDF7]/40 text-[#8ECDF7]' : 'bg-sky-50 border-sky-300 text-sky-800 font-bold'
+                  }`}>
+                    {selectedMachine.machineNumber}
+                  </span>
+                  <Badge
+                    variant={
+                      selectedMachine.status === 'OPERATIONAL'
+                        ? 'emerald'
+                        : selectedMachine.status === 'NEEDS_CALIBRATION'
+                        ? 'amber'
+                        : 'rose'
+                    }
+                    size="md"
+                  >
+                    {selectedMachine.status}
+                  </Badge>
+                  <span className={`text-xs font-mono flex items-center gap-1 ${isDark ? 'text-slate-400' : 'text-slate-600 font-medium'}`}>
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                    SN: <strong className={isDark ? 'text-slate-200' : 'text-slate-900'}>{selectedMachine.serialNumber}</strong>
+                  </span>
+                </div>
 
-              {/* Machine Actions Menu Dropdown */}
-              <div className="relative">
-                <Button
-                  variant="outline"
-                  size="md"
-                  icon={<Settings className="w-4 h-4" />}
-                  onClick={() => setIsActionMenuOpen(!isActionMenuOpen)}
-                >
-                  Machine Actions
-                  <ChevronDown className={`w-4 h-4 ml-1 transition-transform ${isActionMenuOpen ? 'rotate-180' : ''}`} />
-                </Button>
+                <div>
+                  <h1 className={`text-2xl sm:text-3xl font-extrabold tracking-tight ${isDark ? 'text-slate-50' : 'text-slate-900'}`}>
+                    {selectedMachine.model}
+                  </h1>
+                  <div className={`flex items-center gap-2 mt-1 text-xs font-medium flex-wrap ${
+                    isDark ? 'text-[#94A3B8]' : 'text-slate-600'
+                  }`}>
+                    <span className="flex items-center gap-1">
+                      <Building2 className="w-3.5 h-3.5 text-[#8B9DFF]" />
+                      {selectedMachine.customerName}
+                    </span>
+                    <span className="opacity-40">•</span>
+                    <span className="flex items-center gap-1">
+                      <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                      {selectedMachine.plantName}
+                    </span>
+                    <span className="opacity-40">•</span>
+                    <span className="font-mono text-[11px] opacity-90">{selectedMachine.productionLineName}</span>
+                  </div>
+                </div>
 
-                {isActionMenuOpen && (
-                  <>
-                    {/* Invisible backdrop to close dropdown on click outside */}
-                    <div
-                      className="fixed inset-0 z-20"
-                      onClick={() => setIsActionMenuOpen(false)}
-                    />
+                {/* Quick Machine Summary Telemetry Strip */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
+                  <div className={`p-2.5 rounded-xl border text-xs ${
+                    isDark ? 'bg-[#111315]/80 border-[#2B323A]' : 'bg-white/80 border-slate-200 shadow-2xs'
+                  }`}>
+                    <span className={`text-[10px] uppercase font-mono block ${isDark ? 'text-slate-400' : 'text-slate-600 font-semibold'}`}>Installed</span>
+                    <span className={`font-mono font-bold ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>{selectedMachine.installationDate}</span>
+                  </div>
+                  <div className={`p-2.5 rounded-xl border text-xs ${
+                    isDark ? 'bg-[#111315]/80 border-[#2B323A]' : 'bg-white/80 border-slate-200 shadow-2xs'
+                  }`}>
+                    <span className={`text-[10px] uppercase font-mono block ${isDark ? 'text-slate-400' : 'text-slate-600 font-semibold'}`}>Next MHC</span>
+                    <span className={`font-mono font-bold ${isDark ? 'text-[#8ECDF7]' : 'text-sky-800'}`}>{selectedMachine.nextMhcDate}</span>
+                  </div>
+                  <div className={`p-2.5 rounded-xl border text-xs ${
+                    isDark ? 'bg-[#111315]/80 border-[#2B323A]' : 'bg-white/80 border-slate-200 shadow-2xs'
+                  }`}>
+                    <span className={`text-[10px] uppercase font-mono block ${isDark ? 'text-slate-400' : 'text-slate-600 font-semibold'}`}>Laser Heads</span>
+                    <span className={`font-mono font-bold ${isDark ? 'text-amber-300' : 'text-amber-800'}`}>{selectedMachine.laserHeads?.length || 0} Active Unit(s)</span>
+                  </div>
+                  <div className={`p-2.5 rounded-xl border text-xs ${
+                    isDark ? 'bg-[#111315]/80 border-[#2B323A]' : 'bg-white/80 border-slate-200 shadow-2xs'
+                  }`}>
+                    <span className={`text-[10px] uppercase font-mono block ${isDark ? 'text-slate-400' : 'text-slate-600 font-semibold'}`}>MHC Logs</span>
+                    <span className={`font-mono font-bold ${isDark ? 'text-emerald-400' : 'text-emerald-800'}`}>{machineMhcs.length} Recorded</span>
+                  </div>
+                </div>
+              </div>
 
-                    {/* Dropdown Menu Popup */}
-                    <div className={`absolute right-0 mt-2 w-56 rounded-2xl border shadow-xl z-30 py-1 overflow-hidden transition-all ${
-                      isDark
-                        ? 'bg-[#1E2227] border-[#2B323A] text-slate-200 divide-y divide-[#2B323A]'
-                        : 'bg-white border-slate-200 text-slate-800 divide-y divide-slate-100 shadow-2xl'
-                    }`}>
-                      <div className="py-1">
-                        <button
-                          onClick={() => {
-                            setIsActionMenuOpen(false);
-                            handleOpenEdit();
-                          }}
-                          className={`w-full px-4 py-2 text-left text-xs font-semibold flex items-center gap-2.5 transition-colors ${
-                            isDark ? 'hover:bg-[#282E36] hover:text-white' : 'hover:bg-slate-100 hover:text-slate-900'
-                          }`}
-                        >
-                          <Edit3 className="w-4 h-4 text-[#8B9DFF]" />
-                          Edit Specifications
-                        </button>
+              {/* Health Gauge & Primary Workflow Actions (Layer 5 Rank 3, 4, 5) */}
+              <div className={`flex flex-col sm:flex-row lg:flex-col items-center lg:items-end justify-between gap-5 p-4 lg:p-0 rounded-2xl lg:bg-transparent ${
+                isDark ? 'bg-[#111315]/50 border lg:border-0 border-[#2B323A]' : 'bg-white/60 border lg:border-0 border-slate-200'
+              }`}>
+                {/* Overall Health Score */}
+                <div className="flex items-center gap-3">
+                  <HealthGauge score={selectedMachine.healthScore} label="Overall Health Score" size="lg" />
+                </div>
 
-                        <button
-                          onClick={() => {
-                            setIsActionMenuOpen(false);
-                            handleOpenRename();
-                          }}
-                          className={`w-full px-4 py-2 text-left text-xs font-semibold flex items-center gap-2.5 transition-colors ${
-                            isDark ? 'hover:bg-[#282E36] hover:text-white' : 'hover:bg-slate-100 hover:text-slate-900'
-                          }`}
-                        >
-                          <Type className="w-4 h-4 text-[#8ECDF7]" />
-                          Rename Machine Code
-                        </button>
-                      </div>
+                {/* Primary Actions & Professional Dropdown */}
+                <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap justify-end w-full sm:w-auto">
+                  <Button
+                    variant="primary"
+                    size="md"
+                    icon={<Activity className="w-4 h-4" />}
+                    onClick={() => onOpenMhcForMachine(selectedMachine.id)}
+                  >
+                    Execute Health Check
+                  </Button>
 
-                      <div className="py-1">
-                        <button
-                          onClick={() => {
-                            handleDuplicateMachine();
-                          }}
-                          className={`w-full px-4 py-2 text-left text-xs font-semibold flex items-center gap-2.5 transition-colors ${
-                            isDark ? 'hover:bg-[#282E36] hover:text-white' : 'hover:bg-slate-100 hover:text-slate-900'
-                          }`}
-                        >
-                          <Copy className="w-4 h-4 text-amber-500" />
-                          Duplicate Machine Profile
-                        </button>
+                  {/* Machine Actions Menu Dropdown */}
+                  <div className="relative">
+                    <Button
+                      variant="outline"
+                      size="md"
+                      icon={<Settings className="w-4 h-4" />}
+                      onClick={() => setIsActionMenuOpen(!isActionMenuOpen)}
+                    >
+                      Machine Actions
+                      <ChevronDown className={`w-4 h-4 ml-1 transition-transform ${isActionMenuOpen ? 'rotate-180' : ''}`} />
+                    </Button>
 
-                        <button
-                          onClick={() => {
-                            handleArchiveMachine();
-                          }}
-                          className={`w-full px-4 py-2 text-left text-xs font-semibold flex items-center gap-2.5 transition-colors ${
-                            isDark ? 'hover:bg-[#282E36] hover:text-white' : 'hover:bg-slate-100 hover:text-slate-900'
-                          }`}
-                        >
-                          <Archive className="w-4 h-4 text-slate-400" />
-                          Archive Machine
-                        </button>
-                      </div>
+                    {isActionMenuOpen && (
+                      <>
+                        {/* Invisible backdrop to close dropdown on click outside */}
+                        <div
+                          className="fixed inset-0 z-20"
+                          onClick={() => setIsActionMenuOpen(false)}
+                        />
 
-                      <div className="py-1">
-                        <button
-                          onClick={() => {
-                            setIsActionMenuOpen(false);
-                            setIsDeleteModalOpen(true);
-                          }}
-                          className={`w-full px-4 py-2 text-left text-xs font-semibold flex items-center gap-2.5 text-rose-500 transition-colors ${
-                            isDark ? 'hover:bg-rose-950/30' : 'hover:bg-rose-50'
-                          }`}
-                        >
-                          <Trash2 className="w-4 h-4 text-rose-500" />
-                          Delete Machine
-                        </button>
-                      </div>
-                    </div>
-                  </>
-                )}
+                        {/* Dropdown Menu Popup */}
+                        <div className={`absolute right-0 mt-2 w-56 rounded-2xl border shadow-xl z-30 py-1 overflow-hidden transition-all ${
+                          isDark
+                            ? 'bg-[#1E2227] border-[#2B323A] text-slate-200 divide-y divide-[#2B323A]'
+                            : 'bg-white border-slate-200 text-slate-800 divide-y divide-slate-100 shadow-2xl'
+                        }`}>
+                          <div className="py-1">
+                            <button
+                              onClick={() => {
+                                setIsActionMenuOpen(false);
+                                handleOpenEdit();
+                              }}
+                              className={`w-full px-4 py-2 text-left text-xs font-semibold flex items-center gap-2.5 transition-colors ${
+                                isDark ? 'hover:bg-[#282E36] hover:text-white' : 'hover:bg-slate-100 hover:text-slate-900'
+                              }`}
+                            >
+                              <Edit3 className="w-4 h-4 text-[#8B9DFF]" />
+                              Edit Specifications
+                            </button>
+
+                            <button
+                              onClick={() => {
+                                setIsActionMenuOpen(false);
+                                handleOpenRename();
+                              }}
+                              className={`w-full px-4 py-2 text-left text-xs font-semibold flex items-center gap-2.5 transition-colors ${
+                                isDark ? 'hover:bg-[#282E36] hover:text-white' : 'hover:bg-slate-100 hover:text-slate-900'
+                              }`}
+                            >
+                              <Type className="w-4 h-4 text-[#8ECDF7]" />
+                              Rename Machine Code
+                            </button>
+                          </div>
+
+                          <div className="py-1">
+                            <button
+                              onClick={() => {
+                                handleDuplicateMachine();
+                              }}
+                              className={`w-full px-4 py-2 text-left text-xs font-semibold flex items-center gap-2.5 transition-colors ${
+                                isDark ? 'hover:bg-[#282E36] hover:text-white' : 'hover:bg-slate-100 hover:text-slate-900'
+                              }`}
+                            >
+                              <Copy className="w-4 h-4 text-amber-500" />
+                              Duplicate Machine Profile
+                            </button>
+
+                            <button
+                              onClick={() => {
+                                handleArchiveMachine();
+                              }}
+                              className={`w-full px-4 py-2 text-left text-xs font-semibold flex items-center gap-2.5 transition-colors ${
+                                isDark ? 'hover:bg-[#282E36] hover:text-white' : 'hover:bg-slate-100 hover:text-slate-900'
+                              }`}
+                            >
+                              <Archive className="w-4 h-4 text-slate-400" />
+                              Archive Machine
+                            </button>
+                          </div>
+
+                          <div className="py-1">
+                            <button
+                              onClick={() => {
+                                setIsActionMenuOpen(false);
+                                setIsDeleteModalOpen(true);
+                              }}
+                              className={`w-full px-4 py-2 text-left text-xs font-semibold flex items-center gap-2.5 text-rose-500 transition-colors ${
+                                isDark ? 'hover:bg-rose-950/30' : 'hover:bg-rose-50'
+                              }`}
+                            >
+                              <Trash2 className="w-4 h-4 text-rose-500" />
+                              Delete Machine
+                            </button>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </div>
-        <div className="space-y-6">
+
+          <div className="space-y-6">
           {/* Hardware & Installation Telemetry */}
           <div className={`grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 rounded-xl border ${
             isDark ? 'bg-[#1A1D21] border-[#2B323A]' : 'bg-slate-50 border-slate-200'
@@ -1558,6 +1568,8 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
             </Card>
           </div>
         </div>
+        </>
+      )}
 
       {/* 1. Add Machine Modal */}
       <Modal
@@ -1747,8 +1759,8 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
       <Modal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
-        title={`Edit Machine: ${selectedMachine.model}`}
-        subtitle={`Update operational parameters and specs for ${selectedMachine.machineNumber}`}
+        title={`Edit Machine: ${selectedMachine?.model || ''}`}
+        subtitle={`Update operational parameters and specs for ${selectedMachine?.machineNumber || ''}`}
         maxWidth="2xl"
       >
         <form onSubmit={handleSaveEdit} className="space-y-4 p-4">
@@ -1901,7 +1913,7 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
         isOpen={isRenameModalOpen}
         onClose={() => setIsRenameModalOpen(false)}
         title="Quick Rename Machine"
-        subtitle={`Update model designation or machine code for ${selectedMachine.machineNumber}`}
+        subtitle={`Update model designation or machine code for ${selectedMachine?.machineNumber || ''}`}
         maxWidth="md"
       >
         <form onSubmit={handleSaveRename} className="space-y-4 p-4">
@@ -1987,10 +1999,10 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
             <div className="text-xs space-y-1">
               <p className="font-bold">Are you sure you want to delete this machine?</p>
               <p>
-                Target: <strong className="font-mono">{selectedMachine.model} ({selectedMachine.machineNumber})</strong>
+                Target: <strong className="font-mono">{selectedMachine?.model || ''} ({selectedMachine?.machineNumber || ''})</strong>
               </p>
               <p className="text-[11px] opacity-80 pt-1">
-                SN: {selectedMachine.serialNumber} • {selectedMachine.customerName}
+                SN: {selectedMachine?.serialNumber || ''} • {selectedMachine?.customerName || ''}
               </p>
             </div>
           </div>
