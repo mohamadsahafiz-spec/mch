@@ -4,8 +4,14 @@ import path from 'path';
 import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
+  // Dynamic base path for Cloudflare Pages ('/'), GitHub Pages ('/mch/'), or relative ('./')
+  const basePath =
+    process.env.BASE_PATH ||
+    process.env.VITE_BASE_PATH ||
+    (process.env.CF_PAGES ? '/' : process.env.GITHUB_ACTIONS ? '/mch/' : './');
+
   return {
-    base: "/mch/",
+    base: basePath,
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
