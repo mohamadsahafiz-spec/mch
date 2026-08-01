@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Shield, Lock, User, ArrowRight, Check, Sparkles, Cpu, KeyRound } from 'lucide-react';
+import { Shield, Lock, User, ArrowRight, Check, Sparkles, KeyRound } from 'lucide-react';
 import { SystemUser, WorkspaceMode, UserSession } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
+import { FSOSWaferMark } from '../common/FSOSWaferMark';
 
 interface LoginPageProps {
   users?: SystemUser[];
@@ -90,8 +91,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       }`}>
         {/* Brand Header */}
         <div className="text-center space-y-2 mb-8">
-          <div className="inline-flex items-center justify-center p-3 rounded-2xl bg-indigo-600/10 border border-indigo-500/20 mb-2">
-            <Cpu className="w-8 h-8 text-indigo-500" />
+          <div className="inline-flex items-center justify-center p-2.5 rounded-2xl bg-indigo-950/40 border border-indigo-500/20 mb-2 shadow-inner">
+            <FSOSWaferMark className="w-10 h-10" />
           </div>
           <h1 className="text-2xl font-black tracking-wider uppercase font-mono">FSOS</h1>
           <p className="text-xs font-bold font-mono tracking-widest text-indigo-500 uppercase">
