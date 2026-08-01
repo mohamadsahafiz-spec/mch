@@ -18,6 +18,7 @@ import {
   ChevronRight,
   Sparkles,
   FileSpreadsheet,
+  FolderOpen,
   X
 } from 'lucide-react';
 import { MHCSession, MHCReportDraftConfig } from '../../types';
@@ -37,6 +38,12 @@ export const MhcReportBuilder: React.FC<MhcReportBuilderProps> = ({
   onFinalizeReport,
   onBackToSummary
 }) => {
+  const currentEngineerName =
+    session.engineerName ||
+    StorageService.getProfile()?.name ||
+    StorageService.getAuth()?.engineerName ||
+    'Field Service Engineer';
+
   // Initial draft config state
   const [draftConfig, setDraftConfig] = useState<MHCReportDraftConfig>(() => {
     const existingDrafts = StorageService.getMhcReportDrafts();
@@ -54,7 +61,7 @@ export const MhcReportBuilder: React.FC<MhcReportBuilderProps> = ({
       machineModel: session.machineModel,
       machineSerialNumber: session.machineSerialNumber,
       machineName: session.machineName,
-      engineerName: session.engineerName || 'Sahafiz',
+      engineerName: currentEngineerName,
       engineerTitle: 'Senior Field Service Engineer (EO Technics)',
       sectionsVisibility: {
         cover: true,
@@ -102,7 +109,7 @@ export const MhcReportBuilder: React.FC<MhcReportBuilderProps> = ({
         }))
       ],
       engineerConclusion: session.stage08_engineerRemarks?.generalFindings || 'System approved for continuous wafer production under standard cleanroom protocols.',
-      engineerSignatureName: session.engineerName || 'Sahafiz',
+      engineerSignatureName: currentEngineerName,
       engineerSignatureDate: new Date().toISOString().split('T')[0],
       customerSignatureName: 'Dr. Marcus Vance',
       customerSignatureDate: new Date().toISOString().split('T')[0],
@@ -119,7 +126,7 @@ export const MhcReportBuilder: React.FC<MhcReportBuilderProps> = ({
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const showToast = (msg: string) => {
     setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3000);
+    setTimeout(() => setToastMessage(null), 3500);
   };
 
   // Section names mapping
@@ -187,12 +194,19 @@ export const MhcReportBuilder: React.FC<MhcReportBuilderProps> = ({
     showToast('Report draft saved successfully!');
   };
 
+  // Load Draft
+  const handleLoadDraft = (draftToLoad: MHCReportDraftConfig) => {
+    setDraftConfig(draftToLoad);
+    showToast(`Loaded draft "${draftToLoad.reportTitle}"`);
+  };
+
   // Duplicate Draft
-  const handleDuplicateDraft = () => {
+  const handleDuplicateDraft = (targetDraft?: MHCReportDraftConfig) => {
+    const source = targetDraft || draftConfig;
     const clone: MHCReportDraftConfig = {
-      ...draftConfig,
+      ...source,
       id: `DRAFT-MHC-${Date.now()}`,
-      reportTitle: `${draftConfig.reportTitle} (Copy)`,
+      reportTitle: `${source.reportTitle} (Copy)`,
       lastSaved: new Date().toLocaleString()
     };
     const all = [clone, ...StorageService.getMhcReportDrafts()];
@@ -202,39 +216,140 @@ export const MhcReportBuilder: React.FC<MhcReportBuilderProps> = ({
     showToast('Draft duplicated successfully!');
   };
 
-  // CSV Export Functionality
+  // Delete Draft with Confirmation
+  const handleDeleteDraft = (draftId: string) => {
+    const target = savedDrafts.find((d) => d.id === draftId);
+    if (!target) return;
+
+    if (!window.confirm(`Are you sure you want to delete report draft "${target.reportTitle}" (${target.id})? This action cannot be undone.`)) {
+      return;
+    }
+
+    const updated = savedDrafts.filter((d) => d.id !== draftId);
+    StorageService.saveMhcReportDrafts(updated);
+    setSavedDrafts(updated);
+    showToast('Report draft deleted.');
+  };
+
+  // CSV Export Functionality (Full Multi-Section Engineering Data)
   const handleExportCSV = () => {
-    const rows = [
-      ['SECTION', 'KEY_PARAMETER', 'VALUE / READING', 'UNIT / STATUS'],
-      ['SESSION', 'MHC ID', session.id, 'ACTIVE'],
-      ['SESSION', 'Machine', session.machineName, ''],
-      ['SESSION', 'Customer', session.customerName, session.plantName],
-      ['SESSION', 'Engineer', session.engineerName, ''],
-      ['01_LASER_HOURS', 'Laser 1 Hour', session.stage01_laserHours[0]?.calculatedCurrentHour || 0, 'Hours'],
-      ['01_LASER_HOURS', 'Laser 2 Hour', session.stage01_laserHours[1]?.calculatedCurrentHour || 0, 'Hours'],
-      ['03_LASER_POWER', 'Laser 1 Power After', session.stage03_laserPower[0]?.afterValueWatts || 0, 'Watts'],
-      ['03_LASER_POWER', 'Laser 2 Power After', session.stage03_laserPower[1]?.afterValueWatts || 0, 'Watts'],
-      ['04_OPTICS', 'Cleanliness Score', session.stage04_opticsBeam?.cleanlinessScore || 100, '%'],
-      ['04_OPTICS', 'Beam Waist', session.stage04_opticsBeam?.beamWaistMm || 0, 'mm'],
-      ['05_COOLING', 'Chiller Temp', session.stage05_cooling?.chillerTempCelsius || 0, '°C'],
-      ['05_COOLING', 'Flow Rate', session.stage05_cooling?.chillerFlowLpm || 0, 'LPM'],
-      ['05_COOLING', 'DI Conductivity', session.stage05_cooling?.diConductivityUs || 0, 'µS/cm'],
-      ['06_QUALITY', 'Via Diameter', session.stage06_productQuality?.viaDiameterUm || 0, 'µm'],
-      ['08_REMARKS', 'Production Verdict', session.stage08_engineerRemarks?.productionReleaseVerdict || 'APPROVED', '']
+    const rows: (string | number)[][] = [
+      ['SECTION', 'SUBSECTION / PARAMETER', 'VALUE / READING', 'UNIT / STATUS / NOTES'],
+      // Report Header Metadata
+      ['00_METADATA', 'Report Title', draftConfig.reportTitle, ''],
+      ['00_METADATA', 'Report Number', draftConfig.reportNumber, ''],
+      ['00_METADATA', 'Date', draftConfig.date, ''],
+      ['00_METADATA', 'Customer Name', draftConfig.customerName, ''],
+      ['00_METADATA', 'Plant Location', draftConfig.plantName, ''],
+      ['00_METADATA', 'Machine Model', draftConfig.machineModel, ''],
+      ['00_METADATA', 'Machine Serial Number', draftConfig.machineSerialNumber, ''],
+      ['00_METADATA', 'Field Engineer Name', draftConfig.engineerName, draftConfig.engineerTitle],
+
+      // Section 01 Laser Hours
+      ...(session.stage01_laserHours || []).flatMap((lh, i) => [
+        [`01_LASER_HOURS`, `Laser #${i+1} Identifier`, lh.laserIdentifier, ''],
+        [`01_LASER_HOURS`, `Laser #${i+1} Recorded Hour`, lh.recordedLaserHour, 'Hours'],
+        [`01_LASER_HOURS`, `Laser #${i+1} Reading Date`, lh.readingDate, ''],
+        [`01_LASER_HOURS`, `Laser #${i+1} Reading Time`, lh.readingTime, ''],
+        [`01_LASER_HOURS`, `Laser #${i+1} Calculated Current Hour`, lh.calculatedCurrentHour, 'Hours'],
+        [`01_LASER_HOURS`, `Laser #${i+1} Warning Threshold`, lh.warningThreshold, 'Hours'],
+        [`01_LASER_HOURS`, `Laser #${i+1} Critical Threshold`, lh.criticalThreshold, 'Hours'],
+        [`01_LASER_HOURS`, `Laser #${i+1} Runtime Status`, lh.runtimeStatus, '']
+      ]),
+
+      // Section 02 Laser Profile
+      ['02_LASER_PROFILE', 'Processed Product Name', session.stage02_laserProfile?.productName || '', ''],
+      ['02_LASER_PROFILE', 'Recipe Program', session.stage02_laserProfile?.recipeProgram || '', ''],
+      ['02_LASER_PROFILE', 'Profile Info', session.stage02_laserProfile?.profileInfo || '', ''],
+      ['02_LASER_PROFILE', 'Measurement Info', session.stage02_laserProfile?.measurementInfo || '', ''],
+      ['02_LASER_PROFILE', 'Supporting Evidence', session.stage02_laserProfile?.supportingEvidence || '', ''],
+
+      // Section 03 Laser Power
+      ...(session.stage03_laserPower || []).flatMap((lp, i) => [
+        ['03_LASER_POWER', `Laser #${i+1} Identifier`, lp.laserIdentifier, ''],
+        ['03_LASER_POWER', `Laser #${i+1} Rated Power`, lp.ratedPowerWatts, 'Watts'],
+        ['03_LASER_POWER', `Laser #${i+1} Reference Power`, lp.referenceValueWatts, 'Watts'],
+        ['03_LASER_POWER', `Laser #${i+1} Before Power`, lp.beforeValueWatts, 'Watts'],
+        ['03_LASER_POWER', `Laser #${i+1} After Power`, lp.afterValueWatts, 'Watts'],
+        ['03_LASER_POWER', `Laser #${i+1} Power Stability`, lp.stabilityPercent, '%'],
+        ['03_LASER_POWER', `Laser #${i+1} Calibration Result`, lp.result, lp.notes || '']
+      ]),
+
+      // Section 04 Optics Beam
+      ['04_OPTICS_BEAM', 'Optics Cleanliness Score', session.stage04_opticsBeam?.cleanlinessScore || 0, '%'],
+      ['04_OPTICS_BEAM', 'Beam Waist Diameter', session.stage04_opticsBeam?.beamWaistMm || 0, 'mm'],
+      ['04_OPTICS_BEAM', 'Focus Offset', session.stage04_opticsBeam?.focusOffsetMm || 0, 'mm'],
+      ['04_OPTICS_BEAM', 'Symmetry Ratio', session.stage04_opticsBeam?.symmetryRatio || 0, ''],
+      ['04_OPTICS_BEAM', 'M2 Beam Quality Value', session.stage04_opticsBeam?.m2Value || 0, ''],
+      ['04_OPTICS_BEAM', 'Before Condition', session.stage04_opticsBeam?.beforeCondition || '', ''],
+      ['04_OPTICS_BEAM', 'After Condition', session.stage04_opticsBeam?.afterCondition || '', ''],
+      ['04_OPTICS_BEAM', 'Inspection Result', session.stage04_opticsBeam?.inspectionResult || '', session.stage04_opticsBeam?.notes || ''],
+
+      // Section 05 Cooling System
+      ['05_COOLING', 'Chiller Temperature', session.stage05_cooling?.chillerTempCelsius || 0, '°C'],
+      ['05_COOLING', 'Chiller Flow Rate', session.stage05_cooling?.chillerFlowLpm || 0, 'LPM'],
+      ['05_COOLING', 'DI Water Conductivity', session.stage05_cooling?.diConductivityUs || 0, 'µS/cm'],
+      ['05_COOLING', 'Cooling Loop Condition', session.stage05_cooling?.coolingCondition || '', ''],
+      ['05_COOLING', 'Thermal Condition', session.stage05_cooling?.thermalCondition || '', ''],
+      ['05_COOLING', 'Before Condition', session.stage05_cooling?.beforeCondition || '', ''],
+      ['05_COOLING', 'After Condition', session.stage05_cooling?.afterCondition || '', ''],
+      ['05_COOLING', 'Chiller Inspection Result', session.stage05_cooling?.result || '', session.stage05_cooling?.notes || ''],
+
+      // Section 06 Product Quality
+      ['06_PRODUCT_QUALITY', 'Quality Sample ID', session.stage06_productQuality?.sampleId || '', ''],
+      ['06_PRODUCT_QUALITY', 'Via Hole Diameter', session.stage06_productQuality?.viaDiameterUm || 0, 'µm'],
+      ['06_PRODUCT_QUALITY', 'Via Shape Geometry', session.stage06_productQuality?.viaShape || '', ''],
+      ['06_PRODUCT_QUALITY', 'Via Placement Offset', session.stage06_productQuality?.viaOffsetUm || 0, 'µm'],
+      ['06_PRODUCT_QUALITY', 'Pad Quality Assessment', session.stage06_productQuality?.padQuality || '', ''],
+      ['06_PRODUCT_QUALITY', 'Visual Inspection Notes', session.stage06_productQuality?.visualVerification || '', ''],
+      ['06_PRODUCT_QUALITY', 'Quality Result', session.stage06_productQuality?.result || '', session.stage06_productQuality?.notes || ''],
+
+      // Section 07 Spare Parts
+      ...(session.stage07_spareParts || []).flatMap((sp, i) => [
+        ['07_SPARE_PARTS', `Part #${i+1} Name`, sp.partName, ''],
+        ['07_SPARE_PARTS', `Part #${i+1} Part Number`, sp.partNumber, ''],
+        ['07_SPARE_PARTS', `Part #${i+1} Category`, sp.category, ''],
+        ['07_SPARE_PARTS', `Part #${i+1} Quantity`, sp.quantity, 'Units'],
+        ['07_SPARE_PARTS', `Part #${i+1} Reason`, sp.reason, ''],
+        ['07_SPARE_PARTS', `Part #${i+1} Action Taken`, sp.action, ''],
+        ['07_SPARE_PARTS', `Part #${i+1} Cost Indicator`, sp.costIndicator, sp.notes || '']
+      ]),
+
+      // Section 08 Engineer Remarks
+      ['08_ENGINEER_REMARKS', 'General Engineering Findings', session.stage08_engineerRemarks?.generalFindings || '', ''],
+      ['08_ENGINEER_REMARKS', 'Observed Operational Issues', session.stage08_engineerRemarks?.observedIssues || '', ''],
+      ['08_ENGINEER_REMARKS', 'Corrective Actions Taken', session.stage08_engineerRemarks?.correctiveActions || '', ''],
+      ['08_ENGINEER_REMARKS', 'Preventive Recommendations', session.stage08_engineerRemarks?.recommendations || '', ''],
+      ['08_ENGINEER_REMARKS', 'Follow Up Required', session.stage08_engineerRemarks?.followUpRequired ? 'YES' : 'NO', ''],
+      ['08_ENGINEER_REMARKS', 'Production Release Verdict', session.stage08_engineerRemarks?.productionReleaseVerdict || 'APPROVED', ''],
+
+      // Report Conclusion & Signatures
+      ['REPORT_CONCLUSIONS', 'Executive Introduction', draftConfig.customComments || '', ''],
+      ['REPORT_CONCLUSIONS', 'Engineer Final Conclusion', draftConfig.engineerConclusion || '', ''],
+      ['REPORT_CONCLUSIONS', 'Engineer Signee Name', draftConfig.engineerSignatureName || '', draftConfig.engineerTitle || ''],
+      ['REPORT_CONCLUSIONS', 'Customer Signee Name', draftConfig.customerSignatureName || '', draftConfig.customerSignatureDate || '']
     ];
 
-    const csvContent = 'data:text/csv;charset=utf-8,' + rows.map((e) => e.join(',')).join('\n');
+    const escapeCell = (val: any) => {
+      const str = String(val ?? '');
+      if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+        return `"${str.replace(/"/g, '""')}"`;
+      }
+      return str;
+    };
+
+    const csvContent = 'data:text/csv;charset=utf-8,' + rows.map((r) => r.map(escapeCell).join(',')).join('\n');
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `${session.id}_MHC_Draft_Data.csv`);
+    link.setAttribute('download', `${session.id}_Full_Engineering_Data.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    showToast('MHC Session CSV exported!');
+    showToast('Exported full structured engineering CSV data!');
   };
 
-  // CSV Import Functionality
+  // Real CSV Parsing and Hydration
   const handleImportCSV = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -243,19 +358,99 @@ export const MhcReportBuilder: React.FC<MhcReportBuilderProps> = ({
     reader.onload = (event) => {
       try {
         const text = event.target?.result as string;
-        showToast('CSV imported and draft hydrated successfully!');
+        if (!text) {
+          showToast('ERROR: File appears to be empty.');
+          return;
+        }
+
+        const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+        let matchedCount = 0;
+        let skippedCount = 0;
+
+        const updated = { ...draftConfig };
+
+        for (const line of lines) {
+          // Standard CSV row splitting (handling double quotes)
+          const parts = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map((p) => p.trim().replace(/^"|"$/g, ''));
+          if (parts.length < 2) continue;
+
+          const sec = parts[0].toUpperCase();
+          const key = parts[1].toLowerCase();
+          const val = parts[2] !== undefined ? parts[2] : parts[1];
+
+          if (sec === 'SECTION' || key === 'key_parameter' || key === 'subsection / parameter') {
+            continue; // Header row
+          }
+
+          if (key.includes('report title') || key.includes('reporttitle')) {
+            updated.reportTitle = val;
+            matchedCount++;
+          } else if (key.includes('report number') || key.includes('reportnumber')) {
+            updated.reportNumber = val;
+            matchedCount++;
+          } else if (key.includes('date') && !key.includes('update')) {
+            updated.date = val;
+            matchedCount++;
+          } else if (key.includes('customer name') || key.includes('customer')) {
+            updated.customerName = val;
+            matchedCount++;
+          } else if (key.includes('plant') || key.includes('fab location')) {
+            updated.plantName = val;
+            matchedCount++;
+          } else if (key.includes('machine model') || key.includes('machinemodel')) {
+            updated.machineModel = val;
+            matchedCount++;
+          } else if (key.includes('serial') || key.includes('machineserialnumber')) {
+            updated.machineSerialNumber = val;
+            matchedCount++;
+          } else if (key.includes('engineer name') || key.includes('field engineer name')) {
+            updated.engineerName = val;
+            matchedCount++;
+          } else if (key.includes('engineer title')) {
+            updated.engineerTitle = val;
+            matchedCount++;
+          } else if (key.includes('introduction') || key.includes('customcomments') || key.includes('executive introduction')) {
+            updated.customComments = val;
+            matchedCount++;
+          } else if (key.includes('conclusion') || key.includes('final conclusion')) {
+            updated.engineerConclusion = val;
+            matchedCount++;
+          } else if (key.includes('engineer signee') || key.includes('engineersignaturename')) {
+            updated.engineerSignatureName = val;
+            matchedCount++;
+          } else if (key.includes('customer signee') || key.includes('customersignaturename')) {
+            updated.customerSignatureName = val;
+            matchedCount++;
+          } else {
+            skippedCount++;
+          }
+        }
+
+        if (matchedCount === 0) {
+          showToast('ERROR: No supported MHC report draft fields recognized in CSV.');
+        } else {
+          updated.lastSaved = new Date().toLocaleString();
+          setDraftConfig(updated);
+          if (skippedCount > 0) {
+            showToast(`PARTIAL SUCCESS: Hydrated ${matchedCount} draft fields (${skippedCount} unrecognized data rows ignored).`);
+          } else {
+            showToast(`SUCCESS: Hydrated ${matchedCount} fields into report draft cleanly!`);
+          }
+        }
       } catch (err) {
-        showToast('Error parsing CSV file');
+        showToast('ERROR: Failed to parse CSV file.');
       }
     };
     reader.readAsText(file);
+    // Reset file input
+    e.target.value = '';
   };
 
   return (
     <div className="space-y-6">
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed top-4 right-4 z-50 bg-emerald-600 text-white font-semibold text-xs px-4 py-3 rounded-lg shadow-xl flex items-center gap-2">
+        <div className="fixed top-4 right-4 z-50 bg-emerald-600 text-white font-semibold text-xs px-4 py-3 rounded-lg shadow-xl flex items-center gap-2 animate-in fade-in">
           <CheckCircle2 className="w-4 h-4" />
           {toastMessage}
         </div>
@@ -294,6 +489,15 @@ export const MhcReportBuilder: React.FC<MhcReportBuilderProps> = ({
           </Button>
 
           <Button
+            onClick={() => handleDuplicateDraft()}
+            variant="outline"
+            className="border-slate-700 text-purple-400 hover:bg-purple-950/40 text-xs py-2 flex items-center gap-1.5"
+          >
+            <Copy className="w-3.5 h-3.5" />
+            Duplicate
+          </Button>
+
+          <Button
             onClick={handleExportCSV}
             variant="outline"
             className="border-slate-700 text-sky-400 hover:bg-sky-950/40 text-xs py-2 flex items-center gap-1.5"
@@ -322,6 +526,81 @@ export const MhcReportBuilder: React.FC<MhcReportBuilderProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* LEFT PANEL: EDITING WORKSPACE (5 cols) */}
         <div className="lg:col-span-5 space-y-6">
+          {/* SAVED DRAFTS MANAGEMENT PANEL */}
+          <Card className="border border-slate-800 bg-slate-900/80 p-5 space-y-3">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+              <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+                <FolderOpen className="w-4 h-4 text-emerald-400" />
+                Saved Report Drafts ({savedDrafts.length})
+              </h3>
+              <Button
+                onClick={() => handleSaveDraft()}
+                size="sm"
+                className="bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] py-1 px-2.5"
+              >
+                + New Draft Save
+              </Button>
+            </div>
+
+            {savedDrafts.length === 0 ? (
+              <p className="text-xs text-slate-500 italic py-2">No saved drafts found. Click "Save Draft" to store your current report composition.</p>
+            ) : (
+              <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                {savedDrafts.map((d) => {
+                  const isCurrent = d.id === draftConfig.id;
+                  return (
+                    <div
+                      key={d.id}
+                      className={`p-3 rounded-lg border text-xs flex flex-col gap-2 transition ${
+                        isCurrent
+                          ? 'border-emerald-500/70 bg-emerald-950/20 text-slate-200'
+                          : 'border-slate-800 bg-slate-950/60 text-slate-300 hover:border-slate-700'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <div className="font-bold text-slate-100 line-clamp-1">{d.reportTitle}</div>
+                          <div className="text-[10px] font-mono text-slate-400 mt-0.5">
+                            {d.reportNumber} • Saved: {d.lastSaved}
+                          </div>
+                        </div>
+                        {isCurrent && (
+                          <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800/60">
+                            Active
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center justify-end gap-1.5 pt-1 border-t border-slate-800/60">
+                        {!isCurrent && (
+                          <button
+                            onClick={() => handleLoadDraft(d)}
+                            className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-emerald-400 text-[11px] font-semibold transition"
+                          >
+                            Load
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleDuplicateDraft(d)}
+                          className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-purple-300 text-[11px] font-semibold transition flex items-center gap-1"
+                        >
+                          <Copy className="w-3 h-3" /> Duplicate
+                        </button>
+                        <button
+                          onClick={() => handleDeleteDraft(d.id)}
+                          className="px-2 py-1 rounded bg-rose-950/60 hover:bg-rose-900/80 text-rose-300 text-[11px] font-semibold transition flex items-center gap-1 border border-rose-800/40"
+                        >
+                          <Trash2 className="w-3 h-3" /> Delete
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </Card>
+
+          {/* REPORT HEADER & TITLE CONFIG */}
           <Card className="border border-slate-800 bg-slate-900/80 p-5 space-y-4">
             <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2 border-b border-slate-800 pb-2">
               <FileText className="w-4 h-4 text-purple-400" />

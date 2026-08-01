@@ -17,20 +17,16 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
     {
       version: 'v0.8.0',
       date: '2026-08-03',
-      type: 'Mission Workspace Release (ECO-20260803-033)',
+      type: 'MHC Operations Workspace Release (ECO-20260803-034)',
       highlights: [
-        'NEW: Dedicated FSOS Login Page experience with cleanroom engineering aesthetics.',
-        'NEW: User Session Architecture supporting authenticated engineer identity persistence.',
-        'NEW: Workspace Mode Architecture introducing MHC Mode and Founder Mode.',
-        'NEW: Compact Workspace Mode Selector control allowing seamless context switching without logout.',
-        'NEW: MHC Mode Home focused entry point designed around 8-stage Machine Health Check operations.',
-        'NEW: Persistent Last Workspace Mode memory across login sessions.',
-        'NEW: Complete Architectural Separation between Role (permissions) and Workspace Mode (focus).',
-        'NEW: Clean Logout workflow returning to Login Page while preserving all operational data.',
-        'IMPROVED: Application navigation focus and field engineer cognitive load reduction.',
-        'IMPROVED: Empty state recovery paths for machines, health checks, and executive reports.',
-        'KNOWN ISSUES: Workflow Navigator UX refinement remains deferred.',
-        'KNOWN ISSUES: Google AI Studio Git synchronization may intermittently fail.'
+        'NEW: Machine Health Check (MHC) operational workspace promoted to first-class primary category.',
+        'NEW: Saved Report Draft Management featuring Load Draft, Duplicate Draft, and Delete Draft with confirmation.',
+        'NEW: Real CSV Parsing & Data Hydration supporting field mapping with SUCCESS, PARTIAL, and ERROR feedback.',
+        'NEW: Multi-Section CSV Data Export containing complete structured engineering data from Stages 01 through 08.',
+        'NEW: Stage 01 Laser Hour auto-calculation model: Recorded Laser Hour + Reading Date + Reading Time + Elapsed Runtime = Calculated Current Laser Hour.',
+        'NEW: Dynamic Engineer Identity integration removing all remaining hardcoded engineer names across MHC workflows.',
+        'IMPROVED: Live Customer MHC Report Builder preview, document canvas, and executive sign-off blocks.',
+        'COMPLETED: Full Definition of Done for v0.8.0 MHC Operations Workspace.'
       ]
     },
     {
@@ -494,7 +490,7 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
             <div>
               <h3 className="text-base font-bold">Field Service Operations System</h3>
               <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600 font-medium'}`}>
-                Mission Workspace v0.8.0 — Work-Adaptive Cleanroom Platform (ECO-20260803-033)
+                MHC Operations Workspace v0.8.0 — Work-Adaptive Cleanroom Platform (ECO-20260803-034)
               </p>
             </div>
           </div>
@@ -522,7 +518,7 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
               <Cpu className="w-3.5 h-3.5 text-[#8B9DFF]" />
               <span className="font-mono uppercase text-[10px]">Build ID</span>
             </div>
-            <p className="font-mono font-bold text-sm">ECO-20260803-033</p>
+            <p className="font-mono font-bold text-sm">ECO-20260803-034</p>
           </div>
 
           <div className={`p-3.5 rounded-xl border space-y-1 ${
@@ -532,7 +528,7 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
               <Compass className="w-3.5 h-3.5 text-[#8B9DFF]" />
               <span className="font-mono uppercase text-[10px]">Release Codename</span>
             </div>
-            <p className="font-semibold text-xs text-indigo-400">Mission Workspace</p>
+            <p className="font-semibold text-xs text-emerald-400">MHC Operations Workspace</p>
           </div>
 
           <div className={`p-3.5 rounded-xl border space-y-1 ${

@@ -116,7 +116,7 @@ export const MachineHealthCheckModule: React.FC<MachineHealthCheckProps> = ({
       customerId: targetMch.customerId,
       customerName: targetMch.customerName,
       plantName: targetMch.plantName,
-      engineerName: 'Sahafiz',
+      engineerName: StorageService.getProfile()?.name || StorageService.getAuth()?.engineerName || 'Field Service Engineer',
       startDate: new Date().toISOString().split('T')[0],
       startTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       lastUpdated: new Date().toLocaleString(),
@@ -132,17 +132,28 @@ export const MachineHealthCheckModule: React.FC<MachineHealthCheckProps> = ({
         sec_07: 'NOT_STARTED',
         sec_08: 'NOT_STARTED'
       },
-      stage01_laserHours: (targetMch.laserHeads || []).map((lh, i) => ({
-        laserId: lh.id || `lh-${i}`,
-        laserIdentifier: lh.model || `Laser Head #${i + 1}`,
-        recordedLaserHour: lh.runningHours || 10000,
-        readingDate: new Date().toISOString().split('T')[0],
-        readingTime: '09:00',
-        calculatedCurrentHour: (lh.runningHours || 10000) + 120,
-        warningThreshold: 15000,
-        criticalThreshold: 18000,
-        runtimeStatus: 'NORMAL'
-      })),
+      stage01_laserHours: (targetMch.laserHeads || []).map((lh, i) => {
+        const rec = lh.runningHours || 10000;
+        const rDate = new Date().toISOString().split('T')[0];
+        const rTime = '09:00';
+        const readingDateTime = new Date(`${rDate}T${rTime}:00`);
+        const now = new Date();
+        const diffMs = now.getTime() - readingDateTime.getTime();
+        const elapsedHours = diffMs > 0 ? Math.floor(diffMs / (1000 * 60 * 60)) : 0;
+        const calcCurrent = rec + elapsedHours;
+
+        return {
+          laserId: lh.id || `lh-${i}`,
+          laserIdentifier: lh.model || `Laser Head #${i + 1}`,
+          recordedLaserHour: rec,
+          readingDate: rDate,
+          readingTime: rTime,
+          calculatedCurrentHour: calcCurrent,
+          warningThreshold: 15000,
+          criticalThreshold: 18000,
+          runtimeStatus: calcCurrent >= 18000 ? 'CRITICAL' : calcCurrent >= 15000 ? 'WARNING' : 'NORMAL'
+        };
+      }),
       stage02_laserProfile: {
         laserId: targetMch.laserHeads?.[0]?.id || 'lh-1',
         productName: 'Cleanroom Semiconductor Process Wafer',

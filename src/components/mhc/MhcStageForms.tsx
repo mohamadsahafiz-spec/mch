@@ -172,6 +172,16 @@ export const MhcStageForms: React.FC<MhcStageFormsProps> = ({
   if (activeStage === 1) {
     const laserHours = session.stage01_laserHours || [];
 
+    const calculateElapsedHours = (rDate?: string, rTime?: string): number => {
+      if (!rDate) return 0;
+      const timePart = rTime || '00:00';
+      const readingDateTime = new Date(`${rDate}T${timePart}:00`);
+      if (isNaN(readingDateTime.getTime())) return 0;
+      const now = new Date();
+      const diffMs = now.getTime() - readingDateTime.getTime();
+      return diffMs > 0 ? Math.floor(diffMs / (1000 * 60 * 60)) : 0;
+    };
+
     const handleLaserHourChange = (
       index: number,
       field: keyof MHCLaserHourItem,
@@ -180,19 +190,28 @@ export const MhcStageForms: React.FC<MhcStageFormsProps> = ({
       const updated = [...laserHours];
       const item = { ...updated[index], [field]: value };
 
-      // Recalculate runtime status
-      if (field === 'calculatedCurrentHour' || field === 'warningThreshold' || field === 'criticalThreshold') {
-        const cur = Number(field === 'calculatedCurrentHour' ? value : item.calculatedCurrentHour);
-        const warn = Number(field === 'warningThreshold' ? value : item.warningThreshold);
-        const crit = Number(field === 'criticalThreshold' ? value : item.criticalThreshold);
+      // Calculate elapsed runtime dynamically from Reading Date & Reading Time
+      const rec = Number(field === 'recordedLaserHour' ? value : item.recordedLaserHour || 0);
+      const rDate = String(field === 'readingDate' ? value : item.readingDate || '');
+      const rTime = String(field === 'readingTime' ? value : item.readingTime || '');
+      const elapsed = calculateElapsedHours(rDate, rTime);
 
-        if (cur >= crit) {
-          item.runtimeStatus = 'CRITICAL';
-        } else if (cur >= warn) {
-          item.runtimeStatus = 'WARNING';
-        } else {
-          item.runtimeStatus = 'NORMAL';
-        }
+      // Auto-recalculate calculatedCurrentHour when recordedLaserHour, readingDate, or readingTime is changed
+      if (field === 'recordedLaserHour' || field === 'readingDate' || field === 'readingTime') {
+        item.calculatedCurrentHour = rec + elapsed;
+      }
+
+      // Recalculate runtime status
+      const cur = Number(field === 'calculatedCurrentHour' ? (field === 'calculatedCurrentHour' ? value : item.calculatedCurrentHour) : item.calculatedCurrentHour);
+      const warn = Number(field === 'warningThreshold' ? value : item.warningThreshold);
+      const crit = Number(field === 'criticalThreshold' ? value : item.criticalThreshold);
+
+      if (cur >= crit) {
+        item.runtimeStatus = 'CRITICAL';
+      } else if (cur >= warn) {
+        item.runtimeStatus = 'WARNING';
+      } else {
+        item.runtimeStatus = 'NORMAL';
       }
 
       updated[index] = item;
@@ -215,6 +234,9 @@ export const MhcStageForms: React.FC<MhcStageFormsProps> = ({
             </h3>
             <p className="text-sm text-slate-400 mt-0.5">
               Record laser operating hours, check runtime thresholds, and determine maintenance alerts.
+            </p>
+            <p className="text-xs text-sky-400/90 font-mono mt-1 bg-sky-950/40 px-2.5 py-1 rounded border border-sky-800/40 inline-block">
+              Calculation Model: Recorded Laser Hour + Reading Date + Reading Time + Elapsed Runtime = Calculated Current Laser Hour
             </p>
           </div>
           <Badge variant={session.sectionStatuses.sec_01 === 'COMPLETED' ? 'success' : 'warning'}>
