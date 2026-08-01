@@ -90,7 +90,11 @@ function AppLayout() {
     setCustomers(StorageService.getCustomers());
     setPlants(StorageService.getPlants());
     setLines(StorageService.getLines());
-    setMachines(StorageService.getMachines());
+    const loadedMachines = StorageService.getMachines();
+    setMachines(loadedMachines);
+    if (loadedMachines.length > 0 && !loadedMachines.some(m => m.id === selectedMachineId)) {
+      setSelectedMachineId(loadedMachines[0].id);
+    }
     setContracts(StorageService.getContracts());
     setSchedule(StorageService.getSchedule());
     setMhcRecords(StorageService.getMhcRecords());
@@ -184,8 +188,8 @@ function AppLayout() {
     const updated = machines.filter((m) => m.id !== machineId);
     setMachines(updated);
     StorageService.saveMachines(updated);
-    if (selectedMachineId === machineId && updated.length > 0) {
-      setSelectedMachineId(updated[0].id);
+    if (selectedMachineId === machineId) {
+      setSelectedMachineId(updated.length > 0 ? updated[0].id : '');
     }
   };
 

@@ -1074,7 +1074,7 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
                 isDark ? 'bg-[#111315]/80 border-[#2B323A]' : 'bg-white/80 border-slate-200 shadow-2xs'
               }`}>
                 <span className={`text-[10px] uppercase font-mono block ${isDark ? 'text-slate-500' : 'text-slate-600 font-semibold'}`}>Laser Heads</span>
-                <span className={`font-mono font-bold ${isDark ? 'text-amber-300' : 'text-amber-800'}`}>{selectedMachine.laserHeads.length} Active Unit(s)</span>
+                <span className={`font-mono font-bold ${isDark ? 'text-amber-300' : 'text-amber-800'}`}>{selectedMachine.laserHeads?.length || 0} Active Unit(s)</span>
               </div>
               <div className={`p-2.5 rounded-xl border text-xs ${
                 isDark ? 'bg-[#111315]/80 border-[#2B323A]' : 'bg-white/80 border-slate-200 shadow-2xs'
@@ -1233,7 +1233,7 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
           {/* Laser Heads Telemetry Module */}
           <Card title="Laser Heads Runtime Telemetry & Lifecycle">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {selectedMachine.laserHeads.map((lh) => {
+              {(selectedMachine.laserHeads || []).map((lh) => {
                 const percentUsed = Math.round((lh.runningHours / lh.maxRecommendedHours) * 100);
                 return (
                   <div key={lh.id} className={`p-4 rounded-xl border space-y-3 ${
@@ -1287,7 +1287,7 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
           {/* Consumables Telemetry */}
           <Card title="Active Consumables & Wear Items">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {selectedMachine.consumables.map((con) => (
+              {(selectedMachine.consumables || []).map((con) => (
                 <div key={con.id} className={`p-3.5 rounded-xl border space-y-2 ${
                   isDark ? 'bg-[#1A1D21] border-[#2B323A]' : 'bg-slate-50 border-slate-200'
                 }`}>
@@ -1341,7 +1341,7 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
 
             <Card title="Machine Photos & Visual Records">
               <div className="grid grid-cols-2 gap-3">
-                {selectedMachine.photos.map((url, i) => (
+                {(selectedMachine.photos || []).map((url, i) => (
                   <div key={i} className={`aspect-video rounded-xl overflow-hidden border relative group ${
                     isDark ? 'border-slate-700 bg-slate-900' : 'border-slate-300 bg-slate-100'
                   }`}>

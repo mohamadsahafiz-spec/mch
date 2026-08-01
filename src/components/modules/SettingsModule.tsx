@@ -15,6 +15,24 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
 
   const changelog = [
     {
+      version: 'v0.7.6',
+      date: '2026-08-03',
+      type: 'Premium Light Experience (ECO-20260803-030)',
+      highlights: [
+        'NEW: Premium Light Theme refinement milestone.',
+        'NEW: UI polishing phase officially introduced across all system views.',
+        'IMPROVED: Overall visual consistency, typography hierarchy, and enterprise presentation quality.',
+        'IMPROVED: Increased text contrast across headings, body text, and labels for WCAG compliance.',
+        'IMPROVED: Introduced depth between layout layers (off-white bg-slate-50 canvas vs pure white cards).',
+        'IMPROVED: Distinct sidebar surface separation and refined subtle borders.',
+        'IMPROVED: Card hierarchy with consistent spacing, subtle elevation, and stronger hero emphasis.',
+        'FIXED: Visual refinement issues addressed during the Premium Light Experience sprint.',
+        'KNOWN ISSUES: Workflow Navigator UX refinement deferred to a future sprint.',
+        'KNOWN ISSUES: Cloudflare deployment currently requires platform-aware Vite base path configuration.',
+        'KNOWN ISSUES: Google AI Studio Git synchronization may intermittently fail.'
+      ]
+    },
+    {
       version: 'v0.7.5',
       date: '2026-08-03',
       type: 'Identity Experience Refinement (ECO-20260802-029)',
@@ -416,18 +434,18 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
         }`}>
           <div className="flex items-center gap-3">
             <div className={`p-3 rounded-xl border font-mono font-bold text-lg ${
-              isDark ? 'bg-[#8B9DFF]/15 border-[#8B9DFF]/30 text-[#8B9DFF]' : 'bg-indigo-50 border-indigo-200 text-indigo-700'
+              isDark ? 'bg-[#8B9DFF]/15 border-[#8B9DFF]/30 text-[#8B9DFF]' : 'bg-indigo-50 border-indigo-200 text-indigo-800'
             }`}>
-              v0.7.5
+              v0.7.6
             </div>
             <div>
               <h3 className="text-base font-bold">Field Service Operations System</h3>
               <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600 font-medium'}`}>
-                Identity Experience Refinement v0.7.5 — Cleanroom Operations Standard (ECO-20260802-029)
+                Premium Light Experience v0.7.6 — Cleanroom Operations Standard (ECO-20260803-030)
               </p>
             </div>
           </div>
-          <Badge variant="blue">v0.7.5 OPERATIONAL</Badge>
+          <Badge variant="blue">v0.7.6 OPERATIONAL</Badge>
         </div>
       </Card>
 
@@ -441,7 +459,7 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
               <Tag className="w-3.5 h-3.5 text-[#8B9DFF]" />
               <span className="font-mono uppercase text-[10px]">Version</span>
             </div>
-            <p className="font-mono font-bold text-sm text-[#8B9DFF]">v0.7.5</p>
+            <p className="font-mono font-bold text-sm text-[#8B9DFF]">v0.7.6</p>
           </div>
 
           <div className={`p-3.5 rounded-xl border space-y-1 ${
@@ -451,7 +469,7 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
               <Cpu className="w-3.5 h-3.5 text-[#8B9DFF]" />
               <span className="font-mono uppercase text-[10px]">Build ID</span>
             </div>
-            <p className="font-mono font-bold text-sm">ECO-20260802-029</p>
+            <p className="font-mono font-bold text-sm">ECO-20260803-030</p>
           </div>
 
           <div className={`p-3.5 rounded-xl border space-y-1 ${
@@ -461,7 +479,7 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
               <Compass className="w-3.5 h-3.5 text-[#8B9DFF]" />
               <span className="font-mono uppercase text-[10px]">Release Codename</span>
             </div>
-            <p className="font-semibold text-xs text-emerald-400">Identity Experience Refinement</p>
+            <p className="font-semibold text-xs text-emerald-400">Premium Light Experience</p>
           </div>
 
           <div className={`p-3.5 rounded-xl border space-y-1 ${
@@ -512,11 +530,11 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
                 <span>CTO STRATEGIC DIRECTIVE</span>
               </div>
               <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-[#8B9DFF]/20 text-[#8B9DFF] border border-[#8B9DFF]/30 font-semibold">
-                v0.7.1 MANDATE
+                v0.7.6 POLISH PHASE DIRECTIVE
               </span>
             </div>
             <p className="leading-relaxed">
-              Daily Work is now the operational starting point of FSOS and marks the transition from separate modules to a guided workflow. Field Service Engineers no longer open FSOS as a collection of disconnected utilities; they enter through a single operational door that orchestrates their entire shift.
+              v0.7.6 marks the official beginning of the FSOS Product Polish phase. Having built the core feature capabilities, FSOS is now transitioning into UI/UX refinement. Future releases will continue improving usability, visual hierarchy, consistency, production readiness, and overall product quality while maintaining a stable architecture.
             </p>
           </div>
 
@@ -526,28 +544,28 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
           }`}>
             <div className="flex items-center gap-2 font-bold text-sm text-slate-200">
               <History className="w-4 h-4 text-[#8B9DFF]" />
-              <span>Product Evolution Log: The Genesis of Daily Work</span>
+              <span>Product Evolution Log: Transition to UI/UX Refinement & Product Polish</span>
             </div>
 
             <div className="space-y-3 text-slate-300 dark:text-slate-300">
               <div className="space-y-1">
-                <p className="font-semibold text-[#8B9DFF]">1. Why Daily Work Was Introduced</p>
+                <p className="font-semibold text-[#8B9DFF]">1. Why the Premium Light Experience Sprint Was Introduced</p>
                 <p className="text-slate-400 leading-relaxed">
-                  Historically, FSOS presented field engineers with a set of standalone modules (Dashboard, Machine Passport, Workflow Guide, Planner, Report Studio). While each module excelled in its specific domain, engineers were forced to manually decide where to click first, leading to cognitive friction, lost context during shift handovers, and unnecessary navigation steps.
+                  While FSOS was functionally complete across contracts, passports, MHC, and daily work orchestration, the initial light theme suffered from low contrast, flat depth, and soft visual separation. This sprint was introduced to refine the visual ergonomics for high-brightness cleanroom environments.
                 </p>
               </div>
 
               <div className="space-y-1">
-                <p className="font-semibold text-[#8B9DFF]">2. What Problem It Solves</p>
+                <p className="font-semibold text-[#8B9DFF]">2. Why FSOS Is Transitioning from Feature Development to Refinement</p>
                 <p className="text-slate-400 leading-relaxed">
-                  Daily Work eliminates shift startup friction by immediately answering five core operational questions within 5 seconds: <i>Who am I visiting today? Which machine requires attention? What mission is assigned? Can I continue yesterday's work? What is my next action?</i>
+                  Unchecked feature volume without visual discipline leads to visual noise and cognitive friction. By pausing feature expansion to polish typography, card elevation, border separation, and text contrast, FSOS transforms from a functional prototype into an enterprise-ready software platform.
                 </p>
               </div>
 
               <div className="space-y-1">
-                <p className="font-semibold text-[#8B9DFF]">3. How It Changes the Engineer's Daily Workflow</p>
+                <p className="font-semibold text-[#8B9DFF]">3. How This Sprint Improves Overall Product Maturity</p>
                 <p className="text-slate-400 leading-relaxed">
-                  Daily Work transforms FSOS from a passive database into a proactive operational guide. The engineer opens FSOS, reviews today's pre-populated mission status, and clicks a single primary call-to-action (<b>"Start Today's Mission"</b> or <b>"Continue Mission"</b>) to launch directly into active execution with zero manual setup.
+                  Refining color contrast, card hierarchy, and background depth ensures field engineers can operate FSOS effortlessly under cleanroom lighting. The user's visual focus now naturally follows a clear hierarchy: <b>Hero Greeting → Today's Mission → Schedule → Quick Actions</b>.
                 </p>
               </div>
             </div>
@@ -556,27 +574,31 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
       </Card>
 
       {/* Release Notes Summary */}
-      <Card title="Release Notes — v0.7.1 Daily Work Orchestration">
+      <Card title="Release Notes — v0.7.6 Premium Light Experience">
         <div className={`p-4 rounded-xl border space-y-3 text-xs ${
           isDark ? 'bg-[#1A1D21] border-[#2B323A]' : 'bg-slate-50 border-slate-200'
         }`}>
           <div className="flex items-center justify-between border-b border-[#2B323A]/60 pb-2">
-            <span className="font-bold text-sm text-[#8B9DFF]">Release Summary (Sprint ECO-20260802-025)</span>
-            <span className="font-mono text-slate-400">Target: v0.7.1</span>
+            <span className="font-bold text-sm text-[#8B9DFF]">Release Summary (Sprint ECO-20260803-030)</span>
+            <span className="font-mono text-slate-400">Target: v0.7.6</span>
           </div>
 
           <p className="text-slate-300 leading-relaxed">
-            Sprint v0.7.0 delivers Daily Work Orchestration, unifying all existing FSOS capabilities into an engineer-first operational journey. Rather than functioning as isolated tools, Dashboard, Machine Passport, Workflow Guide, Planner, and Report Studio are now interconnected through Daily Work as the central operational home.
+            Sprint v0.7.6 delivers the Premium Light Experience refinement milestone. The Founder can immediately observe increased text contrast, subtle layer depth (off-white workspace background vs white cards), refined sidebar separation, and clear visual hierarchy across all operational dashboards.
           </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
             <div className={`p-3 rounded-lg border ${isDark ? 'bg-[#111315] border-[#2B323A]/80' : 'bg-white border-slate-200'}`}>
-              <p className="font-bold text-[#7FD4A6] mb-1">✓ Primary Action Clarity</p>
-              <p className="text-slate-400 text-[11px]">One clear primary button ("Continue Mission" or "Start Mission") guides engineers without decision paralysis.</p>
+              <p className="font-bold text-[#7FD4A6] mb-1">✓ What Changed</p>
+              <p className="text-slate-400 text-[11px]">Refined typography scale, elevated text contrast for WCAG compliance, distinct sidebar surface separation, and structured card elevation.</p>
             </div>
             <div className={`p-3 rounded-lg border ${isDark ? 'bg-[#111315] border-[#2B323A]/80' : 'bg-white border-slate-200'}`}>
-              <p className="font-bold text-[#8ECDF7] mb-1">✓ Seamless Module Routing</p>
-              <p className="text-slate-400 text-[11px]">Direct contextual routing into Workflow Guide, Machine Passport, and Execution Planner with zero lost state.</p>
+              <p className="font-bold text-[#8ECDF7] mb-1">✓ Why It Changed</p>
+              <p className="text-slate-400 text-[11px]">Eliminates low-contrast readability issues in bright cleanroom environments and aligns FSOS with world-class enterprise design systems (Linear, Stripe, Apple).</p>
+            </div>
+            <div className={`p-3 rounded-lg border ${isDark ? 'bg-[#111315] border-[#2B323A]/80' : 'bg-white border-slate-200'}`}>
+              <p className="font-bold text-[#EFCB7A] mb-1">✓ Remaining for Future</p>
+              <p className="text-slate-400 text-[11px]">Workflow Navigator UX refinement, Cloudflare deployment base path optimization, and continued component polish across secondary drawers.</p>
             </div>
           </div>
         </div>

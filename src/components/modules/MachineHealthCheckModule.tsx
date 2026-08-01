@@ -123,7 +123,17 @@ export const MachineHealthCheckModule: React.FC<MachineHealthCheckProps> = ({
     onGenerateReport(newRecord);
   };
 
-  if (!selectedMachine) return null;
+  if (!selectedMachine) {
+    return (
+      <div className={`p-8 text-center rounded-2xl border ${
+        isDark ? 'bg-[#14171A] border-[#2B323A] text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700'
+      }`}>
+        <Activity className="w-12 h-12 mx-auto text-slate-400 mb-3" />
+        <h2 className="text-base font-bold">No Machines Available for Health Check</h2>
+        <p className="text-xs text-slate-500 mt-1">Please register a machine in the Machine Passport module first.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 pb-12">

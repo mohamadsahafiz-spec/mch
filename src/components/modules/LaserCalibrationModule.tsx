@@ -29,6 +29,18 @@ export const LaserCalibrationModule: React.FC<LaserCalibrationProps> = ({ machin
     setTimeout(() => setCalibrated(false), 3000);
   };
 
+  if (!selectedMachine) {
+    return (
+      <div className={`p-8 text-center rounded-2xl border ${
+        isDark ? 'bg-[#14171A] border-[#2B323A] text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700'
+      }`}>
+        <Zap className="w-12 h-12 mx-auto text-slate-400 mb-3" />
+        <h2 className="text-base font-bold">No Machines Available for Calibration</h2>
+        <p className="text-xs text-slate-500 mt-1">Please register a machine in the Machine Passport module first.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 pb-12">
       {/* Machine Selector */}
@@ -37,7 +49,7 @@ export const LaserCalibrationModule: React.FC<LaserCalibrationProps> = ({ machin
       }`}>
         <div>
           <span className={`text-xs font-mono font-bold uppercase ${isDark ? 'text-[#8ECDF7]' : 'text-sky-800'}`}>Laser Calibration Workbench</span>
-          <h2 className={`text-lg font-bold ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>{selectedMachine.model} ({selectedMachine.serialNumber})</h2>
+          <h2 className={`text-lg font-bold ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>{selectedMachine?.model || 'Laser System'} ({selectedMachine?.serialNumber || 'N/A'})</h2>
         </div>
 
         <select
