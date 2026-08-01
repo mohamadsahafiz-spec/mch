@@ -81,11 +81,11 @@ export const designTokens = {
  */
 export function getThemeClasses(isDark: boolean) {
   return {
-    bg: isDark ? 'bg-[#111315]' : 'bg-slate-100/90',
+    bg: isDark ? 'bg-[#111315]' : 'bg-slate-50',
     surface: isDark ? 'bg-[#1A1D21]' : 'bg-white',
     card: isDark ? 'bg-[#20252B]' : 'bg-white',
-    border: isDark ? 'border-[#2B323A]' : 'border-slate-300/80',
-    borderSubtle: isDark ? 'border-[#2B323A]/60' : 'border-slate-200',
+    border: isDark ? 'border-[#2B323A]' : 'border-slate-200/90',
+    borderSubtle: isDark ? 'border-[#2B323A]/60' : 'border-slate-200/60',
     textPrimary: isDark ? 'text-[#F3F4F6]' : 'text-slate-900',
     textSecondary: isDark ? 'text-slate-400' : 'text-slate-700',
     textMuted: isDark ? 'text-slate-500' : 'text-slate-500',
@@ -101,9 +101,9 @@ export function getThemeClasses(isDark: boolean) {
     dangerBgMuted: isDark ? 'bg-[#E98A8A]/10' : 'bg-rose-50',
     cardContainer: isDark 
       ? 'bg-[#20252B] border-[#2B323A] text-[#F3F4F6]' 
-      : 'bg-white border-slate-300/80 text-slate-900 shadow-sm hover:shadow-md',
+      : 'bg-white border-slate-200/90 text-slate-900 shadow-sm hover:shadow-md transition-shadow',
     surfaceContainer: isDark
       ? 'bg-[#1A1D21] border-[#2B323A]'
-      : 'bg-slate-50 border-slate-300/70',
+      : 'bg-slate-50 border-slate-200 text-slate-900 shadow-2xs',
   };
 }
