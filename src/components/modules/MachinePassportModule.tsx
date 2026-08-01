@@ -24,7 +24,9 @@ import {
   Archive,
   MapPin,
   ShieldCheck,
-  MoreVertical
+  MoreVertical,
+  Upload,
+  Camera
 } from 'lucide-react';
 import { Machine, MHCRecord, ExecutiveReport, Customer } from '../../types';
 import { INITIAL_CUSTOMERS } from '../../data/mockData';
@@ -37,6 +39,7 @@ import { useTheme } from '../../context/ThemeContext';
 
 interface MachinePassportProps {
   machines: Machine[];
+  customers?: Customer[];
   selectedMachineId: string;
   onSelectMachine: (id: string) => void;
   mhcRecords: MHCRecord[];
@@ -45,10 +48,14 @@ interface MachinePassportProps {
   onAddMachine?: (machine: Machine) => void;
   onEditMachine?: (machine: Machine) => void;
   onDeleteMachine?: (machineId: string) => void;
+  onAddCustomer?: (customer: Customer) => void;
+  onEditCustomer?: (customer: Customer) => void;
+  onDeleteCustomer?: (customerId: string) => void;
 }
 
 export const MachinePassportModule: React.FC<MachinePassportProps> = ({
   machines,
+  customers: propsCustomers,
   selectedMachineId,
   onSelectMachine,
   mhcRecords,
@@ -56,7 +63,10 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
   onOpenMhcForMachine,
   onAddMachine,
   onEditMachine,
-  onDeleteMachine
+  onDeleteMachine,
+  onAddCustomer,
+  onEditCustomer,
+  onDeleteCustomer
 }) => {
   const { effectiveTheme } = useTheme();
   const isDark = effectiveTheme === 'dark';
@@ -211,6 +221,53 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
 
   // Customer Card Action Dropdown State
   const [activeCustomerMenuId, setActiveCustomerMenuId] = useState<string | null>(null);
+  // Machine Card Action Dropdown State
+  const [activeMachineCardMenuId, setActiveMachineCardMenuId] = useState<string | null>(null);
+
+  // Machine Photo Handlers
+  const handleAddPhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedMachine) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const result = event.target?.result as string;
+      if (result) {
+        const updatedPhotos = [...(selectedMachine.photos || []), result];
+        if (onEditMachine) {
+          onEditMachine({ ...selectedMachine, photos: updatedPhotos });
+        }
+        showAlert('New machine photo uploaded successfully.');
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleReplacePhoto = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedMachine) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const result = event.target?.result as string;
+      if (result) {
+        const updatedPhotos = [...(selectedMachine.photos || [])];
+        updatedPhotos[index] = result;
+        if (onEditMachine) {
+          onEditMachine({ ...selectedMachine, photos: updatedPhotos });
+        }
+        showAlert('Machine photo updated successfully.');
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemovePhoto = (index: number) => {
+    if (!selectedMachine) return;
+    const updatedPhotos = (selectedMachine.photos || []).filter((_, i) => i !== index);
+    if (onEditMachine) {
+      onEditMachine({ ...selectedMachine, photos: updatedPhotos });
+    }
+    showAlert('Machine photo removed.');
+  };
 
   // Customer CRUD Modals State
   const [isAddCustomerModalOpen, setIsAddCustomerModalOpen] = useState(false);
@@ -256,6 +313,7 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
       activeContractsCount: 1
     };
     setCustomerList((prev) => [...prev, newCust]);
+    if (onAddCustomer) onAddCustomer(newCust);
     setActiveCustomerId(newCust.id);
     setIsAddCustomerModalOpen(false);
     showAlert(`Customer account "${newCust.name}" created successfully.`);
@@ -277,20 +335,18 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
     e.preventDefault();
     if (!customerToEdit || !custForm.name.trim()) return;
     const updatedName = custForm.name.trim();
+    const updatedCust: Customer = {
+      ...customerToEdit,
+      name: updatedName,
+      industry: custForm.industry.trim(),
+      contactPerson: custForm.contactPerson.trim(),
+      email: custForm.email.trim(),
+      phone: custForm.phone.trim()
+    };
     setCustomerList((prev) =>
-      prev.map((c) =>
-        c.id === customerToEdit.id
-          ? {
-              ...c,
-              name: updatedName,
-              industry: custForm.industry.trim(),
-              contactPerson: custForm.contactPerson.trim(),
-              email: custForm.email.trim(),
-              phone: custForm.phone.trim()
-            }
-          : c
-      )
+      prev.map((c) => (c.id === customerToEdit.id ? updatedCust : c))
     );
+    if (onEditCustomer) onEditCustomer(updatedCust);
     setIsEditCustomerModalOpen(false);
     showAlert(`Customer account "${updatedName}" updated successfully.`);
   };
@@ -305,9 +361,11 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
     e.preventDefault();
     if (!customerToEdit || !custForm.name.trim()) return;
     const updatedName = custForm.name.trim();
+    const updatedCust: Customer = { ...customerToEdit, name: updatedName };
     setCustomerList((prev) =>
-      prev.map((c) => (c.id === customerToEdit.id ? { ...c, name: updatedName } : c))
+      prev.map((c) => (c.id === customerToEdit.id ? updatedCust : c))
     );
+    if (onEditCustomer) onEditCustomer(updatedCust);
     setIsRenameCustomerModalOpen(false);
     showAlert(`Customer account renamed to "${updatedName}".`);
   };
@@ -323,6 +381,7 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
     const deletedName = customerToDelete.name;
 
     setCustomerList((prev) => prev.filter((c) => c.id !== deletedId));
+    if (onDeleteCustomer) onDeleteCustomer(deletedId);
 
     if (activeCustomerId === deletedId) {
       const remaining = customerList.filter((c) => c.id !== deletedId);
@@ -444,12 +503,13 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
 
   // Handlers
   const handleOpenAdd = () => {
+    const activeCust = customerList.find((c) => c.id === activeCustomerId) || customerList[0];
     setAddForm({
       model: '',
       machineNumber: `MCH-${Math.floor(100 + Math.random() * 900)}`,
       serialNumber: `SN-TRU-${Math.floor(100000 + Math.random() * 900000)}`,
-      customerName: selectedMachine?.customerName || 'TSMC Microelectronics Fab 18',
-      plantName: selectedMachine?.plantName || 'Tainan Cleanroom Fab 18A',
+      customerName: activeCust?.name || selectedMachine?.customerName || 'TSMC Microelectronics Fab 18',
+      plantName: activeCust?.site || selectedMachine?.plantName || 'Tainan Cleanroom Fab 18A',
       productionLineName: selectedMachine?.productionLineName || 'Line 4 - Sub-3nm Silicon Annealing',
       status: 'OPERATIONAL',
       healthScore: 98,
@@ -462,12 +522,16 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
 
   const handleSaveAdd = (e: React.FormEvent) => {
     e.preventDefault();
+    const activeCust = customerList.find((c) => c.id === activeCustomerId) || customerList[0];
+    const targetCustId = activeCust?.id || 'cust-1';
+    const targetCustName = addForm.customerName || activeCust?.name || 'TSMC Microelectronics Fab 18';
+
     const newMachine: Machine = {
       id: `mch-${Date.now()}`,
-      customerId: 'cust-1',
-      customerName: addForm.customerName || 'TSMC Microelectronics Fab 18',
+      customerId: targetCustId,
+      customerName: targetCustName,
       plantId: 'plant-1',
-      plantName: addForm.plantName || 'Tainan Cleanroom Fab 18A',
+      plantName: addForm.plantName || activeCust?.site || 'Tainan Cleanroom Fab 18A',
       productionLineId: 'line-1',
       productionLineName: addForm.productionLineName || 'Line 4 - Sub-3nm Silicon Annealing',
       model: addForm.model || 'TRUMPF TruPulse 2000',
@@ -524,8 +588,10 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
     if (onAddMachine) {
       onAddMachine(newMachine);
     }
+    setActiveCustomerId(targetCustId);
     onSelectMachine(newMachine.id);
     setIsAddModalOpen(false);
+    showAlert(`New machine "${newMachine.model}" added under ${targetCustName}.`);
   };
 
   const handleOpenEdit = () => {
@@ -909,9 +975,8 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
             {filteredMachines.map((m) => {
               const isSelected = m.id === selectedMachine?.id;
               return (
-                <button
+                <div
                   key={m.id}
-                  type="button"
                   onClick={() => onSelectMachine(m.id)}
                   className={`p-4 rounded-2xl border text-left transition-all duration-200 relative group cursor-pointer ${
                     isSelected
@@ -924,26 +989,128 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
                   }`}
                 >
                   <div className="flex items-center justify-between gap-2 mb-1.5">
-                    <span className={`text-[11px] font-mono font-bold px-2 py-0.5 rounded border ${
-                      isSelected
-                        ? isDark ? 'bg-[#8B9DFF]/20 text-[#8B9DFF] border-[#8B9DFF]/40' : 'bg-indigo-50 text-indigo-700 border-indigo-200'
-                        : isDark ? 'bg-slate-800 text-slate-400 border-slate-700' : 'bg-slate-100 text-slate-600 border-slate-200'
-                    }`}>
-                      {m.machineNumber}
-                    </span>
-                    <Badge
-                      variant={
-                        m.status === 'OPERATIONAL'
-                          ? 'emerald'
-                          : m.status === 'NEEDS_CALIBRATION'
-                            ? 'amber'
-                            : m.status === 'MAINTENANCE_DUE'
-                              ? 'purple'
-                              : 'rose'
-                      }
-                    >
-                      {m.status}
-                    </Badge>
+                    <div className="flex items-center gap-1.5">
+                      <span className={`text-[11px] font-mono font-bold px-2 py-0.5 rounded border ${
+                        isSelected
+                          ? isDark ? 'bg-[#8B9DFF]/20 text-[#8B9DFF] border-[#8B9DFF]/40' : 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                          : isDark ? 'bg-slate-800 text-slate-400 border-slate-700' : 'bg-slate-100 text-slate-600 border-slate-200'
+                      }`}>
+                        {m.machineNumber}
+                      </span>
+                      <Badge
+                        variant={
+                          m.status === 'OPERATIONAL'
+                            ? 'emerald'
+                            : m.status === 'NEEDS_CALIBRATION'
+                              ? 'amber'
+                              : m.status === 'MAINTENANCE_DUE'
+                                ? 'purple'
+                                : 'rose'
+                        }
+                      >
+                        {m.status}
+                      </Badge>
+                    </div>
+
+                    {/* Machine 3-Dot Action Menu */}
+                    <div className="relative z-10">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveMachineCardMenuId(activeMachineCardMenuId === m.id ? null : m.id);
+                        }}
+                        className={`p-1 rounded-lg transition-colors ${
+                          isDark ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-slate-200 text-slate-500'
+                        }`}
+                      >
+                        <MoreVertical className="w-3.5 h-3.5" />
+                      </button>
+
+                      {activeMachineCardMenuId === m.id && (
+                        <>
+                          <div
+                            className="fixed inset-0 z-20"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveMachineCardMenuId(null);
+                            }}
+                          />
+                          <div
+                            className={`absolute right-0 mt-1 w-44 rounded-xl border shadow-xl z-30 py-1 text-xs transition-all ${
+                              isDark
+                                ? 'bg-[#1E2227] border-[#2B323A] text-slate-200 divide-y divide-[#2B323A]'
+                                : 'bg-white border-slate-200 text-slate-800 divide-y divide-slate-100 shadow-xl'
+                            }`}
+                          >
+                            <div className="py-1">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setActiveMachineCardMenuId(null);
+                                  onSelectMachine(m.id);
+                                  handleOpenEdit();
+                                }}
+                                className={`w-full px-3 py-1.5 text-left flex items-center gap-2 transition-colors ${
+                                  isDark ? 'hover:bg-[#282E36] hover:text-white' : 'hover:bg-slate-100 hover:text-slate-900'
+                                }`}
+                              >
+                                <Edit3 className="w-3.5 h-3.5 text-[#8B9DFF]" />
+                                Edit Specifications
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setActiveMachineCardMenuId(null);
+                                  onSelectMachine(m.id);
+                                  setIsRenameModalOpen(true);
+                                }}
+                                className={`w-full px-3 py-1.5 text-left flex items-center gap-2 transition-colors ${
+                                  isDark ? 'hover:bg-[#282E36] hover:text-white' : 'hover:bg-slate-100 hover:text-slate-900'
+                                }`}
+                              >
+                                <Type className="w-3.5 h-3.5 text-[#8ECDF7]" />
+                                Rename Asset
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setActiveMachineCardMenuId(null);
+                                  onSelectMachine(m.id);
+                                  handleDuplicateMachine();
+                                }}
+                                className={`w-full px-3 py-1.5 text-left flex items-center gap-2 transition-colors ${
+                                  isDark ? 'hover:bg-[#282E36] hover:text-white' : 'hover:bg-slate-100 hover:text-slate-900'
+                                }`}
+                              >
+                                <Copy className="w-3.5 h-3.5 text-amber-400" />
+                                Duplicate Machine
+                              </button>
+                            </div>
+                            <div className="py-1">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setActiveMachineCardMenuId(null);
+                                  onSelectMachine(m.id);
+                                  setIsDeleteModalOpen(true);
+                                }}
+                                className={`w-full px-3 py-1.5 text-left flex items-center gap-2 text-rose-500 transition-colors ${
+                                  isDark ? 'hover:bg-rose-500/10' : 'hover:bg-rose-50'
+                                }`}
+                              >
+                                <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                                Delete Machine
+                              </button>
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
                   </div>
 
                   <h4 className={`text-xs font-bold truncate ${
@@ -966,7 +1133,7 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
                       {m.healthScore}% Health
                     </span>
                   </div>
-                </button>
+                </div>
               );
             })}
 
@@ -1340,14 +1507,53 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
             </Card>
 
             <Card title="Machine Photos & Visual Records">
-              <div className="grid grid-cols-2 gap-3">
-                {(selectedMachine.photos || []).map((url, i) => (
-                  <div key={i} className={`aspect-video rounded-xl overflow-hidden border relative group ${
-                    isDark ? 'border-slate-700 bg-slate-900' : 'border-slate-300 bg-slate-100'
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  {(selectedMachine.photos || []).map((url, i) => (
+                    <div key={i} className={`aspect-video rounded-xl overflow-hidden border relative group ${
+                      isDark ? 'border-slate-700 bg-slate-900' : 'border-slate-300 bg-slate-100'
+                    }`}>
+                      <img src={url} alt={`Machine Photo ${i+1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                      
+                      {/* Photo Overlay Actions */}
+                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 p-2">
+                        <label className="p-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white cursor-pointer transition-colors text-[11px] font-semibold flex items-center gap-1">
+                          <Upload className="w-3 h-3" />
+                          Change
+                          <input
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            className="hidden"
+                            onChange={(e) => handleReplacePhoto(i, e)}
+                          />
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => handleRemovePhoto(i)}
+                          className="p-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white transition-colors text-[11px] font-semibold flex items-center gap-1"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Upload New Image Dropzone */}
+                  <label className={`aspect-video rounded-xl border-2 border-dashed flex flex-col items-center justify-center p-3 cursor-pointer transition-all group ${
+                    isDark ? 'border-[#2B323A] hover:border-[#8B9DFF] bg-[#14171A]/40 hover:bg-[#1A1D21]' : 'border-slate-300 hover:border-indigo-500 bg-slate-50 hover:bg-white'
                   }`}>
-                    <img src={url} alt={`Machine Photo ${i+1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                  </div>
-                ))}
+                    <Camera className={`w-5 h-5 mb-1 transition-transform group-hover:scale-110 ${isDark ? 'text-[#8B9DFF]' : 'text-indigo-600'}`} />
+                    <span className={`text-[11px] font-bold ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>+ Upload Image</span>
+                    <span className={`text-[9px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>JPG, PNG, WEBP</span>
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      className="hidden"
+                      onChange={handleAddPhoto}
+                    />
+                  </label>
+                </div>
               </div>
             </Card>
           </div>

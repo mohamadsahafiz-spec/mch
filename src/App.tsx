@@ -193,6 +193,25 @@ function AppLayout() {
     }
   };
 
+  // Customer Management Helpers
+  const handleAddCustomer = (newCustomer: Customer) => {
+    const updated = [newCustomer, ...customers];
+    setCustomers(updated);
+    StorageService.saveCustomers(updated);
+  };
+
+  const handleEditCustomer = (updatedCustomer: Customer) => {
+    const updated = customers.map((c) => (c.id === updatedCustomer.id ? updatedCustomer : c));
+    setCustomers(updated);
+    StorageService.saveCustomers(updated);
+  };
+
+  const handleDeleteCustomer = (customerId: string) => {
+    const updated = customers.filter((c) => c.id !== customerId);
+    setCustomers(updated);
+    StorageService.saveCustomers(updated);
+  };
+
   // Sync to persistence helpers
   const handleUpdateContract = (updatedContract: Contract) => {
     const updated = contracts.map((c) => (c.id === updatedContract.id ? updatedContract : c));
@@ -355,6 +374,7 @@ function AppLayout() {
           {activeTab === 'machines' && (
             <MachinePassportModule
               machines={machines}
+              customers={customers}
               selectedMachineId={selectedMachineId}
               onSelectMachine={setSelectedMachineId}
               mhcRecords={mhcRecords}
@@ -366,6 +386,9 @@ function AppLayout() {
               onAddMachine={handleAddMachine}
               onEditMachine={handleEditMachine}
               onDeleteMachine={handleDeleteMachine}
+              onAddCustomer={handleAddCustomer}
+              onEditCustomer={handleEditCustomer}
+              onDeleteCustomer={handleDeleteCustomer}
             />
           )}
 

@@ -15,6 +15,24 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
 
   const changelog = [
     {
+      version: 'v0.7.7',
+      date: '2026-08-03',
+      type: 'Machine Health Check Workflow Sprint (ECO-20260803-031)',
+      highlights: [
+        'NEW: Machine Health Check (MHC) operational workflow overhaul.',
+        'NEW: Active Inspection Target Machine selection grid with real-time status and health score filters.',
+        'NEW: Laser Hour Monitoring & Lifecycle Threshold management (Recorded Hours, Current Reading, Runtime Delta, Warning/Critical Thresholds).',
+        'NEW: Dynamic Laser Output & Power Calibration Check supporting multi-laser configurations (Add/Edit/Delete laser heads).',
+        'NEW: Dynamic Editable Inspection Sections (Optics Cleanliness, Chiller Thermal Loop, Executive Release Verdict).',
+        'NEW: 1-Click Customer MHC Report Generation reusing shared Executive Report engine.',
+        'NEW: Standalone Customer-Ready MHC Report Document View with print, PDF export, sign-off blocks, and Before/After photos.',
+        'FIXED: Customer account deletion following Engineering Rule #001 CRUD consistency with confirmation dialog.',
+        'FIXED: Machine addition workflow keeps engineer inside active customer fleet workspace.',
+        'NEW: Machine Card 3-Dot Action Menu (Edit Specifications, Rename Asset, Duplicate Machine, Delete Machine).',
+        'NEW: Machine Photo Management (Upload, Change, and Remove image support for JPG, PNG, WEBP).'
+      ]
+    },
+    {
       version: 'v0.7.6',
       date: '2026-08-03',
       type: 'Premium Light Experience (ECO-20260803-030)',
@@ -436,16 +454,16 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
             <div className={`p-3 rounded-xl border font-mono font-bold text-lg ${
               isDark ? 'bg-[#8B9DFF]/15 border-[#8B9DFF]/30 text-[#8B9DFF]' : 'bg-indigo-50 border-indigo-200 text-indigo-800'
             }`}>
-              v0.7.6
+              v0.7.7
             </div>
             <div>
               <h3 className="text-base font-bold">Field Service Operations System</h3>
               <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600 font-medium'}`}>
-                Premium Light Experience v0.7.6 — Cleanroom Operations Standard (ECO-20260803-030)
+                Machine Health Check Workflow v0.7.7 — Cleanroom Operations Standard (ECO-20260803-031)
               </p>
             </div>
           </div>
-          <Badge variant="blue">v0.7.6 OPERATIONAL</Badge>
+          <Badge variant="blue">v0.7.7 OPERATIONAL</Badge>
         </div>
       </Card>
 
@@ -459,7 +477,7 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
               <Tag className="w-3.5 h-3.5 text-[#8B9DFF]" />
               <span className="font-mono uppercase text-[10px]">Version</span>
             </div>
-            <p className="font-mono font-bold text-sm text-[#8B9DFF]">v0.7.6</p>
+            <p className="font-mono font-bold text-sm text-[#8B9DFF]">v0.7.7</p>
           </div>
 
           <div className={`p-3.5 rounded-xl border space-y-1 ${
@@ -469,7 +487,7 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
               <Cpu className="w-3.5 h-3.5 text-[#8B9DFF]" />
               <span className="font-mono uppercase text-[10px]">Build ID</span>
             </div>
-            <p className="font-mono font-bold text-sm">ECO-20260803-030</p>
+            <p className="font-mono font-bold text-sm">ECO-20260803-031</p>
           </div>
 
           <div className={`p-3.5 rounded-xl border space-y-1 ${
@@ -479,7 +497,7 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
               <Compass className="w-3.5 h-3.5 text-[#8B9DFF]" />
               <span className="font-mono uppercase text-[10px]">Release Codename</span>
             </div>
-            <p className="font-semibold text-xs text-emerald-400">Premium Light Experience</p>
+            <p className="font-semibold text-xs text-emerald-400">Machine Health Check Workflow</p>
           </div>
 
           <div className={`p-3.5 rounded-xl border space-y-1 ${
