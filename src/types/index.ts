@@ -409,7 +409,73 @@ export interface ReportDraft {
   updatedAt: string;
 }
 
-// FSOS v0.8.0 MHC Workspace Types
+// FSOS v0.8.1 MHC Workspace Types & Custom Engineering Field Extensions
+export interface MHCCustomField {
+  id: string;
+  label: string;
+  value: string;
+  unit?: string;
+  type?: 'text' | 'number' | 'date' | 'time' | 'select' | 'boolean';
+}
+
+export interface MHCCustomInfoBlock {
+  id: string;
+  title: string;
+  content: string;
+}
+
+export interface MHCCustomImageItem {
+  id: string;
+  url: string;
+  label?: string;
+}
+
+export interface MHCCustomMeasurementItem {
+  id: string;
+  name: string;
+  beforeVal: number | string;
+  afterVal: number | string;
+  unit?: string;
+  result?: 'PASS' | 'WARNING' | 'FAIL' | 'ATTENTION';
+}
+
+export interface MHCCustomInspectionItem {
+  id: string;
+  name: string;
+  status: 'PASS' | 'WARNING' | 'FAIL' | 'ATTENTION';
+  notes: string;
+}
+
+export interface MHCImageComparisonSet {
+  id: string;
+  title: string;
+  beforeUrl?: string;
+  beforeCaption?: string;
+  afterUrl?: string;
+  afterCaption?: string;
+  notes?: string;
+}
+
+export interface MHCTemperatureSeries {
+  id: string;
+  key: string;
+  name: string;
+  color: string;
+}
+
+export interface MHCTemperatureDataPoint {
+  id: string;
+  timestamp: string; // e.g., "0m", "10m", "20m", "30m"
+  values: Record<string, number>; // series.key -> temperature °C
+}
+
+export interface MHCTemperatureGraphConfig {
+  id: string;
+  title: string;
+  series: MHCTemperatureSeries[];
+  dataPoints: MHCTemperatureDataPoint[];
+}
+
 export interface MHCLaserHourItem {
   laserId: string;
   laserIdentifier: string;
@@ -420,6 +486,7 @@ export interface MHCLaserHourItem {
   warningThreshold: number;
   criticalThreshold: number;
   runtimeStatus: 'NORMAL' | 'WARNING' | 'CRITICAL';
+  customFields?: MHCCustomField[];
 }
 
 export interface MHCLaserProfileData {
@@ -430,6 +497,9 @@ export interface MHCLaserProfileData {
   measurementInfo: string;
   supportingEvidence: string;
   images: string[];
+  customFields?: MHCCustomField[];
+  customBlocks?: MHCCustomInfoBlock[];
+  customImages?: MHCCustomImageItem[];
 }
 
 export interface MHCLaserPowerItem {
@@ -443,6 +513,8 @@ export interface MHCLaserPowerItem {
   result: 'PASS' | 'WARNING' | 'FAIL';
   notes: string;
   evidenceImages: string[];
+  customFields?: MHCCustomField[];
+  customMeasurements?: MHCCustomMeasurementItem[];
 }
 
 export interface MHCOpticsBeamData {
@@ -456,6 +528,9 @@ export interface MHCOpticsBeamData {
   inspectionResult: 'PASS' | 'WARNING' | 'FAIL';
   images: string[];
   notes: string;
+  customFields?: MHCCustomField[];
+  customInspections?: MHCCustomInspectionItem[];
+  imageComparisons?: MHCImageComparisonSet[];
 }
 
 export interface MHCCoolingData {
@@ -468,6 +543,9 @@ export interface MHCCoolingData {
   afterCondition: string;
   result: 'PASS' | 'ATTENTION' | 'FAIL';
   notes: string;
+  customFields?: MHCCustomField[];
+  customMeasurements?: MHCCustomMeasurementItem[];
+  temperatureGraph?: MHCTemperatureGraphConfig;
 }
 
 export interface MHCProductQualityData {
@@ -483,6 +561,9 @@ export interface MHCProductQualityData {
   afterImages: string[];
   result: 'PASS' | 'ATTENTION' | 'FAIL';
   notes: string;
+  customFields?: MHCCustomField[];
+  customInspections?: MHCCustomInspectionItem[];
+  imageComparisons?: MHCImageComparisonSet[];
 }
 
 export interface MHCSparePartItem {
@@ -531,6 +612,8 @@ export interface MHCSession {
   stage06_productQuality: MHCProductQualityData;
   stage07_spareParts: MHCSparePartItem[];
   stage08_engineerRemarks: MHCEngineerRemarksData;
+  fieldLabelOverrides?: Record<string, string>;
+  deletedFieldKeys?: string[];
 }
 
 export interface MHCReportDraftConfig {
