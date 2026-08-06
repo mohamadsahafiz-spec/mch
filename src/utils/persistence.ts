@@ -1,3 +1,4 @@
+import { LaserEngine } from './laserEngine';
 import { 
   Customer, 
   Plant, 
@@ -104,7 +105,10 @@ export const StorageService = {
   getLines: (): ProductionLine[] => getStorage(KEYS.LINES, INITIAL_LINES),
   saveLines: (data: ProductionLine[]) => setStorage(KEYS.LINES, data),
 
-  getMachines: (): Machine[] => getStorage(KEYS.MACHINES, INITIAL_MACHINES),
+  getMachines: (): Machine[] => {
+    const raw = getStorage(KEYS.MACHINES, INITIAL_MACHINES);
+    return LaserEngine.normalizeMachines(raw) as unknown as Machine[];
+  },
   saveMachines: (data: Machine[]) => setStorage(KEYS.MACHINES, data),
 
   getContracts: (): Contract[] => getStorage(KEYS.CONTRACTS, INITIAL_CONTRACTS),

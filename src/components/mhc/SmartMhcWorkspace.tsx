@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { LaserEngine } from '../../utils/laserEngine';
 import { 
   Activity, 
   Cpu, 
@@ -420,7 +421,8 @@ export const SmartMhcWorkspace: React.FC<SmartMhcWorkspaceProps> = ({
 
   // 8. DATA TRAY Items Calculation (Derived directly from Machine Passport + Active Session + Previous Session)
   const dataTrayItems = useMemo<SmartMhcDataTrayItem[]>(() => {
-    const lh1 = machine.laserHeads?.[0];
+    const lh1 = machine.laserHeads?.[0] || machine.lasers?.[0];
+    const lm = lh1 ? LaserEngine.calculateLaserMetrics(lh1) : null;
     const sLh1 = activeSession.stage01_laserHours?.[0];
     const sPower = activeSession.stage03_laserPower?.[0];
     const sOptics = activeSession.stage04_opticsBeam;
@@ -443,10 +445,12 @@ export const SmartMhcWorkspace: React.FC<SmartMhcWorkspaceProps> = ({
       { id: 'dt-p3', category: 'Product & Process', key: 'via_diameter', label: 'Via Cut Diameter', value: sQuality?.viaDiameterUm || 42.5, unit: 'µm', status: sQuality?.viaDiameterUm ? 'AVAILABLE' : 'MISSING' },
       { id: 'dt-p4', category: 'Product & Process', key: 'sample_id', label: 'Sample Coupon ID', value: sQuality?.sampleId || `SAMPLE-${machine.machineNumber}-001`, status: 'AVAILABLE' },
 
-      // Laser Category
-      { id: 'dt-l1', category: 'Laser', key: 'laser_model', label: 'Laser Head Model', value: lh1?.model || 'TruMicro 7070', status: 'AVAILABLE' },
-      { id: 'dt-l2', category: 'Laser', key: 'recorded_hours', label: 'Laser Life (Hours)', value: sLh1?.recordedLaserHour || lh1?.runningHours || 18240, unit: 'hrs', status: 'AVAILABLE' },
-      { id: 'dt-l3', category: 'Laser', key: 'calculated_hours', label: 'Calculated Current Hour', value: sLh1?.calculatedCurrentHour || (lh1?.runningHours ? lh1.runningHours + 48 : 18288), unit: 'hrs', status: 'AVAILABLE' },
+      // Laser Category (Authoritative LaserEngine Data Tray)
+      { id: 'dt-l1', category: 'Laser', key: 'laser_model', label: 'Laser Head Model', value: lm?.name || lh1?.model || 'TruMicro 7070', status: 'AVAILABLE' },
+      { id: 'dt-l2', category: 'Laser', key: 'recorded_hours', label: 'Base Physical Meter (Hours)', value: sLh1?.recordedLaserHour || lm?.baseLaserHour || 12000, unit: 'hrs', status: 'AVAILABLE' },
+      { id: 'dt-l3', category: 'Laser', key: 'calculated_hours', label: 'Calculated Current Hour', value: sLh1?.calculatedCurrentHour || lm?.calculatedCurrentHour || 12048, unit: 'hrs', status: 'AVAILABLE' },
+      { id: 'dt-l3a', category: 'Laser', key: 'life_remaining_pct', label: 'Laser Life Remaining', value: lm?.formattedLifeRemaining || '75.2%', status: 'AVAILABLE' },
+      { id: 'dt-l3b', category: 'Laser', key: 'remaining_hours', label: 'Remaining Hours', value: lm?.recommendedRemainingHour ? lm.recommendedRemainingHour.toLocaleString() : '12,952', unit: 'hrs', status: 'AVAILABLE' },
       { id: 'dt-l4', category: 'Laser', key: 'rated_power', label: 'Rated Laser Power', value: sPower?.ratedPowerWatts || lh1?.ratedPowerWatts || 250, unit: 'W', status: 'AVAILABLE' },
       { id: 'dt-l5', category: 'Laser', key: 'before_power', label: 'Laser Power (Before)', value: sPower?.beforeValueWatts || 240, unit: 'W', status: sPower?.beforeValueWatts ? 'AVAILABLE' : 'MISSING' },
       { id: 'dt-l6', category: 'Laser', key: 'after_power', label: 'Laser Power (After)', value: sPower?.afterValueWatts || 242, unit: 'W', status: sPower?.afterValueWatts ? 'AVAILABLE' : 'MISSING' },

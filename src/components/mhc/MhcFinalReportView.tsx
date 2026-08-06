@@ -110,38 +110,71 @@ export const MhcFinalReportView: React.FC<MhcFinalReportViewProps> = ({
 
         {/* Stage 01: Laser Hours */}
         <div className="space-y-2">
-          <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider border-b border-slate-300 pb-1 flex items-center gap-1.5">
-            <Clock className="w-3.5 h-3.5 text-slate-600" />
-            01 CURRENT LASER HOUR READINGS
+          <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider border-b border-slate-300 pb-1 flex items-center justify-between">
+            <span className="flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5 text-slate-600" />
+              01 CURRENT LASER HOUR READINGS & LIFECYCLE SNAPSHOT
+            </span>
+            <span className="text-[10px] font-mono text-slate-500 font-normal">Deterministic LaserEngine Calculation</span>
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-            {session.stage01_laserHours.map((lh, i) => (
-              <div key={i} className="p-3 bg-slate-50 rounded border border-slate-200 space-y-1.5">
-                <div className="flex justify-between items-center border-b border-slate-200 pb-1">
-                  <div className="font-bold text-slate-900">{lh.laserIdentifier}</div>
-                  <div className="text-right font-mono">
-                    <span className="text-emerald-700 font-bold">{lh.calculatedCurrentHour} hrs</span>
-                    <span className="text-[10px] text-slate-500 ml-1.5">({lh.runtimeStatus})</span>
-                  </div>
-                </div>
-                <div className="text-[11px] text-slate-600 flex justify-between">
-                  <span>Recorded: {lh.recordedLaserHour} hrs</span>
-                  <span>Date: {lh.readingDate} {lh.readingTime}</span>
-                </div>
-                {lh.customFields && lh.customFields.length > 0 && (
-                  <div className="pt-1.5 border-t border-slate-200/80 space-y-1">
-                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Custom Engineering Fields:</span>
-                    <div className="grid grid-cols-2 gap-1.5 text-[11px]">
-                      {lh.customFields.map((cf, cfIdx) => (
-                        <div key={cfIdx} className="bg-white p-1 rounded border border-slate-200">
-                          <span className="text-slate-500">{cf.label}:</span> <strong className="text-slate-800">{cf.value} {cf.unit}</strong>
-                        </div>
-                      ))}
+            {session.stage01_laserHours.map((lh, i) => {
+              const ratedLife = lh.criticalThreshold || 25000;
+              const curHr = lh.calculatedCurrentHour || lh.recordedLaserHour || 0;
+              const remaining = Math.max(0, ratedLife - curHr);
+
+              return (
+                <div key={i} className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-2">
+                  <div className="flex justify-between items-center border-b border-slate-200 pb-1">
+                    <div className="font-bold text-slate-900 font-mono">{lh.laserIdentifier}</div>
+                    <div className="text-right font-mono">
+                      <span className="text-emerald-700 font-bold">{curHr.toLocaleString()} hrs</span>
+                      <span className={`text-[10px] font-bold ml-1.5 px-1.5 py-0.5 rounded border ${
+                        lh.runtimeStatus === 'CRITICAL' ? 'bg-rose-100 text-rose-800 border-rose-300' :
+                        lh.runtimeStatus === 'WARNING' ? 'bg-amber-100 text-amber-800 border-amber-300' :
+                        'bg-emerald-100 text-emerald-800 border-emerald-300'
+                      }`}>
+                        {lh.runtimeStatus}
+                      </span>
                     </div>
                   </div>
-                )}
-              </div>
-            ))}
+
+                  <div className="grid grid-cols-2 gap-2 text-[11px] font-mono text-slate-600 bg-white p-2 rounded border border-slate-200/80">
+                    <div>
+                      <span className="text-slate-400 block text-[10px] uppercase">Base Meter Reading</span>
+                      <strong className="text-slate-800">{lh.recordedLaserHour?.toLocaleString()} hrs</strong>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 block text-[10px] uppercase">Reading Date/Time</span>
+                      <strong className="text-slate-800">{lh.readingDate || 'N/A'} {lh.readingTime || ''}</strong>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 block text-[10px] uppercase">Rated Life Limit</span>
+                      <strong className="text-slate-800">{ratedLife.toLocaleString()} hrs</strong>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 block text-[10px] uppercase">Remaining Hours</span>
+                      <strong className={remaining < 1000 ? 'text-rose-600' : 'text-emerald-700'}>
+                        {remaining.toLocaleString()} hrs
+                      </strong>
+                    </div>
+                  </div>
+
+                  {lh.customFields && lh.customFields.length > 0 && (
+                    <div className="pt-1.5 border-t border-slate-200/80 space-y-1">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Custom Engineering Fields:</span>
+                      <div className="grid grid-cols-2 gap-1.5 text-[11px]">
+                        {lh.customFields.map((cf, cfIdx) => (
+                          <div key={cfIdx} className="bg-white p-1 rounded border border-slate-200">
+                            <span className="text-slate-500">{cf.label}:</span> <strong className="text-slate-800">{cf.value} {cf.unit}</strong>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
 

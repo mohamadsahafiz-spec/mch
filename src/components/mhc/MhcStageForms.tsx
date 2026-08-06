@@ -19,6 +19,7 @@ import {
   X,
   RotateCcw
 } from 'lucide-react';
+import { LaserEngine } from '../../utils/laserEngine';
 import { 
   ResponsiveContainer, 
   LineChart, 
@@ -1305,26 +1306,21 @@ export const MhcStageForms: React.FC<MhcStageFormsProps> = ({
       const updated = [...laserHours];
       const item = { ...updated[index], [field]: value };
 
-      const rec = Number(field === 'recordedLaserHour' ? value : item.recordedLaserHour || 0);
+      const rec = Number(field === 'recordedLaserHour' ? value : item.recordedLaserHour ?? 0);
       const rDate = String(field === 'readingDate' ? value : item.readingDate || '');
       const rTime = String(field === 'readingTime' ? value : item.readingTime || '');
-      const elapsed = calculateElapsedHours(rDate, rTime);
+      const timePart = rTime || '00:00';
+      const baseTs = rDate ? `${rDate}T${timePart}:00` : null;
 
-      if (field === 'recordedLaserHour' || field === 'readingDate' || field === 'readingTime') {
-        item.calculatedCurrentHour = rec + elapsed;
-      }
+      // Authoritative LaserEngine calculation
+      const curHour = LaserEngine.calculateCurrentHour(rec, baseTs, new Date());
+      item.calculatedCurrentHour = curHour !== null ? curHour : rec;
 
-      const cur = Number(field === 'calculatedCurrentHour' ? value : item.calculatedCurrentHour);
-      const warn = Number(field === 'warningThreshold' ? value : item.warningThreshold);
-      const crit = Number(field === 'criticalThreshold' ? value : item.criticalThreshold);
+      const warn = Number(field === 'warningThreshold' ? value : item.warningThreshold || 20000);
+      const crit = Number(field === 'criticalThreshold' ? value : item.criticalThreshold || 25000);
 
-      if (cur >= crit) {
-        item.runtimeStatus = 'CRITICAL';
-      } else if (cur >= warn) {
-        item.runtimeStatus = 'WARNING';
-      } else {
-        item.runtimeStatus = 'NORMAL';
-      }
+      const engineStatus = LaserEngine.evaluateStatus(item.calculatedCurrentHour, warn, crit);
+      item.runtimeStatus = engineStatus === 'ALARM' ? 'CRITICAL' : engineStatus === 'WARNING' ? 'WARNING' : 'NORMAL';
 
       updated[index] = item;
 

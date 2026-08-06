@@ -26,6 +26,9 @@ import {
   ShieldCheck,
   MoreVertical,
   Upload,
+  Download,
+  FileJson,
+  Check,
   Camera
 } from 'lucide-react';
 import { Machine, MHCRecord, ExecutiveReport, Customer } from '../../types';
@@ -36,6 +39,15 @@ import { Button } from '../common/Button';
 import { Modal } from '../common/Modal';
 import { HealthGauge } from '../common/HealthGauge';
 import { useTheme } from '../../context/ThemeContext';
+
+import { 
+  LaserEngine, 
+  LaserMetrics, 
+  MachineMetrics, 
+  LaserHeadDomain, 
+  formatLifeRemainingPercent,
+  formatDate 
+} from '../../utils/laserEngine';
 
 interface MachinePassportProps {
   machines: Machine[];
@@ -48,6 +60,7 @@ interface MachinePassportProps {
   onAddMachine?: (machine: Machine) => void;
   onEditMachine?: (machine: Machine) => void;
   onDeleteMachine?: (machineId: string) => void;
+  onBatchImportMachines?: (machines: Machine[]) => void;
   onAddCustomer?: (customer: Customer) => void;
   onEditCustomer?: (customer: Customer) => void;
   onDeleteCustomer?: (customerId: string) => void;
@@ -64,6 +77,7 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
   onAddMachine,
   onEditMachine,
   onDeleteMachine,
+  onBatchImportMachines,
   onAddCustomer,
   onEditCustomer,
   onDeleteCustomer
@@ -71,6 +85,261 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
   const { effectiveTheme } = useTheme();
   const isDark = effectiveTheme === 'dark';
   const selectedMachine = machines.find((m) => m.id === selectedMachineId) || machines[0];
+
+  // Authoritative Machine Laser Lifecycle Metrics derived via LaserEngine
+  const machineMetrics: MachineMetrics = React.useMemo(() => {
+    return LaserEngine.calculateMachineMetrics(selectedMachine);
+  }, [selectedMachine]);
+
+  // Physical Meter Verification Modal State
+  const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
+  const [targetLaserMetrics, setTargetLaserMetrics] = useState<LaserMetrics | null>(null);
+  const [physicalMeterInput, setPhysicalMeterInput] = useState<string>('');
+  const [verifyDateInput, setVerifyDateInput] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [verifyTimeInput, setVerifyTimeInput] = useState<string>('09:00');
+  const [verifyReason, setVerifyReason] = useState<string>('Scheduled Preventive Maintenance Verification');
+
+  // Laser Head Configuration Modal State
+  const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
+  const [configLaserHead, setConfigLaserHead] = useState<LaserHeadDomain | null>(null);
+  const [configName, setConfigName] = useState('');
+  const [configSerial, setConfigSerial] = useState('');
+  const [configBaseHour, setConfigBaseHour] = useState('');
+  const [configBaseTimestamp, setConfigBaseTimestamp] = useState('');
+  const [configRatedLife, setConfigRatedLife] = useState('');
+  const [configWarningLife, setConfigWarningLife] = useState('');
+  const [configContingency, setConfigContingency] = useState('');
+
+  // Add Laser Head Modal State
+  const [isAddLaserModalOpen, setIsAddLaserModalOpen] = useState(false);
+  const [addLaserName, setAddLaserName] = useState('');
+  const [addLaserSerial, setAddLaserSerial] = useState('');
+  const [addLaserBaseHour, setAddLaserBaseHour] = useState('');
+  const [addLaserBaseDate, setAddLaserBaseDate] = useState(new Date().toISOString().split('T')[0]);
+  const [addLaserBaseTime, setAddLaserBaseTime] = useState('09:00');
+  const [addLaserRatedLife, setAddLaserRatedLife] = useState('25000');
+
+  // Laser Monitor JSON Import / Export State
+  const [importPreviewModalOpen, setImportPreviewModalOpen] = useState(false);
+  const [importResultModalOpen, setImportResultModalOpen] = useState(false);
+  const [importPreviewData, setImportPreviewData] = useState<{
+    machinesFound: number;
+    laserHeadsFound: number;
+    existingMatched: number;
+    newMachines: number;
+    warnings: string[];
+    mappedMachines: Machine[];
+    importedMachineList: Machine[];
+  } | null>(null);
+  const [importResultSummary, setImportResultSummary] = useState<{
+    machinesImported: number;
+    laserHeadsImported: number;
+    existingMatched: number;
+    newMachines: number;
+    warnings: string[];
+  } | null>(null);
+
+  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+
+  const handleTriggerImportFile = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const text = event.target?.result as string;
+        const preview = LaserEngine.parseAndMapLaserMonitorJson(text, machines, customers);
+        setImportPreviewData(preview);
+        setImportPreviewModalOpen(true);
+      } catch (err: any) {
+        alert(err.message || 'Failed to parse JSON file.');
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const handleConfirmImport = () => {
+    if (!importPreviewData) return;
+
+    if (onBatchImportMachines) {
+      onBatchImportMachines(importPreviewData.mappedMachines);
+    } else {
+      importPreviewData.mappedMachines.forEach((m) => {
+        if (onEditMachine) onEditMachine(m);
+      });
+    }
+
+    setImportResultSummary({
+      machinesImported: importPreviewData.machinesFound,
+      laserHeadsImported: importPreviewData.laserHeadsFound,
+      existingMatched: importPreviewData.existingMatched,
+      newMachines: importPreviewData.newMachines,
+      warnings: importPreviewData.warnings
+    });
+
+    setImportPreviewModalOpen(false);
+    setImportResultModalOpen(true);
+  };
+
+  const handleExportJson = () => {
+    LaserEngine.exportLaserLifecycleJson(machines);
+  };
+
+  // Handlers for Physical Meter Verification
+  const handleOpenVerifyModal = (lm: LaserMetrics) => {
+    setTargetLaserMetrics(lm);
+    setPhysicalMeterInput(String(lm.estimatedCurrentHour ?? lm.baseLaserHour ?? 12000));
+    setVerifyDateInput(new Date().toISOString().split('T')[0]);
+    setVerifyTimeInput(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }));
+    setVerifyReason('Scheduled Preventive Maintenance Verification');
+    setIsVerifyModalOpen(true);
+  };
+
+  const handleConfirmRecalibration = () => {
+    if (!selectedMachine || !targetLaserMetrics) return;
+    const actualHour = parseFloat(physicalMeterInput);
+    if (isNaN(actualHour) || actualHour < 0) {
+      showAlert('Please enter a valid non-negative physical meter reading.');
+      return;
+    }
+
+    const timestampStr = `${verifyDateInput}T${verifyTimeInput}:00`;
+    const timestamp = new Date(timestampStr);
+
+    const updatedMachine = LaserEngine.executeRecalibration(
+      selectedMachine,
+      targetLaserMetrics.id,
+      actualHour,
+      verifyReason || 'Meter Verification',
+      timestamp
+    );
+
+    if (onEditMachine) {
+      onEditMachine(updatedMachine);
+    }
+
+    setIsVerifyModalOpen(false);
+    showAlert(`Physical meter verified and recalibrated to ${actualHour.toLocaleString()} hrs!`);
+  };
+
+  // Handlers for Laser Config Modal
+  const handleOpenConfigModal = (lm: LaserMetrics) => {
+    const lh = (selectedMachine.lasers || selectedMachine.laserHeads || []).find(l => l.id === lm.id);
+    setConfigLaserHead(lh || {
+      id: lm.id,
+      name: lm.name,
+      serialNo: lm.serialNo,
+      baseLaserHour: lm.baseLaserHour,
+      baseTimestamp: lm.baseTimestamp,
+      ratedLife: lm.ratedLife,
+      warningLife: lm.warningLife,
+      contingencyCeiling: lm.contingencyCeiling,
+      calibrationHistory: lm.calibrationHistory
+    });
+    setConfigName(lm.name);
+    setConfigSerial(lm.serialNo);
+    setConfigBaseHour(lm.baseLaserHour !== null && lm.baseLaserHour !== undefined ? String(lm.baseLaserHour) : '');
+    setConfigBaseTimestamp(lm.baseTimestamp || '');
+    setConfigRatedLife(String(lm.ratedLife));
+    setConfigWarningLife(String(lm.warningLife));
+    setConfigContingency(String(lm.contingencyCeiling));
+    setIsConfigModalOpen(true);
+  };
+
+  const handleSaveLaserConfig = () => {
+    if (!selectedMachine || !configLaserHead) return;
+    const updatedLaserHead: LaserHeadDomain = {
+      ...configLaserHead,
+      name: configName.trim() || 'Laser Head',
+      serialNo: configSerial.trim() || 'SN-UNKNOWN',
+      baseLaserHour: configBaseHour.trim() !== '' ? parseFloat(configBaseHour) : null,
+      baseTimestamp: configBaseTimestamp.trim() !== '' ? configBaseTimestamp : null,
+      ratedLife: parseFloat(configRatedLife) || 25000,
+      warningLife: parseFloat(configWarningLife) || 20000,
+      contingencyCeiling: parseFloat(configContingency) || 30000
+    };
+
+    const updatedMachine = LaserEngine.updateLaserInMachine(selectedMachine, updatedLaserHead);
+    if (onEditMachine) {
+      onEditMachine(updatedMachine);
+    }
+    setIsConfigModalOpen(false);
+    showAlert(`Laser head "${updatedLaserHead.name}" configuration updated.`);
+  };
+
+  const handleDeleteLaserHead = () => {
+    if (!selectedMachine || !configLaserHead) return;
+    const lasers = selectedMachine.lasers || selectedMachine.laserHeads || [];
+    if (lasers.length <= 1) {
+      showAlert('Cannot delete laser head. Machines must have at least one laser head.');
+      return;
+    }
+    const updatedLasers = lasers.filter(l => l.id !== configLaserHead.id);
+    const updatedMachine = {
+      ...selectedMachine,
+      lasers: updatedLasers,
+      laserHeads: updatedLasers
+    };
+    if (onEditMachine) {
+      onEditMachine(updatedMachine);
+    }
+    setIsConfigModalOpen(false);
+    showAlert(`Laser head deleted.`);
+  };
+
+  // Handlers for Add Laser Modal
+  const handleOpenAddLaser = () => {
+    const currentCount = (selectedMachine.lasers || selectedMachine.laserHeads || []).length;
+    setAddLaserName(`Laser Head #${currentCount + 1}`);
+    setAddLaserSerial(`LZR-${selectedMachine.machineNumber ? selectedMachine.machineNumber.replace('MCH-', '') : '01'}-0${currentCount + 1}`);
+    setAddLaserBaseHour('10000');
+    setAddLaserBaseDate(new Date().toISOString().split('T')[0]);
+    setAddLaserBaseTime('09:00');
+    setAddLaserRatedLife('25000');
+    setIsAddLaserModalOpen(true);
+  };
+
+  const handleSaveAddLaser = () => {
+    if (!selectedMachine) return;
+    const baseHr = parseFloat(addLaserBaseHour);
+    const baseTs = `${addLaserBaseDate}T${addLaserBaseTime}:00`;
+    const newLaserHead: LaserHeadDomain = {
+      id: `lh-${Date.now()}`,
+      name: addLaserName.trim() || 'Laser Head',
+      serialNo: addLaserSerial.trim() || 'SN-GENERIC',
+      baseLaserHour: !isNaN(baseHr) ? baseHr : 10000,
+      baseTimestamp: baseTs,
+      ratedLife: parseFloat(addLaserRatedLife) || 25000,
+      warningLife: (parseFloat(addLaserRatedLife) || 25000) * 0.8,
+      contingencyCeiling: (parseFloat(addLaserRatedLife) || 25000) * 1.2,
+      calibrationHistory: [
+        {
+          date: new Date().toISOString().split('T')[0],
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          estimatedHour: !isNaN(baseHr) ? baseHr : 10000,
+          actualHour: !isNaN(baseHr) ? baseHr : 10000,
+          difference: 0,
+          reason: 'Initial Baseline Set',
+          rating: 'Initial Baseline'
+        }
+      ]
+    };
+
+    const updatedMachine = LaserEngine.addLaserToMachine(selectedMachine, newLaserHead);
+    if (onEditMachine) {
+      onEditMachine(updatedMachine);
+    }
+    setIsAddLaserModalOpen(false);
+    showAlert(`New laser head "${newLaserHead.name}" added to machine.`);
+  };
 
   // Customer List State
   const [customerList, setCustomerList] = useState<Customer[]>(() => {
@@ -929,7 +1198,32 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
             </span>
           </div>
 
-          <div className="flex items-center gap-2 text-xs font-mono">
+          <div className="flex items-center gap-2 text-xs font-mono flex-wrap">
+            <input
+              type="file"
+              ref={fileInputRef}
+              accept=".json"
+              onChange={handleFileSelected}
+              className="hidden"
+            />
+            <Button
+              size="sm"
+              variant="outline"
+              icon={<Upload className="w-3.5 h-3.5 text-indigo-500" />}
+              onClick={handleTriggerImportFile}
+              className="text-xs h-7 px-2.5 font-sans"
+            >
+              Import Laser Monitor JSON
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              icon={<Download className="w-3.5 h-3.5 text-sky-500" />}
+              onClick={handleExportJson}
+              className="text-xs h-7 px-2.5 font-sans"
+            >
+              Export Laser Lifecycle JSON
+            </Button>
             <span className={`px-2 py-0.5 rounded border text-[11px] font-semibold ${
               isDark ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-emerald-50 text-emerald-700 border-emerald-200'
             }`}>
@@ -1321,59 +1615,192 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
             </div>
           </div>
 
-          {/* Laser Heads Telemetry Module */}
-          <Card title="Laser Heads Runtime Telemetry & Lifecycle">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {(selectedMachine.laserHeads || []).map((lh) => {
-                const percentUsed = Math.round((lh.runningHours / lh.maxRecommendedHours) * 100);
+          {/* Laser Heads Runtime Telemetry & Lifecycle Module */}
+          <div className={`p-5 rounded-2xl border space-y-4 ${
+            isDark ? 'bg-[#14171A] border-[#2B323A]' : 'bg-white border-slate-200'
+          }`}>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200 dark:border-slate-800">
+              <div className="flex items-center gap-2.5">
+                <div className={`p-2 rounded-xl ${isDark ? 'bg-amber-500/10 text-amber-400' : 'bg-amber-50 text-amber-600'}`}>
+                  <Zap className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className={`text-sm font-bold ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
+                    Laser Heads Runtime Telemetry & Lifecycle Engine
+                  </h3>
+                  <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                    Live deterministic lifecycle tracking based on physical meter baseline & elapsed runtime
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Badge 
+                  variant={
+                    machineMetrics.status === 'SAFE' ? 'emerald' :
+                    machineMetrics.status === 'WARNING' ? 'amber' :
+                    machineMetrics.status === 'ALARM' ? 'rose' : 'amber'
+                  }
+                  size="md"
+                >
+                  SYSTEM: {machineMetrics.status.replace('_', ' ')}
+                </Badge>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  icon={<Plus className="w-3.5 h-3.5" />}
+                  onClick={handleOpenAddLaser}
+                  className="text-xs"
+                >
+                  Add Laser Head
+                </Button>
+              </div>
+            </div>
+
+            {/* Baseline Required Warning Banner */}
+            {machineMetrics.baselineRequiredCount > 0 && (
+              <div className={`p-3.5 rounded-xl border flex items-center justify-between gap-3 text-xs ${
+                isDark ? 'bg-amber-950/40 border-amber-800/60 text-amber-200' : 'bg-amber-50 border-amber-200 text-amber-900'
+              }`}>
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
+                  <span>
+                    <strong>Baseline Required:</strong> Physical meter reading has not been recorded for {machineMetrics.baselineRequiredCount} laser head(s). Please verify physical meter to activate lifecycle engine.
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Per-Laser Head Lifecycle Cards */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {machineMetrics.laserMetricsList.map((lm) => {
+                const isBaselineReq = lm.status === 'BASELINE_REQUIRED';
+                const percentUsed = lm.lifeRemainingPercent !== null 
+                  ? Math.min(100, Math.max(0, 100 - lm.lifeRemainingPercent))
+                  : 0;
+
                 return (
-                  <div key={lh.id} className={`p-4 rounded-xl border space-y-3 ${
-                    isDark ? 'bg-[#1A1D21] border-[#2B323A]' : 'bg-slate-50 border-slate-200'
+                  <div key={lm.id} className={`p-4 rounded-xl border space-y-3.5 transition-all ${
+                    lm.status === 'ALARM'
+                      ? (isDark ? 'bg-rose-950/20 border-rose-800/60' : 'bg-rose-50/80 border-rose-200')
+                      : lm.status === 'WARNING'
+                      ? (isDark ? 'bg-amber-950/20 border-amber-800/60' : 'bg-amber-50/80 border-amber-200')
+                      : (isDark ? 'bg-[#1A1D21] border-[#2B323A]' : 'bg-slate-50 border-slate-200')
                   }`}>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Zap className={`w-4 h-4 ${isDark ? 'text-[#EFCB7A]' : 'text-amber-600'}`} />
-                        <span className={`text-xs font-bold ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>{lh.model}</span>
+                    {/* Header Row */}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <Zap className={`w-4 h-4 shrink-0 ${
+                          lm.status === 'ALARM' ? 'text-rose-500' :
+                          lm.status === 'WARNING' ? 'text-amber-500' :
+                          isDark ? 'text-[#EFCB7A]' : 'text-amber-600'
+                        }`} />
+                        <div className="min-w-0">
+                          <span className={`text-xs font-bold block truncate ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
+                            {lm.name}
+                          </span>
+                          <span className={`text-[10px] font-mono block ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>
+                            SN: {lm.serialNo}
+                          </span>
+                        </div>
                       </div>
-                      <Badge variant={lh.healthScore >= 90 ? 'emerald' : 'amber'} size="sm">
-                        Health: {lh.healthScore}%
+
+                      <Badge 
+                        variant={
+                          lm.status === 'SAFE' ? 'emerald' :
+                          lm.status === 'WARNING' ? 'amber' :
+                          lm.status === 'ALARM' ? 'rose' : 'amber'
+                        } 
+                        size="sm"
+                      >
+                        {lm.status === 'BASELINE_REQUIRED' ? 'BASELINE REQ' : lm.status}
                       </Badge>
                     </div>
 
+                    {/* Progress Bar / Rated Life */}
                     <div className="space-y-1 text-xs font-mono">
                       <div className={`flex justify-between ${isDark ? 'text-slate-400' : 'text-slate-600 font-medium'}`}>
-                        <span>Running Hours:</span>
-                        <span className={`font-bold ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>{lh.runningHours} / {lh.maxRecommendedHours} hrs</span>
+                        <span>Current Estimated:</span>
+                        <span className={`font-bold ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
+                          {lm.currentHour !== null ? `${lm.currentHour.toLocaleString()} / ${lm.ratedLife.toLocaleString()} hrs` : 'Unset'}
+                        </span>
                       </div>
+
                       <div className={`w-full h-2 rounded-full overflow-hidden ${isDark ? 'bg-slate-800' : 'bg-slate-200'}`}>
                         <div
-                          className={`h-full rounded-full ${percentUsed > 85 ? (isDark ? 'bg-[#EFCB7A]' : 'bg-amber-500') : (isDark ? 'bg-[#8ECDF7]' : 'bg-sky-600')}`}
+                          className={`h-full rounded-full transition-all duration-300 ${
+                            lm.status === 'ALARM' ? 'bg-rose-500' :
+                            lm.status === 'WARNING' ? 'bg-amber-500' :
+                            isDark ? 'bg-[#8ECDF7]' : 'bg-sky-600'
+                          }`}
                           style={{ width: `${percentUsed}%` }}
                         />
                       </div>
-                      <div className={`flex justify-between text-[10px] pt-1 ${isDark ? 'text-slate-500' : 'text-slate-600 font-medium'}`}>
-                        <span>Remaining: {lh.remainingHours} hrs</span>
-                        <span>Est. Swap: {lh.estimatedReplacementDate}</span>
+
+                      <div className={`flex justify-between text-[10px] pt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                        <span>Life Remaining: <strong className={lm.status === 'ALARM' ? 'text-rose-400' : lm.status === 'WARNING' ? 'text-amber-400' : 'text-emerald-400'}>{lm.formattedLifeRemaining}</strong></span>
+                        <span>Est. EOL: {lm.estimatedRecommendedEOL || 'N/A'}</span>
                       </div>
                     </div>
 
-                    <div className={`grid grid-cols-2 gap-2 text-[11px] font-mono p-2 rounded border ${
+                    {/* Grid Metrics */}
+                    <div className={`grid grid-cols-2 gap-2 text-[11px] font-mono p-2.5 rounded-lg border ${
                       isDark ? 'bg-[#111315] border-[#2B323A]' : 'bg-white border-slate-200'
                     }`}>
                       <div>
-                        <span className={isDark ? 'text-slate-500' : 'text-slate-600 font-medium'}>Power:</span>
-                        <span className={`font-bold ml-1 ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>{lh.powerOutputWatts}W / {lh.ratedPowerWatts}W</span>
+                        <span className={isDark ? 'text-slate-500' : 'text-slate-500'}>Physical Meter:</span>
+                        <p className={`font-bold ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>
+                          {lm.baseLaserHour !== null ? `${lm.baseLaserHour.toLocaleString()} hrs` : 'Not Set'}
+                        </p>
                       </div>
                       <div>
-                        <span className={isDark ? 'text-slate-500' : 'text-slate-600 font-medium'}>Beam M²:</span>
-                        <span className={`font-bold ml-1 ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>{lh.beamQualityM2}</span>
+                        <span className={isDark ? 'text-slate-500' : 'text-slate-500'}>Remaining Hours:</span>
+                        <p className={`font-bold ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>
+                          {lm.recommendedRemainingHour !== null ? `${lm.recommendedRemainingHour.toLocaleString()} hrs` : 'N/A'}
+                        </p>
                       </div>
+                      <div>
+                        <span className={isDark ? 'text-slate-500' : 'text-slate-500'}>Remaining Days:</span>
+                        <p className={`font-bold ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>
+                          {lm.remainingDaysInfo.formattedText}
+                        </p>
+                      </div>
+                      <div>
+                        <span className={isDark ? 'text-slate-500' : 'text-slate-500'}>Freshness:</span>
+                        <p className={`font-bold ${lm.accuracy.color === 'emerald' ? 'text-emerald-400' : lm.accuracy.color === 'amber' ? 'text-amber-400' : 'text-slate-400'}`}>
+                          {lm.accuracy.label}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Action Bar */}
+                    <div className="flex items-center gap-2 pt-1">
+                      <Button
+                        size="sm"
+                        variant={isBaselineReq ? 'warning' : 'primary'}
+                        icon={<CheckCircle2 className="w-3.5 h-3.5" />}
+                        onClick={() => handleOpenVerifyModal(lm)}
+                        className="flex-1 text-xs py-1.5"
+                      >
+                        {isBaselineReq ? 'Set Physical Baseline' : 'Verify Physical Meter'}
+                      </Button>
+
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        icon={<Settings className="w-3.5 h-3.5" />}
+                        onClick={() => handleOpenConfigModal(lm)}
+                        className="text-xs py-1.5"
+                        title="Configure Laser Head & Calibration History"
+                      >
+                        Config
+                      </Button>
                     </div>
                   </div>
                 );
               })}
             </div>
-          </Card>
+          </div>
 
           {/* Consumables Telemetry */}
           <Card title="Active Consumables & Wear Items">
@@ -2237,6 +2664,564 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
           </Modal>
         );
       })()}
+
+      {/* 9. Verify Physical Laser Meter Modal */}
+      {isVerifyModalOpen && targetLaserMetrics && (() => {
+        const estHr = targetLaserMetrics.estimatedCurrentHour ?? targetLaserMetrics.baseLaserHour ?? 0;
+        const enteredHr = parseFloat(physicalMeterInput) || 0;
+        const dev = enteredHr - estHr;
+        const absDev = Math.abs(dev);
+        const evalRating = LaserEngine.evaluateDeviation(dev, estHr);
+
+        return (
+          <Modal
+            isOpen={isVerifyModalOpen}
+            onClose={() => setIsVerifyModalOpen(false)}
+            title={`Verify Physical Meter — ${targetLaserMetrics.name}`}
+            subtitle={`Machine: ${selectedMachine.model} (${selectedMachine.machineNumber}) • Serial: ${targetLaserMetrics.serialNo}`}
+            maxWidth="md"
+          >
+            <div className="p-4 space-y-4">
+              {/* Estimated vs Physical Banner */}
+              <div className={`p-4 rounded-xl border grid grid-cols-2 gap-3 text-xs ${
+                isDark ? 'bg-[#111315] border-[#2B323A]' : 'bg-slate-50 border-slate-200'
+              }`}>
+                <div>
+                  <span className={`block text-[10px] uppercase font-mono ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                    Live Estimated Hour
+                  </span>
+                  <span className={`text-base font-extrabold font-mono ${isDark ? 'text-[#8ECDF7]' : 'text-sky-800'}`}>
+                    {estHr.toLocaleString()} hrs
+                  </span>
+                  <span className={`block text-[10px] mt-0.5 ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>
+                    Calculated via LaserEngine
+                  </span>
+                </div>
+
+                <div>
+                  <span className={`block text-[10px] uppercase font-mono ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                    Last Physical Meter
+                  </span>
+                  <span className={`text-base font-extrabold font-mono ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>
+                    {targetLaserMetrics.baseLaserHour !== null ? `${targetLaserMetrics.baseLaserHour.toLocaleString()} hrs` : 'Unset'}
+                  </span>
+                  <span className={`block text-[10px] mt-0.5 ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>
+                    {targetLaserMetrics.baseTimestamp ? formatDate(targetLaserMetrics.baseTimestamp) : 'No baseline recorded'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Physical Meter Form */}
+              <div className="space-y-3">
+                <div>
+                  <label className={`block text-xs font-semibold mb-1 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                    Physical Meter Reading (hrs) <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    min="0"
+                    step="1"
+                    value={physicalMeterInput}
+                    onChange={(e) => setPhysicalMeterInput(e.target.value)}
+                    className={`w-full px-3 py-2 rounded-xl text-sm font-mono font-bold border ${
+                      isDark ? 'bg-[#111315] border-[#2B323A] text-slate-100' : 'bg-white border-slate-300 text-slate-900'
+                    }`}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className={`block text-xs font-semibold mb-1 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                      Verification Date
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      value={verifyDateInput}
+                      onChange={(e) => setVerifyDateInput(e.target.value)}
+                      className={`w-full px-3 py-2 rounded-xl text-xs font-mono border ${
+                        isDark ? 'bg-[#111315] border-[#2B323A] text-slate-100' : 'bg-white border-slate-300 text-slate-900'
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <label className={`block text-xs font-semibold mb-1 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                      Verification Time
+                    </label>
+                    <input
+                      type="time"
+                      required
+                      value={verifyTimeInput}
+                      onChange={(e) => setVerifyTimeInput(e.target.value)}
+                      className={`w-full px-3 py-2 rounded-xl text-xs font-mono border ${
+                        isDark ? 'bg-[#111315] border-[#2B323A] text-slate-100' : 'bg-white border-slate-300 text-slate-900'
+                      }`}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className={`block text-xs font-semibold mb-1 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                    Reason / Engineer Notes
+                  </label>
+                  <select
+                    value={verifyReason}
+                    onChange={(e) => setVerifyReason(e.target.value)}
+                    className={`w-full px-3 py-2 rounded-xl text-xs border ${
+                      isDark ? 'bg-[#111315] border-[#2B323A] text-slate-100' : 'bg-white border-slate-300 text-slate-900'
+                    }`}
+                  >
+                    <option value="Scheduled Preventive Maintenance Verification">Scheduled PM Verification</option>
+                    <option value="Routine Inspection Audit">Routine Inspection Audit</option>
+                    <option value="Diode Module / Optics Service Baseline">Diode Module / Optics Service Baseline</option>
+                    <option value="Laser Recalibration & Alignment">Laser Recalibration & Alignment</option>
+                    <option value="Customer Cleanroom Handover Verification">Customer Cleanroom Handover Verification</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Dynamic Real-Time Deviation Feedback */}
+              <div className={`p-3.5 rounded-xl border space-y-1.5 text-xs font-mono ${
+                absDev > 500 ? (isDark ? 'bg-amber-950/30 border-amber-800/50 text-amber-200' : 'bg-amber-50 border-amber-200 text-amber-900') :
+                (isDark ? 'bg-emerald-950/20 border-emerald-800/40 text-emerald-200' : 'bg-emerald-50 border-emerald-200 text-emerald-900')
+              }`}>
+                <div className="flex justify-between items-center font-bold">
+                  <span>Meter Deviation:</span>
+                  <span>{dev > 0 ? `+${dev.toLocaleString()}` : dev.toLocaleString()} hrs</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>Accuracy Rating:</span>
+                  <span className="font-bold">{evalRating}</span>
+                </div>
+              </div>
+
+              {/* Footer Actions */}
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsVerifyModalOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  icon={<CheckCircle2 className="w-4 h-4" />}
+                  onClick={handleConfirmRecalibration}
+                >
+                  Confirm & Recalibrate Baseline
+                </Button>
+              </div>
+            </div>
+          </Modal>
+        );
+      })()}
+
+      {/* 10. Laser Head Configuration & Calibration History Modal */}
+      {isConfigModalOpen && configLaserHead && (
+        <Modal
+          isOpen={isConfigModalOpen}
+          onClose={() => setIsConfigModalOpen(false)}
+          title={`Laser Head Configuration & Calibration Log — ${configName}`}
+          subtitle={`Machine: ${selectedMachine.model} (${selectedMachine.machineNumber})`}
+          maxWidth="lg"
+        >
+          <div className="p-4 space-y-5">
+            {/* Form Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className={`block text-xs font-semibold mb-1 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                  Laser Head Model / Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={configName}
+                  onChange={(e) => setConfigName(e.target.value)}
+                  className={`w-full px-3 py-2 rounded-xl text-xs border ${
+                    isDark ? 'bg-[#111315] border-[#2B323A] text-slate-100' : 'bg-white border-slate-300 text-slate-900'
+                  }`}
+                />
+              </div>
+
+              <div>
+                <label className={`block text-xs font-semibold mb-1 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                  Serial Number
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={configSerial}
+                  onChange={(e) => setConfigSerial(e.target.value)}
+                  className={`w-full px-3 py-2 rounded-xl text-xs border font-mono ${
+                    isDark ? 'bg-[#111315] border-[#2B323A] text-slate-100' : 'bg-white border-slate-300 text-slate-900'
+                  }`}
+                />
+              </div>
+
+              <div>
+                <label className={`block text-xs font-semibold mb-1 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                  Rated Lifetime Hours
+                </label>
+                <input
+                  type="number"
+                  required
+                  value={configRatedLife}
+                  onChange={(e) => setConfigRatedLife(e.target.value)}
+                  className={`w-full px-3 py-2 rounded-xl text-xs border font-mono ${
+                    isDark ? 'bg-[#111315] border-[#2B323A] text-slate-100' : 'bg-white border-slate-300 text-slate-900'
+                  }`}
+                />
+              </div>
+
+              <div>
+                <label className={`block text-xs font-semibold mb-1 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                  Warning Life Threshold (hrs)
+                </label>
+                <input
+                  type="number"
+                  required
+                  value={configWarningLife}
+                  onChange={(e) => setConfigWarningLife(e.target.value)}
+                  className={`w-full px-3 py-2 rounded-xl text-xs border font-mono ${
+                    isDark ? 'bg-[#111315] border-[#2B323A] text-slate-100' : 'bg-white border-slate-300 text-slate-900'
+                  }`}
+                />
+              </div>
+            </div>
+
+            {/* Calibration Audit Log Table */}
+            <div className="space-y-2">
+              <h4 className={`text-xs font-bold uppercase tracking-wider ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                Physical Meter Calibration & Recalibration Audit Log
+              </h4>
+
+              <div className={`rounded-xl border overflow-hidden text-xs font-mono max-h-48 overflow-y-auto ${
+                isDark ? 'border-[#2B323A] bg-[#111315]' : 'border-slate-200 bg-white'
+              }`}>
+                {(!configLaserHead.calibrationHistory || configLaserHead.calibrationHistory.length === 0) ? (
+                  <p className="p-4 text-center text-slate-500">No recalibration history recorded for this laser head.</p>
+                ) : (
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className={isDark ? 'bg-[#1A1D21] text-slate-400 border-b border-[#2B323A]' : 'bg-slate-100 text-slate-600 border-b border-slate-200'}>
+                        <th className="p-2">Date/Time</th>
+                        <th className="p-2">Est. Hour</th>
+                        <th className="p-2">Actual Hour</th>
+                        <th className="p-2">Dev</th>
+                        <th className="p-2">Rating</th>
+                        <th className="p-2">Reason</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/60 dark:divide-slate-800">
+                      {configLaserHead.calibrationHistory.map((rec, i) => (
+                        <tr key={i} className={isDark ? 'hover:bg-slate-800/40' : 'hover:bg-slate-50'}>
+                          <td className="p-2 font-bold">{rec.date} {rec.time || ''}</td>
+                          <td className="p-2">{rec.estimatedHour?.toLocaleString()}</td>
+                          <td className="p-2 text-emerald-400 font-bold">{rec.actualHour?.toLocaleString()}</td>
+                          <td className="p-2">{rec.difference > 0 ? `+${rec.difference}` : rec.difference}</td>
+                          <td className="p-2">{rec.rating}</td>
+                          <td className="p-2 max-w-xs truncate text-[10px] text-slate-400">{rec.reason}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-slate-800">
+              <Button
+                variant="danger"
+                size="sm"
+                icon={<Trash2 className="w-4 h-4" />}
+                onClick={handleDeleteLaserHead}
+                disabled={(selectedMachine.lasers || selectedMachine.laserHeads || []).length <= 1}
+              >
+                Delete Laser Head
+              </Button>
+
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsConfigModalOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  icon={<Edit3 className="w-4 h-4" />}
+                  onClick={handleSaveLaserConfig}
+                >
+                  Save Configuration
+                </Button>
+              </div>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* 11. Add Laser Head Modal */}
+      {isAddLaserModalOpen && (
+        <Modal
+          isOpen={isAddLaserModalOpen}
+          onClose={() => setIsAddLaserModalOpen(false)}
+          title={`Add Laser Head — ${selectedMachine.model}`}
+          subtitle="Configure a multi-laser head system for independent lifecycle tracking."
+          maxWidth="md"
+        >
+          <div className="p-4 space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className={`block text-xs font-semibold mb-1 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                  Laser Head Name / Model <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={addLaserName}
+                  onChange={(e) => setAddLaserName(e.target.value)}
+                  className={`w-full px-3 py-2 rounded-xl text-xs border ${
+                    isDark ? 'bg-[#111315] border-[#2B323A] text-slate-100' : 'bg-white border-slate-300 text-slate-900'
+                  }`}
+                  placeholder="e.g. TRUMPF TruLaser Oscillator #2"
+                />
+              </div>
+
+              <div>
+                <label className={`block text-xs font-semibold mb-1 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                  Serial Number
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={addLaserSerial}
+                  onChange={(e) => setAddLaserSerial(e.target.value)}
+                  className={`w-full px-3 py-2 rounded-xl text-xs font-mono border ${
+                    isDark ? 'bg-[#111315] border-[#2B323A] text-slate-100' : 'bg-white border-slate-300 text-slate-900'
+                  }`}
+                />
+              </div>
+
+              <div>
+                <label className={`block text-xs font-semibold mb-1 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                  Physical Meter Reading (hrs) <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  required
+                  min="0"
+                  value={addLaserBaseHour}
+                  onChange={(e) => setAddLaserBaseHour(e.target.value)}
+                  className={`w-full px-3 py-2 rounded-xl text-xs font-mono border ${
+                    isDark ? 'bg-[#111315] border-[#2B323A] text-slate-100' : 'bg-white border-slate-300 text-slate-900'
+                  }`}
+                />
+              </div>
+
+              <div>
+                <label className={`block text-xs font-semibold mb-1 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                  Rated Life (hrs)
+                </label>
+                <input
+                  type="number"
+                  required
+                  value={addLaserRatedLife}
+                  onChange={(e) => setAddLaserRatedLife(e.target.value)}
+                  className={`w-full px-3 py-2 rounded-xl text-xs font-mono border ${
+                    isDark ? 'bg-[#111315] border-[#2B323A] text-slate-100' : 'bg-white border-slate-300 text-slate-900'
+                  }`}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className={`block text-xs font-semibold mb-1 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                  Baseline Date
+                </label>
+                <input
+                  type="date"
+                  value={addLaserBaseDate}
+                  onChange={(e) => setAddLaserBaseDate(e.target.value)}
+                  className={`w-full px-3 py-2 rounded-xl text-xs font-mono border ${
+                    isDark ? 'bg-[#111315] border-[#2B323A] text-slate-100' : 'bg-white border-slate-300 text-slate-900'
+                  }`}
+                />
+              </div>
+
+              <div>
+                <label className={`block text-xs font-semibold mb-1 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                  Baseline Time
+                </label>
+                <input
+                  type="time"
+                  value={addLaserBaseTime}
+                  onChange={(e) => setAddLaserBaseTime(e.target.value)}
+                  className={`w-full px-3 py-2 rounded-xl text-xs font-mono border ${
+                    isDark ? 'bg-[#111315] border-[#2B323A] text-slate-100' : 'bg-white border-slate-300 text-slate-900'
+                  }`}
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-200 dark:border-slate-800">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsAddLaserModalOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                icon={<Plus className="w-4 h-4" />}
+                onClick={handleSaveAddLaser}
+              >
+                Add Laser Head
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* 1. Import Preview Modal */}
+      {importPreviewModalOpen && importPreviewData && (
+        <Modal
+          isOpen={importPreviewModalOpen}
+          onClose={() => setImportPreviewModalOpen(false)}
+          title="Laser Monitor JSON Import Preview"
+          size="md"
+        >
+          <div className="space-y-4">
+            <p className={`text-xs ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+              Parsed backup file from Laser Hour Monitor. Preview of machines and laser lifecycle configurations to be imported into FSOS:
+            </p>
+
+            <div className={`grid grid-cols-2 gap-3 p-3 rounded-xl font-mono text-xs border ${
+              isDark ? 'bg-[#14171A] border-[#2B323A]' : 'bg-slate-50 border-slate-200'
+            }`}>
+              <div className="p-2.5 bg-slate-900/60 rounded-lg border border-slate-700/60">
+                <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Machines Found</span>
+                <strong className="text-base text-indigo-400 font-bold">{importPreviewData.machinesFound}</strong>
+              </div>
+              <div className="p-2.5 bg-slate-900/60 rounded-lg border border-slate-700/60">
+                <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Laser Heads Found</span>
+                <strong className="text-base text-sky-400 font-bold">{importPreviewData.laserHeadsFound}</strong>
+              </div>
+              <div className="p-2.5 bg-slate-900/60 rounded-lg border border-slate-700/60">
+                <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Existing Matched (Merge)</span>
+                <strong className="text-base text-amber-400 font-bold">{importPreviewData.existingMatched}</strong>
+              </div>
+              <div className="p-2.5 bg-slate-900/60 rounded-lg border border-slate-700/60">
+                <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">New Machines (Add)</span>
+                <strong className="text-base text-emerald-400 font-bold">{importPreviewData.newMachines}</strong>
+              </div>
+            </div>
+
+            {importPreviewData.warnings && importPreviewData.warnings.length > 0 && (
+              <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl space-y-1">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-amber-500">
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                  <span>Validation Warnings ({importPreviewData.warnings.length})</span>
+                </div>
+                <ul className="text-[11px] text-amber-400/90 list-disc list-inside space-y-0.5 max-h-24 overflow-y-auto font-mono">
+                  {importPreviewData.warnings.map((w, idx) => (
+                    <li key={idx}>{w}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <div className={`p-3 rounded-xl border text-xs space-y-2 ${
+              isDark ? 'bg-[#14171A] border-[#2B323A]' : 'bg-slate-50 border-slate-200'
+            }`}>
+              <div className="font-bold text-slate-300 flex justify-between items-center">
+                <span>LaserEngine Lifecycle Calculation Authority</span>
+                <Badge variant="emerald">ACTIVE</Badge>
+              </div>
+              <p className="text-[11px] text-slate-400">
+                Imported baseline physical hours (<code className="text-amber-400 font-mono">baseLaserHour</code> + <code className="text-amber-400 font-mono">baseTimestamp</code>) will be processed by native FSOS LaserEngine. LIVE running hours, status, and EOL prognosis will be derived deterministically without altering historical baselines.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setImportPreviewModalOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                icon={<Upload className="w-4 h-4" />}
+                onClick={handleConfirmImport}
+              >
+                Import
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* 2. Import Result Modal */}
+      {importResultModalOpen && importResultSummary && (
+        <Modal
+          isOpen={importResultModalOpen}
+          onClose={() => setImportResultModalOpen(false)}
+          title="Laser Monitor Import Completed"
+          size="md"
+        >
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-400 text-xs">
+              <CheckCircle2 className="w-6 h-6 shrink-0 text-emerald-400" />
+              <div>
+                <strong className="block font-bold">Import Successful</strong>
+                <span>All imported machines and laser heads are now fully bound to FSOS Machine Passport, MHC, Smart MHC Data Tray, and Executive Reports.</span>
+              </div>
+            </div>
+
+            <div className={`grid grid-cols-2 gap-2 text-xs font-mono p-3 rounded-xl border ${
+              isDark ? 'bg-[#14171A] border-[#2B323A]' : 'bg-slate-50 border-slate-200'
+            }`}>
+              <div className="flex justify-between py-1 border-b border-slate-700/50">
+                <span className="text-slate-400">Machines Processed:</span>
+                <strong className="text-white">{importResultSummary.machinesImported}</strong>
+              </div>
+              <div className="flex justify-between py-1 border-b border-slate-700/50">
+                <span className="text-slate-400">Laser Heads Imported:</span>
+                <strong className="text-white">{importResultSummary.laserHeadsImported}</strong>
+              </div>
+              <div className="flex justify-between py-1">
+                <span className="text-slate-400">Merged Existing:</span>
+                <strong className="text-amber-400">{importResultSummary.existingMatched}</strong>
+              </div>
+              <div className="flex justify-between py-1">
+                <span className="text-slate-400">New Added:</span>
+                <strong className="text-emerald-400">{importResultSummary.newMachines}</strong>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end pt-3 border-t border-slate-200 dark:border-slate-800">
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => setImportResultModalOpen(false)}
+              >
+                Done
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 };

@@ -249,6 +249,14 @@ function AppLayout() {
     }
   };
 
+  const handleBatchImportMachines = (importedMachines: Machine[]) => {
+    setMachines(importedMachines);
+    StorageService.saveMachines(importedMachines);
+    if (importedMachines.length > 0) {
+      setSelectedMachineId(importedMachines[0].id);
+    }
+  };
+
   // Customer Management Helpers
   const handleAddCustomer = (newCustomer: Customer) => {
     const updated = [newCustomer, ...customers];
@@ -484,6 +492,7 @@ function AppLayout() {
               onAddMachine={handleAddMachine}
               onEditMachine={handleEditMachine}
               onDeleteMachine={handleDeleteMachine}
+              onBatchImportMachines={handleBatchImportMachines}
               onAddCustomer={handleAddCustomer}
               onEditCustomer={handleEditCustomer}
               onDeleteCustomer={handleDeleteCustomer}

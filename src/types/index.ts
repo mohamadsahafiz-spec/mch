@@ -29,6 +29,24 @@ export type NavigationTab =
 
 export type WorkspaceMode = 'MHC_MODE' | 'FOUNDER_MODE';
 
+export type {
+  CalibrationHistoryRecord,
+  AccuracyLevel,
+  AccuracyInfo,
+  RecalibrationRecommendation,
+  RemainingDaysInfo,
+  RecommendedLimitInfo,
+  LaserAge,
+  LaserHeadDomain,
+  MaintenanceRecord,
+  MachineDomain,
+  LaserStatus,
+  LaserMetrics,
+  MachineMetrics,
+  RecalibrationAnalysis,
+  RecalibrationResult
+} from '../utils/laserEngine';
+
 export interface UserSession {
   isAuthenticated: boolean;
   userId: string;
@@ -122,6 +140,17 @@ export interface LaserHead {
   wavelengthNm: number;
   beamQualityM2: number;
   healthScore: number; // 0 - 100
+  // Multi-laser lifecycle engine extensions (v0.9.0 Phase 2.1)
+  name?: string;
+  serialNo?: string;
+  ratedLife?: number;
+  warningLife?: number;
+  contingencyCeiling?: number;
+  baseLaserHour?: number | null;
+  baseTimestamp?: string | null;
+  runtimeState?: string;
+  lastRecalibrationDate?: string | null;
+  calibrationHistory?: import('../utils/laserEngine').CalibrationHistoryRecord[];
 }
 
 export interface ConsumableItem {
@@ -154,6 +183,19 @@ export interface Machine {
   photos: string[];
   lastMhcDate: string;
   nextMhcDate: string;
+  // Multi-laser lifecycle engine extensions (v0.9.0 Phase 2.1)
+  machineNo?: string;
+  machineName?: string;
+  manufacturer?: string;
+  department?: string;
+  lasers?: import('../utils/laserEngine').LaserHeadDomain[];
+  maintenanceHistory?: import('../utils/laserEngine').MaintenanceRecord[];
+  lastUpdated?: string;
+  baseLaserHour?: number | null;
+  baseTimestamp?: string | null;
+  ratedLife?: number;
+  warningLife?: number;
+  contingencyCeiling?: number;
 }
 
 export interface SubsystemHealth {
