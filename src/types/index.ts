@@ -7,6 +7,8 @@ export type NavigationTab =
   | 'customers'
   | 'machines'
   | 'mhc'
+  | 'mhc_templates'
+  | 'mhc_history'
   | 'mhc_01'
   | 'mhc_02'
   | 'mhc_03'
@@ -639,5 +641,71 @@ export interface MHCReportDraftConfig {
   customerSignatureName: string;
   customerSignatureDate: string;
   lastSaved: string;
+}
+
+export interface SmartMhcDataTrayItem {
+  id: string;
+  category: 'Machine' | 'Product & Process' | 'Laser' | 'Optical / Quality' | 'Maintenance' | 'Engineer';
+  key: string;
+  label: string;
+  value: string | number;
+  unit?: string;
+  status: 'AVAILABLE' | 'MISSING' | 'NA';
+  fieldType?: 'text' | 'number' | 'date' | 'time' | 'status' | 'note' | 'image' | 'measurement';
+  isCustom?: boolean;
+}
+
+export interface SmartMhcWidget {
+  id: string;
+  type: 
+    | 'Machine Identity'
+    | 'Laser Life'
+    | 'Laser Temperature'
+    | 'Laser Power / Trend'
+    | 'Beam Comparison'
+    | 'Optics Condition'
+    | 'Product Quality Before/After'
+    | 'Product Info'
+    | 'Process Parameters'
+    | 'Spare Parts'
+    | 'Recommendations'
+    | 'Text / Note'
+    | 'Image'
+    | 'Table'
+    | 'Divider'
+    | 'Custom Widget';
+  title: string;
+  subtitle?: string;
+  width: '1/1' | '1/2' | '1/3';
+  status: 'NORMAL' | 'WARNING' | 'CRITICAL' | 'NA';
+  comparisonSource: 'Baseline vs Current' | 'Before vs After Maintenance' | 'Spec Sheet vs Real-time' | 'Previous MHC vs Current' | 'None';
+  displayFields: Record<string, boolean>;
+  boundFieldKeys?: string[];
+  customDisplayType?: 'card' | 'table' | 'callout' | 'image' | 'stat_grid';
+  customNotes?: string;
+  imageUrl?: string;
+  tableData?: Array<{ label: string; before: string; after: string; result: string }>;
+}
+
+export interface MhcWorkspaceTemplate {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  revision: string;
+  updatedAt: string;
+  isDefault?: boolean;
+  widgets: SmartMhcWidget[];
+}
+
+export interface MhcWorkspaceDraft {
+  id: string;
+  sessionId: string;
+  machineId: string;
+  machineName: string;
+  draftTitle: string;
+  lastSaved: string;
+  widgets: SmartMhcWidget[];
+  sessionSnapshot?: MHCSession;
 }
 

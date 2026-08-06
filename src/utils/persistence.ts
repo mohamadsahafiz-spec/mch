@@ -20,7 +20,9 @@ import {
   WorkspaceMode,
   UserSession,
   MHCSession,
-  MHCReportDraftConfig
+  MHCReportDraftConfig,
+  MhcWorkspaceTemplate,
+  MhcWorkspaceDraft
 } from '../types';
 import { 
   INITIAL_CUSTOMERS, 
@@ -67,7 +69,9 @@ const KEYS = {
   AUTH: 'fso_v080_authenticated',
   WORKSPACE_MODE: 'fso_v080_workspace_mode',
   MHC_SESSIONS: 'fso_v080_mhc_sessions',
-  MHC_REPORT_DRAFTS: 'fso_v080_mhc_report_drafts'
+  MHC_REPORT_DRAFTS: 'fso_v080_mhc_report_drafts',
+  MHC_WORKSPACE_TEMPLATES: 'fso_v090_mhc_workspace_templates',
+  MHC_WORKSPACE_DRAFTS: 'fso_v090_mhc_workspace_drafts'
 };
 
 function getStorage<T>(key: string, defaultValue: T): T {
@@ -157,6 +161,12 @@ export const StorageService = {
 
   getMhcReportDrafts: (): MHCReportDraftConfig[] => getStorage(KEYS.MHC_REPORT_DRAFTS, INITIAL_MHC_REPORT_DRAFTS),
   saveMhcReportDrafts: (data: MHCReportDraftConfig[]) => setStorage(KEYS.MHC_REPORT_DRAFTS, data),
+
+  getMhcWorkspaceTemplates: (): MhcWorkspaceTemplate[] => getStorage(KEYS.MHC_WORKSPACE_TEMPLATES, []),
+  saveMhcWorkspaceTemplates: (data: MhcWorkspaceTemplate[]) => setStorage(KEYS.MHC_WORKSPACE_TEMPLATES, data),
+
+  getMhcWorkspaceDrafts: (): MhcWorkspaceDraft[] => getStorage(KEYS.MHC_WORKSPACE_DRAFTS, []),
+  saveMhcWorkspaceDrafts: (data: MhcWorkspaceDraft[]) => setStorage(KEYS.MHC_WORKSPACE_DRAFTS, data),
 
   resetToDefaults: () => {
     localStorage.clear();

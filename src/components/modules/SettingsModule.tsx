@@ -15,6 +15,39 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
 
   const changelog = [
     {
+      version: 'v0.9.0',
+      date: '2026-08-06',
+      type: 'Phase 1.3: Smart MHC Refine & Release (ECO-20260806-038)',
+      highlights: [
+        'CRITICAL WORKSPACE CORRECTION: Expanded Smart MHC across full viewport width while preserving exact A4 210:297 portrait aspect ratio and centering canvas.',
+        'NEW: Canvas View Controls — integrated Zoom -, 100%, Zoom +, and Fit Page auto-scaling to fit A4 document perfectly inside viewport.',
+        'NEW: DOM-Measured A4 Capacity Engine — real-time calculation of rendered document height against standard A4 printable height with visual fill meter.',
+        'NEW: Automated Quality Check & Over-Capacity Guard — blocks PDF export when report height exceeds 1 page and alerts engineer to adjust widget layout.',
+        'NEW: ISO 13374-4 Inspired Condition Monitoring Intelligence — automated Current Condition, Degradation Trend, Health Score, Prognosis Life, and Recommended Actions.',
+        'NEW: Isolated A4 Print & PDF Export Engine — full-screen print preview modal generating clean 1-page A4 PDF output with zero UI chrome.',
+        'NEW: Automatic Previous MHC Historical Comparison — automatically identifies and compares power, beam spot size, and thermal loop against previous machine session.',
+        'NEW: Single Source of Truth Synchronization — inline data edits in Smart MHC sync instantly to active session data and data tray.',
+        'NEW: Strict Separation of Templates & Drafts — Templates store structure/layout only; Drafts store full session measurements, custom fields, and canvas state.'
+      ]
+    },
+    {
+      version: 'v0.9.0 Phase 1.2',
+      date: '2026-08-06',
+      type: 'Phase 1.2: Smart MHC Core Build (ECO-20260806-037)',
+      highlights: [
+        'NEW: Smart MHC Engine Single Source of Truth — direct bind to Machine Passport static identity, active MHCSession readings, and previous MHC historical data.',
+        'NEW: Functional Data Tray availability engine — real-time AVAILABLE / MISSING / N/A status badges based on machine and session data state.',
+        'NEW: [+ Add Custom Data] — create reusable, bindable MHC fields/measurements with text, number/unit, date/time, status, note, image, or measurement field types.',
+        'NEW: Data-Connected Canvas Widgets — Laser Life, Laser Temp/Thermal Loop, Laser Power Calibration, Beam Comparison, Optics Condition, Process Parameters, Spare Parts, and Recommendations.',
+        'NEW: Inline Missing Data Edit & Sync — fill missing readings directly inside Smart MHC without redirecting to Stage 01–08 forms; changes sync instantly across widgets and session.',
+        'NEW: [+ Create Custom Widget] — build user-defined widgets binding existing or custom Data Tray fields with customizable display types (Cards, Tables, Callouts, Images).',
+        'NEW: Interactive A4 Portrait Canvas — full drag/reorder controls (Move Up/Down, Duplicate, Remove), 1/1, 1/2, 1/3 column layouts, and A4 page fill capacity indicator.',
+        'NEW: ISO 13374-4 Inspired Condition-Monitoring Intelligence — automated Current Condition, Degradation Trend, Overall Health Score, Prognosis Remaining Life, and Recommended Actions.',
+        'NEW: Automatic Previous MHC Historical Comparison — compares current wattage, beam spot size, and thermal loop against previous completed MHC session without manual re-entry.',
+        'NEW: Strict Separation of Templates & Drafts — Templates store structure/layout only (Save/Load/Duplicate); Drafts store actual machine session work, measurements, evidence, and canvas state.'
+      ]
+    },
+    {
       version: 'v0.8.1',
       date: '2026-08-03',
       type: 'MHC CRUD & Machine Passport UX Refinement (ECO-20260803-035)',

@@ -371,8 +371,12 @@ function AppLayout() {
           onLogout={handleLogout}
         />
 
-        <main className={`flex-1 p-4 md:p-6 max-w-7xl w-full mx-auto ${
-          activeTab === 'workflow_guide' ? 'overflow-hidden flex flex-col h-[calc(100vh-4rem)]' : 'overflow-y-auto'
+        <main className={`flex-1 ${
+          (activeTab === 'mhc' || activeTab.startsWith('mhc_'))
+            ? 'p-2 sm:p-3 max-w-none w-full overflow-y-auto'
+            : activeTab === 'workflow_guide'
+            ? 'p-4 md:p-6 max-w-7xl w-full mx-auto overflow-hidden flex flex-col h-[calc(100vh-4rem)]'
+            : 'p-4 md:p-6 max-w-7xl w-full mx-auto overflow-y-auto'
         }`}>
           {activeTab === 'start_page' && (
             workspaceMode === 'MHC_MODE' ? (

@@ -18,7 +18,10 @@ import {
   FileCheck, 
   Building2,
   ArrowLeft,
-  Layout
+  Layout,
+  Sparkles,
+  LayoutTemplate,
+  History
 } from 'lucide-react';
 import { 
   Machine, 
@@ -39,6 +42,9 @@ import { MhcStageForms } from '../mhc/MhcStageForms';
 import { MhcSummaryView } from '../mhc/MhcSummaryView';
 import { MhcReportBuilder } from '../mhc/MhcReportBuilder';
 import { MhcFinalReportView } from '../mhc/MhcFinalReportView';
+import { SmartMhcWorkspace } from '../mhc/SmartMhcWorkspace';
+import { MhcReportTemplates } from '../mhc/MhcReportTemplates';
+import { MhcHistoryView } from '../mhc/MhcHistoryView';
 
 interface MachineHealthCheckProps {
   machines: Machine[];
@@ -51,7 +57,7 @@ interface MachineHealthCheckProps {
 export const MachineHealthCheckModule: React.FC<MachineHealthCheckProps> = ({
   machines,
   initialMachineId,
-  activeSubTab,
+  activeSubTab = 'mhc',
   onSaveMhcRecord,
   onGenerateReport
 }) => {
@@ -71,26 +77,30 @@ export const MachineHealthCheckModule: React.FC<MachineHealthCheckProps> = ({
     (s) => s.machineId === selectedMachineId && s.completionStatus !== 'COMPLETED'
   ) || mhcSessions.find((s) => s.machineId === selectedMachineId) || mhcSessions[0];
 
-  // 3. View Mode: 'overview' | 'workspace' | 'summary' | 'report_builder' | 'final_report'
+  // 3. View Mode: 'smart_workspace' | 'report_templates' | 'mhc_history' | 'stage_forms' | 'summary' | 'report_builder' | 'final_report' | 'overview'
   const [viewMode, setViewMode] = useState<
-    'overview' | 'workspace' | 'summary' | 'report_builder' | 'final_report'
-  >('workspace');
+    'smart_workspace' | 'report_templates' | 'mhc_history' | 'stage_forms' | 'summary' | 'report_builder' | 'final_report' | 'overview'
+  >('smart_workspace');
 
-  // 4. Stage Number: 1 to 8
+  // 4. Stage Number: 1 to 8 for Engineering Data stage forms
   const [activeStage, setActiveStage] = useState<number>(1);
 
-  // Handle activeSubTab mapping from sidebar
+  // Handle activeSubTab mapping from sidebar navigation
   useEffect(() => {
     if (!activeSubTab) return;
 
-    if (activeSubTab.startsWith('mhc_0')) {
+    if (activeSubTab === 'mhc') {
+      setViewMode('smart_workspace');
+    } else if (activeSubTab === 'mhc_templates') {
+      setViewMode('report_templates');
+    } else if (activeSubTab === 'mhc_history') {
+      setViewMode('mhc_history');
+    } else if (activeSubTab.startsWith('mhc_0')) {
       const stageNum = parseInt(activeSubTab.replace('mhc_0', ''), 10);
       if (stageNum >= 1 && stageNum <= 8) {
         setActiveStage(stageNum);
-        setViewMode('workspace');
+        setViewMode('stage_forms');
       }
-    } else if (activeSubTab === 'mhc') {
-      setViewMode('workspace');
     }
   }, [activeSubTab]);
 
@@ -228,7 +238,7 @@ export const MachineHealthCheckModule: React.FC<MachineHealthCheckProps> = ({
     StorageService.saveMhcSessions(updated);
     setSelectedMachineId(mchId);
     setActiveStage(1);
-    setViewMode('workspace');
+    setViewMode('smart_workspace');
   };
 
   const handleContinueSession = (sessionId: string) => {
@@ -236,7 +246,7 @@ export const MachineHealthCheckModule: React.FC<MachineHealthCheckProps> = ({
     if (targetSession) {
       setSelectedMachineId(targetSession.machineId);
       setActiveStage(targetSession.currentSection || 1);
-      setViewMode('workspace');
+      setViewMode('smart_workspace');
     }
   };
 
@@ -253,10 +263,53 @@ export const MachineHealthCheckModule: React.FC<MachineHealthCheckProps> = ({
   ];
 
   return (
-    <div className="space-y-6">
-      {/* View Mode Router */}
+    <div className="space-y-4">
+      {/* 1. PRIMARY SMART MHC WORKSPACE */}
+      {viewMode === 'smart_workspace' && (
+        <SmartMhcWorkspace
+          machine={selectedMachine}
+          session={activeSession}
+          onUpdateSession={handleUpdateSession}
+          onOpenStageForm={(stageNum) => {
+            setActiveStage(stageNum);
+            setViewMode('stage_forms');
+          }}
+        />
+      )}
 
-      {/* 1. OVERVIEW MODE: Machine Selection + Passport Summary */}
+      {/* 2. REPORT TEMPLATES VIEW */}
+      {viewMode === 'report_templates' && (
+        <MhcReportTemplates
+          onSelectTemplate={(templateId) => {
+            setViewMode('smart_workspace');
+          }}
+        />
+      )}
+
+      {/* 3. MHC HISTORY VIEW */}
+      {viewMode === 'mhc_history' && (
+        <MhcHistoryView
+          sessions={mhcSessions}
+          machines={machines}
+          onOpenSmartWorkspace={(sessionId) => {
+            const target = mhcSessions.find(s => s.id === sessionId);
+            if (target) {
+              setSelectedMachineId(target.machineId);
+              setViewMode('smart_workspace');
+            }
+          }}
+          onOpenStageForm={(sessionId, stageNum) => {
+            const target = mhcSessions.find(s => s.id === sessionId);
+            if (target) {
+              setSelectedMachineId(target.machineId);
+              setActiveStage(stageNum);
+              setViewMode('stage_forms');
+            }
+          }}
+        />
+      )}
+
+      {/* 4. OVERVIEW MODE: Machine Selection */}
       {viewMode === 'overview' && (
         <MhcMachineSelector
           machines={machines}
@@ -268,25 +321,25 @@ export const MachineHealthCheckModule: React.FC<MachineHealthCheckProps> = ({
         />
       )}
 
-      {/* 2. WORKSPACE MODE: 8-Stage Inspection Workspace */}
-      {viewMode === 'workspace' && activeSession && (
+      {/* 5. ENGINEERING DATA STAGE FORMS (01 to 08 preserved) */}
+      {viewMode === 'stage_forms' && activeSession && (
         <div className="space-y-6">
           {/* Active Session Header Bar */}
           <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <Button
-                onClick={() => setViewMode('overview')}
+                onClick={() => setViewMode('smart_workspace')}
                 variant="outline"
                 className="border-slate-800 text-slate-300 hover:bg-slate-800 text-xs py-2 flex items-center gap-1.5"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
-                Machine Selection
+                Back to Smart MHC Workspace
               </Button>
 
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-800/50">
-                    MHC SESSION WORKSPACE
+                  <span className="text-xs font-bold text-amber-400 bg-amber-950 px-2 py-0.5 rounded border border-amber-800/50">
+                    ENGINEERING DATA INSPECTION
                   </span>
                   <span className="text-xs font-mono text-slate-400">ID: {activeSession.id}</span>
                 </div>
@@ -326,13 +379,13 @@ export const MachineHealthCheckModule: React.FC<MachineHealthCheckProps> = ({
                     onClick={() => setActiveStage(st.num)}
                     className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-semibold transition whitespace-nowrap border ${
                       isActive
-                        ? 'bg-emerald-950/80 text-emerald-300 border-emerald-500/70 shadow-sm'
+                        ? 'bg-amber-950/80 text-amber-300 border-amber-500/70 shadow-sm'
                         : isDone
                         ? 'bg-slate-900/60 text-slate-300 border-slate-800 hover:bg-slate-800'
                         : 'bg-slate-900/20 text-slate-500 border-slate-900 hover:bg-slate-900/50'
                     }`}
                   >
-                    <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-emerald-400' : isDone ? 'text-emerald-500' : 'text-slate-500'}`} />
+                    <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-amber-400' : isDone ? 'text-emerald-500' : 'text-slate-500'}`} />
                     <span>{st.label}</span>
                     {isDone && <Check className="w-3 h-3 text-emerald-400 ml-0.5" />}
                   </button>
@@ -382,19 +435,19 @@ export const MachineHealthCheckModule: React.FC<MachineHealthCheckProps> = ({
         </div>
       )}
 
-      {/* 3. SUMMARY MODE: Operational Review before Report Generation */}
+      {/* 6. SUMMARY MODE: Operational Review before Report Generation */}
       {viewMode === 'summary' && activeSession && (
         <MhcSummaryView
           session={activeSession}
           onNavigateStage={(stageNum) => {
             setActiveStage(stageNum);
-            setViewMode('workspace');
+            setViewMode('stage_forms');
           }}
           onProceedToReportBuilder={() => setViewMode('report_builder')}
         />
       )}
 
-      {/* 4. REPORT BUILDER MODE: Custom Composition Workspace */}
+      {/* 7. REPORT BUILDER MODE */}
       {viewMode === 'report_builder' && activeSession && (
         <MhcReportBuilder
           session={activeSession}
@@ -406,7 +459,7 @@ export const MachineHealthCheckModule: React.FC<MachineHealthCheckProps> = ({
         />
       )}
 
-      {/* 5. FINAL REPORT MODE: Customer Publication PDF */}
+      {/* 8. FINAL REPORT MODE */}
       {viewMode === 'final_report' && activeSession && activeDraftConfig && (
         <MhcFinalReportView
           session={activeSession}
