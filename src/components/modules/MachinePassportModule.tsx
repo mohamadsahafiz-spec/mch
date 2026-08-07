@@ -90,7 +90,11 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
 }) => {
   const { effectiveTheme } = useTheme();
   const isDark = effectiveTheme === 'dark';
-  const selectedMachine = machines.find((m) => m.id === selectedMachineId) || machines[0];
+  const sortedMachines = React.useMemo(() => {
+    return LaserEngine.normalizeMachines(machines);
+  }, [machines]);
+
+  const selectedMachine = sortedMachines.find((m) => m.id === selectedMachineId) || sortedMachines[0] || machines[0];
 
   // Machine Passport Sub-Category Active Tab State ('lifecycle' | 'temperature' | 'laser_power' | 'beam_profile' | 'product_process')
   const [passportSubTab, setPassportSubTab] = useState<'lifecycle' | 'temperature' | 'laser_power' | 'beam_profile' | 'product_process'>('lifecycle');
@@ -276,7 +280,7 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
       contingencyCeiling: parseFloat(configContingency) || 30000
     };
 
-    const updatedMachine = LaserEngine.updateLaserInMachine(selectedMachine, updatedLaserHead);
+    const updatedMachine = LaserEngine.updateLaserInMachine(selectedMachine, configLaserHead.id, updatedLaserHead);
     if (onEditMachine) {
       onEditMachine(updatedMachine);
     }
@@ -479,7 +483,7 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
   const activeCustomer = customers.find((c) => c.id === activeCustomerId) || customers[0];
 
   // Filter machines for selected customer
-  const filteredMachines = machines.filter(
+  const filteredMachines = sortedMachines.filter(
     (m) => m.customerId === activeCustomerId || m.customerName === activeCustomer?.name
   );
 
@@ -487,7 +491,7 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
   const handleSelectCustomer = (custId: string) => {
     setActiveCustomerId(custId);
     const targetCust = customers.find((c) => c.id === custId);
-    const custMachines = machines.filter(
+    const custMachines = sortedMachines.filter(
       (m) => m.customerId === custId || m.customerName === targetCust?.name
     );
     if (custMachines.length > 0) {
@@ -1432,10 +1436,14 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
                     <span className={`font-medium truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                       {m.plantName}
                     </span>
-                    <span className={`font-bold shrink-0 ${
-                      m.healthScore >= 90 ? 'text-emerald-500' : m.healthScore >= 75 ? 'text-amber-500' : 'text-rose-500'
+                    <span className={`font-bold shrink-0 text-[10px] px-1.5 py-0.5 rounded ${
+                      LaserEngine.getMachineHealthStatus(m) === 'PASS'
+                        ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                        : LaserEngine.getMachineHealthStatus(m) === 'WARNING'
+                        ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
+                        : 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
                     }`}>
-                      {m.healthScore}% Health
+                      {LaserEngine.getMachineHealthStatus(m)}
                     </span>
                   </div>
                 </div>
@@ -1581,9 +1589,22 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
               <div className={`flex flex-col sm:flex-row lg:flex-col items-center lg:items-end justify-between gap-5 p-4 lg:p-0 rounded-2xl lg:bg-transparent ${
                 isDark ? 'bg-[#111315]/50 border lg:border-0 border-[#2B323A]' : 'bg-white/60 border lg:border-0 border-slate-200'
               }`}>
-                {/* Overall Health Score */}
-                <div className="flex items-center gap-3">
-                  <HealthGauge score={selectedMachine.healthScore} label="Overall Health Score" size="lg" />
+                {/* Overall Health Status */}
+                <div className="flex flex-col items-start sm:items-end gap-1 font-mono">
+                  <span className="text-[10px] font-bold uppercase text-slate-400">ENGINEERING STATUS</span>
+                  <Badge
+                    variant={
+                      LaserEngine.getMachineHealthStatus(selectedMachine) === 'PASS'
+                        ? 'emerald'
+                        : LaserEngine.getMachineHealthStatus(selectedMachine) === 'WARNING'
+                        ? 'amber'
+                        : 'rose'
+                    }
+                    size="lg"
+                    className="font-bold text-xs px-3 py-1 tracking-wider"
+                  >
+                    {LaserEngine.getMachineHealthStatus(selectedMachine)}
+                  </Badge>
                 </div>
 
                 {/* Primary Actions */}
@@ -1928,112 +1949,26 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
             </div>
           </div>
 
-          {/* Consumables Telemetry */}
-          <Card title="Active Consumables & Wear Items">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {(selectedMachine.consumables || []).map((con) => (
-                <div key={con.id} className={`p-3.5 rounded-xl border space-y-2 ${
-                  isDark ? 'bg-[#1A1D21] border-[#2B323A]' : 'bg-slate-50 border-slate-200'
-                }`}>
-                  <div className="flex items-center justify-between">
-                    <span className={`text-xs font-bold truncate ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>{con.name}</span>
-                    <Badge variant={con.status === 'OPTIMAL' ? 'emerald' : con.status === 'WARNING' ? 'amber' : 'rose'} size="sm">
-                      {con.status}
-                    </Badge>
-                  </div>
-                  <p className={`text-[10px] font-mono ${isDark ? 'text-slate-500' : 'text-slate-600 font-medium'}`}>P/N: {con.partNumber}</p>
-
-                  <div className="space-y-1 pt-1">
-                    <div className={`flex justify-between text-[11px] font-mono ${isDark ? 'text-slate-400' : 'text-slate-700 font-medium'}`}>
-                      <span>Life Remaining:</span>
-                      <span className={`font-bold ${isDark ? 'text-[#8ECDF7]' : 'text-sky-800'}`}>{con.currentLifePercent}%</span>
+          {/* Maintenance & MHC Log History */}
+          <Card title="Machine Health Check Log">
+            <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+              {machineMhcs.length === 0 ? (
+                <p className={`text-xs py-4 text-center ${isDark ? 'text-slate-500' : 'text-slate-600'}`}>No past MHC records.</p>
+              ) : (
+                machineMhcs.map((rec) => (
+                  <div key={rec.id} className={`p-2.5 rounded-lg border flex justify-between items-center text-xs ${
+                    isDark ? 'bg-[#1A1D21] border-[#2B323A]' : 'bg-slate-50 border-slate-200'
+                  }`}>
+                    <div>
+                      <span className={`font-bold ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>{rec.date}</span>
+                      <p className={`text-[10px] truncate max-w-xs ${isDark ? 'text-slate-400' : 'text-slate-600 font-medium'}`}>{rec.engineerRemarks}</p>
                     </div>
-                    <div className={`w-full h-1.5 rounded-full overflow-hidden ${isDark ? 'bg-slate-800' : 'bg-slate-200'}`}>
-                      <div
-                        className={`h-full rounded-full ${con.currentLifePercent < 25 ? (isDark ? 'bg-[#E98A8A]' : 'bg-rose-600') : (isDark ? 'bg-[#8ECDF7]' : 'bg-sky-600')}`}
-                        style={{ width: `${con.currentLifePercent}%` }}
-                      />
-                    </div>
-                    <p className={`text-[10px] text-right ${isDark ? 'text-slate-500' : 'text-slate-600 font-medium'}`}>{con.estimatedDaysRemaining} days remaining</p>
+                    <Badge variant="cyan" size="sm">{rec.healthScores.overallScore}/100</Badge>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </Card>
-
-          {/* Maintenance & Report History */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card title="Machine Health Check Log">
-              <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-                {machineMhcs.length === 0 ? (
-                  <p className={`text-xs py-4 text-center ${isDark ? 'text-slate-500' : 'text-slate-600'}`}>No past MHC records.</p>
-                ) : (
-                  machineMhcs.map((rec) => (
-                    <div key={rec.id} className={`p-2.5 rounded-lg border flex justify-between items-center text-xs ${
-                      isDark ? 'bg-[#1A1D21] border-[#2B323A]' : 'bg-slate-50 border-slate-200'
-                    }`}>
-                      <div>
-                        <span className={`font-bold ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>{rec.date}</span>
-                        <p className={`text-[10px] truncate max-w-xs ${isDark ? 'text-slate-400' : 'text-slate-600 font-medium'}`}>{rec.engineerRemarks}</p>
-                      </div>
-                      <Badge variant="cyan" size="sm">{rec.healthScores.overallScore}/100</Badge>
-                    </div>
-                  ))
-                )}
-              </div>
-            </Card>
-
-            <Card title="Machine Photos & Visual Records">
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-3">
-                  {(selectedMachine.photos || []).map((url, i) => (
-                    <div key={i} className={`aspect-video rounded-xl overflow-hidden border relative group ${
-                      isDark ? 'border-slate-700 bg-slate-900' : 'border-slate-300 bg-slate-100'
-                    }`}>
-                      <img src={url} alt={`Machine Photo ${i+1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                      
-                      {/* Photo Overlay Actions */}
-                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 p-2">
-                        <label className="p-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white cursor-pointer transition-colors text-[11px] font-semibold flex items-center gap-1">
-                          <Upload className="w-3 h-3" />
-                          Change
-                          <input
-                            type="file"
-                            accept="image/jpeg,image/png,image/webp"
-                            className="hidden"
-                            onChange={(e) => handleReplacePhoto(i, e)}
-                          />
-                        </label>
-                        <button
-                          type="button"
-                          onClick={() => handleRemovePhoto(i)}
-                          className="p-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white transition-colors text-[11px] font-semibold flex items-center gap-1"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                          Remove
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-
-                  {/* Upload New Image Dropzone */}
-                  <label className={`aspect-video rounded-xl border-2 border-dashed flex flex-col items-center justify-center p-3 cursor-pointer transition-all group ${
-                    isDark ? 'border-[#2B323A] hover:border-[#8B9DFF] bg-[#14171A]/40 hover:bg-[#1A1D21]' : 'border-slate-300 hover:border-indigo-500 bg-slate-50 hover:bg-white'
-                  }`}>
-                    <Camera className={`w-5 h-5 mb-1 transition-transform group-hover:scale-110 ${isDark ? 'text-[#8B9DFF]' : 'text-indigo-600'}`} />
-                    <span className={`text-[11px] font-bold ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>+ Upload Image</span>
-                    <span className={`text-[9px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>JPG, PNG, WEBP</span>
-                    <input
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp"
-                      className="hidden"
-                      onChange={handleAddPhoto}
-                    />
-                  </label>
-                </div>
-              </div>
-            </Card>
-          </div>
         </div>
         ) : passportSubTab === 'temperature' ? (
           <MachineTemperatureWorkspace
@@ -2177,21 +2112,7 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
               </select>
             </div>
 
-            <div>
-              <label className={`block text-xs font-semibold mb-1 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
-                Initial Health Score (0-100)
-              </label>
-              <input
-                type="number"
-                min={0}
-                max={100}
-                value={addForm.healthScore}
-                onChange={(e) => setAddForm({ ...addForm, healthScore: Number(e.target.value) })}
-                className={`w-full px-3 py-2 rounded-xl text-xs border ${
-                  isDark ? 'bg-[#111315] border-[#2B323A] text-slate-100' : 'bg-white border-slate-300 text-slate-900'
-                }`}
-              />
-            </div>
+
 
             <div>
               <label className={`block text-xs font-semibold mb-1 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
@@ -2358,21 +2279,7 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
               </select>
             </div>
 
-            <div>
-              <label className={`block text-xs font-semibold mb-1 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
-                Health Score (0-100)
-              </label>
-              <input
-                type="number"
-                min={0}
-                max={100}
-                value={editForm.healthScore}
-                onChange={(e) => setEditForm({ ...editForm, healthScore: Number(e.target.value) })}
-                className={`w-full px-3 py-2 rounded-xl text-xs border ${
-                  isDark ? 'bg-[#111315] border-[#2B323A] text-slate-100' : 'bg-white border-slate-300 text-slate-900'
-                }`}
-              />
-            </div>
+
           </div>
 
           <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-200 dark:border-slate-800">
@@ -2818,7 +2725,7 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
         const enteredHr = parseFloat(physicalMeterInput) || 0;
         const dev = enteredHr - estHr;
         const absDev = Math.abs(dev);
-        const evalRating = LaserEngine.evaluateDeviation(dev, estHr);
+        const evalRating = LaserEngine.calculateDeviationRating(dev);
 
         return (
           <Modal

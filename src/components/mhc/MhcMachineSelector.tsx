@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   Cpu, 
   Building2, 
@@ -17,6 +17,7 @@ import { Machine, MHCSession } from '../../types';
 import { Card } from '../common/Card';
 import { Badge } from '../common/Badge';
 import { Button } from '../common/Button';
+import { LaserEngine } from '../../utils/laserEngine';
 
 interface MhcMachineSelectorProps {
   machines: Machine[];
@@ -37,9 +38,13 @@ export const MhcMachineSelector: React.FC<MhcMachineSelectorProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
 
-  const selectedMachine = machines.find((m) => m.id === selectedMachineId) || machines[0];
+  const sortedMachines = useMemo(() => {
+    return LaserEngine.normalizeMachines(machines);
+  }, [machines]);
 
-  const filteredMachines = machines.filter(
+  const selectedMachine = sortedMachines.find((m) => m.id === selectedMachineId) || sortedMachines[0] || machines[0];
+
+  const filteredMachines = sortedMachines.filter(
     (m) =>
       m.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
       m.serialNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -129,7 +134,13 @@ export const MhcMachineSelector: React.FC<MhcMachineSelectorProps> = ({
               <div className="mt-4 pt-3 border-t border-slate-800/60 flex items-center justify-between text-xs text-slate-400">
                 <div className="flex items-center gap-1.5">
                   <Activity className="w-3.5 h-3.5 text-slate-400" />
-                  <span>Health: <strong className="text-slate-200">{m.healthScore}%</strong></span>
+                  <span>Status: <strong className={
+                    LaserEngine.getMachineHealthStatus(m) === 'PASS'
+                      ? 'text-emerald-400'
+                      : LaserEngine.getMachineHealthStatus(m) === 'WARNING'
+                      ? 'text-amber-400'
+                      : 'text-rose-400'
+                  }>{LaserEngine.getMachineHealthStatus(m)}</strong></span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <Clock className="w-3.5 h-3.5 text-slate-400" />

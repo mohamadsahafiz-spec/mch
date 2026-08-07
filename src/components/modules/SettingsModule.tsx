@@ -15,6 +15,19 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
 
   const changelog = [
     {
+      version: 'v0.9.1',
+      date: '2026-08-07',
+      type: 'Data Integrity Hotfix (v0.9.1)',
+      highlights: [
+        'Browser-Local Time Semantics: Updated default dates and timestamps to browser-local time (getLocalDateString).',
+        'Laser Power History: Added [+ New Current Check] and [+ Add Historical Record] workflows with strict date sorting.',
+        'IndexedDB Image Persistence: Removed localStorage quota errors and silent payload pruning. Evidence stored safely in browser IndexedDB.',
+        'Product / Process / Via Null-Safety: Fixed null-pointer errors for previous records with optional chaining and fallback empty state.',
+        'Beam Profile Record Management: Added reliable record deletion with automatic IndexedDB blob cleanup.',
+        'Save Transaction Safety: Atomic persistence ensures form data is retained and error feedback shown if storage fails.'
+      ]
+    },
+    {
       version: 'v0.9.0',
       date: '2026-08-06',
       type: 'Phase 1.3: Smart MHC Refine & Release (ECO-20260806-038)',

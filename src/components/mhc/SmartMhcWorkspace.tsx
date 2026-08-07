@@ -58,7 +58,8 @@ import {
   XCircle,
   Wrench,
   UserCheck,
-  Aperture
+  Aperture,
+  GripVertical
 } from 'lucide-react';
 import { 
   Machine, 
@@ -74,6 +75,8 @@ import { Button } from '../common/Button';
 import { Modal } from '../common/Modal';
 import { useTheme } from '../../context/ThemeContext';
 import { StorageService } from '../../utils/persistence';
+import { ImageStore } from '../../utils/imageStore';
+import { getLocalDateString } from '../../utils/timeUtils';
 import { TemperatureGraph } from '../common/TemperatureGraph';
 import { TemperatureEngine } from '../../utils/temperatureEngine';
 import { SavedTemperatureRecord } from '../../types/temperature';
@@ -91,8 +94,9 @@ const MhcEnterLaserPowerModal: React.FC<{
   onClose: () => void;
   machine: Machine;
   onSave: (record: LaserPowerCheckRecord) => void;
-}> = ({ isOpen, onClose, machine, onSave }) => {
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  isHistorical?: boolean;
+}> = ({ isOpen, onClose, machine, onSave, isHistorical }) => {
+  const [date, setDate] = useState(getLocalDateString());
   const [freq, setFreq] = useState(50);
   const [remarks, setRemarks] = useState('');
 
@@ -101,6 +105,19 @@ const MhcEnterLaserPowerModal: React.FC<{
 
   const [optHeadA, setOptHeadA] = useState('14.8');
   const [optHeadB, setOptHeadB] = useState('14.6');
+
+  useEffect(() => {
+    if (isOpen) {
+      if (isHistorical) {
+        // Default historical date to 30 days ago for convenience, engineer can change
+        const d = new Date();
+        d.setDate(d.getDate() - 30);
+        setDate(getLocalDateString(d));
+      } else {
+        setDate(getLocalDateString());
+      }
+    }
+  }, [isOpen, isHistorical]);
 
   const [maskInputs, setMaskInputs] = useState<Record<MaskSize, { headA: string; headB: string }>>({
     '2.2mm': { headA: '3.4', headB: '3.3' },
@@ -159,7 +176,7 @@ const MhcEnterLaserPowerModal: React.FC<{
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={`Enter Laser Power Check — ${machine.model} (${machine.machineNumber})`}
+      title={isHistorical ? `Add Historical Laser Power Record — ${machine.model} (${machine.machineNumber})` : `Enter Laser Power Check — ${machine.model} (${machine.machineNumber})`}
       maxWidth="max-w-3xl"
     >
       <div className="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
@@ -576,8 +593,13 @@ export const SmartMhcWorkspace: React.FC<SmartMhcWorkspaceProps> = ({
   const [selectedLaserPowerRecordId, setSelectedLaserPowerRecordId] = useState<string | null>(null);
   const [isSelectLaserPowerModalOpen, setIsSelectLaserPowerModalOpen] = useState<boolean>(false);
   const [isEnterLaserPowerModalOpen, setIsEnterLaserPowerModalOpen] = useState<boolean>(false);
+  const [isHistoricalLaserPower, setIsHistoricalLaserPower] = useState<boolean>(false);
 
-  const laserPowerRecords = machine.laserPowerRecords || [];
+  const laserPowerRecords = useMemo(() => {
+    const raw = machine.laserPowerRecords || [];
+    return [...raw].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [machine.laserPowerRecords]);
+
   const activeLaserPowerRecord = useMemo<LaserPowerCheckRecord | null>(() => {
     if (selectedLaserPowerRecordId) {
       const found = laserPowerRecords.find(r => r.id === selectedLaserPowerRecordId);
@@ -586,6 +608,15 @@ export const SmartMhcWorkspace: React.FC<SmartMhcWorkspaceProps> = ({
     return laserPowerRecords[0] || null;
   }, [selectedLaserPowerRecordId, laserPowerRecords]);
 
+  const prevLaserPowerRecord = useMemo<LaserPowerCheckRecord | null>(() => {
+    if (!activeLaserPowerRecord) return null;
+    const activeIndex = laserPowerRecords.findIndex(r => r.id === activeLaserPowerRecord.id);
+    if (activeIndex >= 0 && activeIndex + 1 < laserPowerRecords.length) {
+      return laserPowerRecords[activeIndex + 1];
+    }
+    return null;
+  }, [activeLaserPowerRecord, laserPowerRecords]);
+
   const handleFileUpload = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
     try {
@@ -593,19 +624,27 @@ export const SmartMhcWorkspace: React.FC<SmartMhcWorkspaceProps> = ({
       const textPromises = fileArray.map(f => f.text());
       const rawTexts = await Promise.all(textPromises);
 
-      const parsedDataMap = TemperatureEngine.analyzeTemperatureLogs(rawTexts);
-      if (!parsedDataMap || Object.keys(parsedDataMap).length === 0) {
+      const analysisResult = TemperatureEngine.analyzeTemperatureLogs(rawTexts);
+      if (!analysisResult || !analysisResult.resampledChannels || Object.keys(analysisResult.resampledChannels).length === 0) {
         showToast('Error: No valid temperature data found in uploaded files.');
         return;
       }
 
-      const stats = TemperatureEngine.calculateGlobalStats(parsedDataMap);
+      const channelDataMap = analysisResult.resampledChannels;
+      const stats = TemperatureEngine.calculateGlobalStats(channelDataMap);
       const newRecord: SavedTemperatureRecord = {
         id: `TR-${Date.now()}`,
+        machineId: machine.id,
+        title: fileArray.map(f => f.name).join(', '),
         createdAt: new Date().toISOString(),
         sourceFileNames: fileArray.map(f => f.name),
-        channelData: parsedDataMap,
-        stats
+        rawRecordsCount: analysisResult.rawRecords.length,
+        intervalSec: 10,
+        stats: stats || { min: 0, max: 0, avg: 0, range: 0, points: 0 },
+        channelStats: analysisResult.channelStats,
+        dayBoundaries: analysisResult.dayBoundaries,
+        channelData: channelDataMap,
+        records: analysisResult.rawRecords
       };
 
       const updatedRecords = [newRecord, ...(machine.temperatureRecords || [])];
@@ -956,28 +995,20 @@ export const SmartMhcWorkspace: React.FC<SmartMhcWorkspaceProps> = ({
     }
   }, [canvasWidgets, zoomLevel]);
 
-  // Fit Page Handler (Calculates LARGEST complete A4 page that physically fits in available viewport width & height)
+  // Fit Width Handler (Calculates scale factor that physically fits width in available container)
   const handleFitPage = useCallback(() => {
     if (!canvasContainerRef.current) {
       setZoomLevel(95);
       return;
     }
     const containerW = canvasContainerRef.current.clientWidth - 48; // padding & margins
-    const containerH = canvasContainerRef.current.clientHeight - 85; // canvas controls bar & padding
-    
-    // Base A4 portrait dimension (210:297) -> 820px x 1160px
     const baseW = 820;
-    const baseH = 1160;
 
-    if (containerW > 0 && containerH > 0) {
-      const scaleW = containerW / baseW;
-      const scaleH = containerH / baseH;
-      
-      // Calculate fit scale factor for largest complete page fit
-      const fitScale = Math.min(scaleW, scaleH);
-      const fitPercent = Math.max(50, Math.min(160, Math.round(fitScale * 100)));
+    if (containerW > 0) {
+      const fitScale = containerW / baseW;
+      const fitPercent = Math.max(60, Math.min(130, Math.round(fitScale * 100)));
       setZoomLevel(fitPercent);
-      showToast(`Fit Page: ${fitPercent}% scale`);
+      showToast(`Fit Width: ${fitPercent}% scale`);
     }
   }, []);
 
@@ -1040,7 +1071,7 @@ export const SmartMhcWorkspace: React.FC<SmartMhcWorkspaceProps> = ({
     };
     setCanvasWidgets(prev => [...prev, newWidget]);
     setSelectedWidgetId(newWidget.id);
-    showToast(`Added "${newWidget.title}" to A4 Canvas`);
+    showToast(`Added "${newWidget.title}" to Report Canvas`);
   };
 
   // 14. Create Custom Widget Handler
@@ -1214,7 +1245,7 @@ export const SmartMhcWorkspace: React.FC<SmartMhcWorkspaceProps> = ({
       { id: 'qc-prog', label: 'Diode Remaining Life / Prognosis Calculated', passed: true, type: 'INFO' },
       { id: 'qc-recom', label: 'Maintenance Action Plan & Recommendations Present', passed: Boolean(activeSession.stage08_engineerRemarks?.recommendations), type: 'INFO' },
       { id: 'qc-evid', label: 'Required Beam Profile / Visual Evidence Present', passed: true, type: 'INFO' },
-      { id: 'qc-a4', label: 'A4 One-Page Capacity Limit (<= 100%)', passed: actualA4Capacity <= 100, type: 'BLOCKING', details: `Current: ${actualA4Capacity}%` }
+      { id: 'qc-widgets', label: 'Report Canvas Evidence Widgets Added', passed: canvasWidgets.length > 0, type: 'INFO', details: `${canvasWidgets.length} active widgets` }
     ];
     const hasBlockingError = checks.some(c => c.type === 'BLOCKING' && !c.passed);
     return { checks, hasBlockingError };
@@ -1231,6 +1262,72 @@ export const SmartMhcWorkspace: React.FC<SmartMhcWorkspaceProps> = ({
 
   const handleExecutePrint = () => {
     window.print();
+  };
+
+  // Render Laser Life Widget with Real Metrics from Passport/LaserEngine
+  const renderLaserLifeWidget = (isPrintPreview: boolean = false) => {
+    const lasers = Array.isArray(machine.lasers) && machine.lasers.length > 0
+      ? machine.lasers
+      : (Array.isArray(machine.laserHeads) ? machine.laserHeads : []);
+
+    if (!lasers || lasers.length === 0) {
+      return (
+        <div className={`py-3 text-center text-xs italic rounded border border-dashed ${
+          isPrintPreview ? 'bg-slate-50 border-slate-300 text-slate-500' : 'bg-slate-900/40 border-slate-800 text-slate-400'
+        }`}>
+          No laser head configured in Machine Passport.
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-3 text-xs font-mono">
+        {lasers.map((lh: any) => {
+          const metrics = LaserEngine.calculateLaserMetrics(lh);
+          if (!metrics) return null;
+
+          const lifeRemainingPercent = metrics.lifeRemainingPercent;
+          const remainingPct = lifeRemainingPercent !== null && lifeRemainingPercent !== undefined
+            ? Math.max(0, Math.min(100, Math.round(lifeRemainingPercent)))
+            : 0;
+          const pctColor = remainingPct <= 10 ? 'text-rose-400 bg-rose-950/60 border-rose-800' : remainingPct <= 25 ? 'text-amber-400 bg-amber-950/60 border-amber-800' : 'text-emerald-400 bg-emerald-950/60 border-emerald-800';
+          const barColor = remainingPct <= 10 ? 'bg-rose-500' : remainingPct <= 25 ? 'bg-amber-400' : 'bg-emerald-500';
+
+          const estHours = metrics.estimatedCurrentHour ?? metrics.currentHour;
+          const remHours = metrics.recommendedRemainingHour ?? metrics.remainingTotal;
+          const eolDateStr = metrics.eolDate ?? metrics.estimatedRecommendedEOL;
+          const stateStr = (metrics.runtimeState || 'NORMAL').replace(/_/g, ' ');
+
+          return (
+            <div key={lh.id || lh.name} className={`p-2.5 rounded border space-y-1.5 ${
+              isPrintPreview ? 'bg-slate-50 border-slate-200 text-slate-900' : 'bg-slate-900/60 border-slate-800 text-slate-200'
+            }`}>
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-slate-200">{lh.name || 'Laser Head'} ({lh.serialNo || 'SN-N/A'})</span>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${pctColor}`}>
+                  {lifeRemainingPercent !== null && lifeRemainingPercent !== undefined ? `${remainingPct}% Remaining` : 'Baseline Required'}
+                </span>
+              </div>
+
+              {/* Meter bar */}
+              <div className="w-full bg-slate-950 h-2 rounded-full overflow-hidden border border-slate-800">
+                <div className={`h-full ${barColor}`} style={{ width: `${remainingPct}%` }} />
+              </div>
+
+              {/* Real Metric Details */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 text-[10px] text-slate-400 pt-1 border-t border-slate-800/60">
+                <div>Est. Hours: <strong className="text-slate-200">{estHours !== null && estHours !== undefined ? `${estHours.toLocaleString()} h` : '—'}</strong></div>
+                <div>Physical Meter: <strong className="text-slate-200">{metrics.baseLaserHour !== null && metrics.baseLaserHour !== undefined ? `${metrics.baseLaserHour.toLocaleString()} h` : '—'}</strong></div>
+                <div>Rated Life: <strong className="text-slate-200">{metrics.ratedLife ? `${metrics.ratedLife.toLocaleString()} h` : '—'}</strong></div>
+                <div>Remaining: <strong className="text-emerald-400">{remHours !== null && remHours !== undefined ? `${remHours.toLocaleString()} h` : '—'}</strong></div>
+                <div>EOL Date: <strong className="text-amber-400">{eolDateStr || 'N/A'}</strong></div>
+                <div>State: <strong className="text-cyan-400">{stateStr}</strong></div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
   };
 
   // Render Laser Temperature Widget with Real Data
@@ -1346,21 +1443,54 @@ export const SmartMhcWorkspace: React.FC<SmartMhcWorkspaceProps> = ({
   };
 
   const handleSavePowerCheckFromMhc = (newRecord: LaserPowerCheckRecord) => {
-    const updatedRecords = [newRecord, ...(machine.laserPowerRecords || [])];
-    const updatedMachine: Machine = {
-      ...machine,
-      laserPowerRecords: updatedRecords
-    };
-    if (onUpdateMachine) {
-      onUpdateMachine(updatedMachine);
-    }
-    const allMachines = StorageService.getMachines();
-    const otherMachines = allMachines.filter(m => m.id !== machine.id);
-    StorageService.saveMachines([updatedMachine, ...otherMachines]);
+    try {
+      const existing = machine.laserPowerRecords || [];
+      const updatedRecords = [newRecord, ...existing].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      const updatedMachine: Machine = {
+        ...machine,
+        laserPowerRecords: updatedRecords
+      };
 
-    setSelectedLaserPowerRecordId(newRecord.id);
-    setIsEnterLaserPowerModalOpen(false);
-    showToast('Laser Power Check saved to Machine Passport & linked to MHC!');
+      const allMachines = StorageService.getMachines();
+      const otherMachines = allMachines.filter(m => m.id !== machine.id);
+      StorageService.saveMachines([updatedMachine, ...otherMachines]);
+
+      if (onUpdateMachine) {
+        onUpdateMachine(updatedMachine);
+      }
+
+      setSelectedLaserPowerRecordId(newRecord.id);
+      setIsEnterLaserPowerModalOpen(false);
+      showToast('Laser Power Check saved to Machine Passport & linked to MHC!');
+    } catch (err: any) {
+      console.error('Save laser power error:', err);
+      showToast(`Failed to save record: ${err?.message || 'Storage error'}`);
+    }
+  };
+
+  const handleDeleteLaserPowerRecord = (id: string) => {
+    if (!confirm('Are you sure you want to delete this Laser Power record?')) return;
+    try {
+      const existing = machine.laserPowerRecords || [];
+      const updatedRecords = existing.filter(r => r.id !== id);
+      const updatedMachine: Machine = {
+        ...machine,
+        laserPowerRecords: updatedRecords
+      };
+
+      const allMachines = StorageService.getMachines();
+      const otherMachines = allMachines.filter(m => m.id !== machine.id);
+      StorageService.saveMachines([updatedMachine, ...otherMachines]);
+
+      if (onUpdateMachine) {
+        onUpdateMachine(updatedMachine);
+      }
+      if (selectedLaserPowerRecordId === id) setSelectedLaserPowerRecordId(null);
+      showToast('Laser Power record deleted.');
+    } catch (err: any) {
+      console.error('Delete laser power error:', err);
+      showToast(`Failed to delete record: ${err?.message}`);
+    }
   };
 
   const renderLaserPowerWidget = (isPrintPreview: boolean) => {
@@ -1382,11 +1512,18 @@ export const SmartMhcWorkspace: React.FC<SmartMhcWorkspaceProps> = ({
                 </Button>
               )}
               <Button
-                onClick={(e) => { e.stopPropagation(); setIsEnterLaserPowerModalOpen(true); }}
+                onClick={(e) => { e.stopPropagation(); setIsHistoricalLaserPower(false); setIsEnterLaserPowerModalOpen(true); }}
                 className="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold py-1 px-2.5 flex items-center gap-1"
               >
                 <Plus className="w-3 h-3" />
-                Enter New Power Check
+                New Current Check
+              </Button>
+              <Button
+                onClick={(e) => { e.stopPropagation(); setIsHistoricalLaserPower(true); setIsEnterLaserPowerModalOpen(true); }}
+                className="bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold py-1 px-2.5 flex items-center gap-1"
+              >
+                <Plus className="w-3 h-3" />
+                Add Historical Record
               </Button>
             </div>
           )}
@@ -1394,12 +1531,29 @@ export const SmartMhcWorkspace: React.FC<SmartMhcWorkspaceProps> = ({
       );
     }
 
-    const m13 = activeLaserPowerRecord.workingZoneMasks.find(m => m.maskSize === '1.3mm');
+    const currM13 = activeLaserPowerRecord.workingZoneMasks.find(m => m.maskSize === '1.3mm');
+    const prevM13 = prevLaserPowerRecord?.workingZoneMasks.find(m => m.maskSize === '1.3mm');
+
+    const renderValWithDelta = (currVal?: number | null, prevVal?: number | null) => {
+      if (currVal === undefined || currVal === null) return '—';
+      if (prevVal === undefined || prevVal === null || !prevLaserPowerRecord) {
+        return `${currVal}W`;
+      }
+      const delta = +(currVal - prevVal).toFixed(2);
+      const deltaStr = delta > 0 ? `+${delta}W` : delta < 0 ? `${delta}W` : '0W';
+      const color = delta < -0.5 ? 'text-rose-400 font-bold' : delta > 0 ? 'text-emerald-400 font-bold' : 'text-slate-400';
+      return (
+        <div className="flex flex-col items-center">
+          <span className="font-bold text-slate-100">{currVal}W</span>
+          <span className={`text-[9px] ${color}`}>Prev: {prevVal}W ({deltaStr})</span>
+        </div>
+      );
+    };
 
     return (
       <div className="space-y-2 text-xs font-mono">
         {/* Metadata bar */}
-        <div className={`flex items-center justify-between px-2 py-1 rounded text-[11px] font-bold ${
+        <div className={`flex flex-wrap items-center justify-between px-2 py-1.5 rounded text-[11px] font-bold ${
           isPrintPreview ? 'bg-slate-100 text-slate-800' : 'bg-slate-900 text-slate-200 border border-slate-800'
         }`}>
           <div className="flex items-center gap-3">
@@ -1407,48 +1561,66 @@ export const SmartMhcWorkspace: React.FC<SmartMhcWorkspaceProps> = ({
             <span>Spec (1.3mm): <strong>≥1.0 W</strong></span>
           </div>
           <div className="flex items-center gap-2 font-sans">
-            <span className="text-slate-400 font-mono text-[10px]">Date: {activeLaserPowerRecord.date}</span>
+            <span className="text-slate-400 font-mono text-[10px]">
+              Curr: {activeLaserPowerRecord.date} | Prev: {prevLaserPowerRecord ? prevLaserPowerRecord.date : 'No previous record'}
+            </span>
             <Badge variant={activeLaserPowerRecord.overallResult === 'PASS' ? 'success' : 'danger'}>
               {activeLaserPowerRecord.overallResult}
             </Badge>
           </div>
         </div>
 
-        {/* Streamlined A4 Table */}
+        {/* Matrix Comparing PREVIOUS vs CURRENT */}
         <table className="w-full text-left border-collapse text-[11px]">
           <thead>
             <tr className={`border-b text-[10px] uppercase ${isPrintPreview ? 'border-slate-300 text-slate-600' : 'border-slate-800 text-slate-400'}`}>
               <th className="py-1">STAGE</th>
-              <th className="py-1 text-center">HEAD A</th>
-              <th className="py-1 text-center">HEAD B</th>
+              <th className="py-1 text-center">HEAD A (CURR vs PREV)</th>
+              <th className="py-1 text-center">HEAD B (CURR vs PREV)</th>
+              <th className="py-1 text-center">STATUS</th>
             </tr>
           </thead>
           <tbody className={`divide-y ${isPrintPreview ? 'divide-slate-200 text-slate-900' : 'divide-slate-800/80 text-slate-200'}`}>
             <tr>
               <td className="py-1.5 font-bold">Laser Source</td>
-              <td className="py-1.5 text-center font-bold text-amber-500">
-                {activeLaserPowerRecord.laserSource.headA ?? '—'} W
+              <td className="py-1.5 text-center">
+                {renderValWithDelta(activeLaserPowerRecord.laserSource.headA, prevLaserPowerRecord?.laserSource.headA)}
               </td>
-              <td className="py-1.5 text-center font-bold text-amber-500">
-                {activeLaserPowerRecord.laserSource.headB ?? '—'} W
+              <td className="py-1.5 text-center">
+                {renderValWithDelta(activeLaserPowerRecord.laserSource.headB, prevLaserPowerRecord?.laserSource.headB)}
+              </td>
+              <td className="py-1.5 text-center font-bold">
+                <Badge variant={activeLaserPowerRecord.laserSource.headA >= 10 && activeLaserPowerRecord.laserSource.headB >= 10 ? 'success' : 'warning'} size="sm">
+                  {activeLaserPowerRecord.laserSource.headA >= 10 && activeLaserPowerRecord.laserSource.headB >= 10 ? 'PASS' : 'WARNING'}
+                </Badge>
               </td>
             </tr>
             <tr>
               <td className="py-1.5 font-bold">Optics / Top Hat</td>
-              <td className="py-1.5 text-center font-bold text-cyan-500">
-                {activeLaserPowerRecord.opticsTopHat.headA ?? '—'} W
+              <td className="py-1.5 text-center">
+                {renderValWithDelta(activeLaserPowerRecord.opticsTopHat.headA, prevLaserPowerRecord?.opticsTopHat.headA)}
               </td>
-              <td className="py-1.5 text-center font-bold text-cyan-500">
-                {activeLaserPowerRecord.opticsTopHat.headB ?? '—'} W
+              <td className="py-1.5 text-center">
+                {renderValWithDelta(activeLaserPowerRecord.opticsTopHat.headB, prevLaserPowerRecord?.opticsTopHat.headB)}
+              </td>
+              <td className="py-1.5 text-center font-bold">
+                <Badge variant={activeLaserPowerRecord.opticsTopHat.headA >= 5 && activeLaserPowerRecord.opticsTopHat.headB >= 5 ? 'success' : 'warning'} size="sm">
+                  {activeLaserPowerRecord.opticsTopHat.headA >= 5 && activeLaserPowerRecord.opticsTopHat.headB >= 5 ? 'PASS' : 'WARNING'}
+                </Badge>
               </td>
             </tr>
             <tr>
-              <td className="py-1.5 font-bold">Mask 1.3mm</td>
-              <td className="py-1.5 text-center font-bold text-emerald-500">
-                {m13?.headA ?? '—'} W
+              <td className="py-1.5 font-bold">1.3mm Mask (≥1.0W)</td>
+              <td className="py-1.5 text-center">
+                {renderValWithDelta(currM13?.headA, prevM13?.headA)}
               </td>
-              <td className="py-1.5 text-center font-bold text-emerald-500">
-                {m13?.headB ?? '—'} W
+              <td className="py-1.5 text-center">
+                {renderValWithDelta(currM13?.headB, prevM13?.headB)}
+              </td>
+              <td className="py-1.5 text-center font-bold">
+                <Badge variant={(currM13?.headA ?? 0) >= 1.0 && (currM13?.headB ?? 0) >= 1.0 ? 'success' : 'danger'} size="sm">
+                  {(currM13?.headA ?? 0) >= 1.0 && (currM13?.headB ?? 0) >= 1.0 ? 'PASS' : 'FAIL'}
+                </Badge>
               </td>
             </tr>
           </tbody>
@@ -1456,23 +1628,35 @@ export const SmartMhcWorkspace: React.FC<SmartMhcWorkspaceProps> = ({
 
         {/* Action buttons (only in non-print preview mode) */}
         {!isPrintPreview && (
-          <div className="flex items-center gap-2 pt-1 border-t border-slate-800/80 font-sans">
-            {laserPowerRecords.length > 0 && (
+          <div className="flex items-center justify-between pt-1 border-t border-slate-800/80 font-sans">
+            <span className="text-[10px] text-slate-400 italic">
+              {prevLaserPowerRecord ? `Comparing Current (${activeLaserPowerRecord.date}) vs Previous (${prevLaserPowerRecord.date})` : 'No previous record for comparison.'}
+            </span>
+            <div className="flex items-center gap-1.5">
+              {laserPowerRecords.length > 0 && (
+                <Button
+                  onClick={(e) => { e.stopPropagation(); setIsSelectLaserPowerModalOpen(true); }}
+                  className="bg-amber-600 hover:bg-amber-500 text-white text-[10px] font-bold py-1 px-2 flex items-center gap-1"
+                >
+                  <FolderOpen className="w-3 h-3" />
+                  Select Record
+                </Button>
+              )}
               <Button
-                onClick={(e) => { e.stopPropagation(); setIsSelectLaserPowerModalOpen(true); }}
-                className="bg-amber-600 hover:bg-amber-500 text-white text-[10px] font-bold py-1 px-2 flex items-center gap-1"
+                onClick={(e) => { e.stopPropagation(); setIsHistoricalLaserPower(false); setIsEnterLaserPowerModalOpen(true); }}
+                className="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold py-1 px-2 flex items-center gap-1"
               >
-                <FolderOpen className="w-3 h-3" />
-                Use Passport Record
+                <Plus className="w-3 h-3" />
+                New Current Check
               </Button>
-            )}
-            <Button
-              onClick={(e) => { e.stopPropagation(); setIsEnterLaserPowerModalOpen(true); }}
-              className="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold py-1 px-2 flex items-center gap-1"
-            >
-              <Plus className="w-3 h-3" />
-              Enter New Power Check
-            </Button>
+              <Button
+                onClick={(e) => { e.stopPropagation(); setIsHistoricalLaserPower(true); setIsEnterLaserPowerModalOpen(true); }}
+                className="bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold py-1 px-2 flex items-center gap-1"
+              >
+                <Plus className="w-3 h-3" />
+                Add Historical Record
+              </Button>
+            </div>
           </div>
         )}
       </div>
@@ -1488,7 +1672,10 @@ export const SmartMhcWorkspace: React.FC<SmartMhcWorkspaceProps> = ({
   const [isEnterBeamProfileModalOpen, setIsEnterBeamProfileModalOpen] = useState<boolean>(false);
   const [isSelectEvidenceModalOpen, setIsSelectEvidenceModalOpen] = useState<boolean>(false);
 
-  const beamProfileRecords = machine.beamProfileRecords || [];
+  const beamProfileRecords = useMemo(() => {
+    const raw = machine.beamProfileRecords || [];
+    return [...raw].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [machine.beamProfileRecords]);
 
   const currBeamProfileRecord = useMemo<BeamProfileCheckRecord | null>(() => {
     if (selectedCurrBeamProfileRecordId) {
@@ -1503,25 +1690,66 @@ export const SmartMhcWorkspace: React.FC<SmartMhcWorkspaceProps> = ({
       const found = beamProfileRecords.find(r => r.id === selectedPrevBeamProfileRecordId);
       if (found) return found;
     }
-    return beamProfileRecords[1] || beamProfileRecords[0] || null;
-  }, [selectedPrevBeamProfileRecordId, beamProfileRecords]);
+    if (!currBeamProfileRecord) return null;
+    const currIdx = beamProfileRecords.findIndex(r => r.id === currBeamProfileRecord.id);
+    if (currIdx >= 0 && currIdx + 1 < beamProfileRecords.length) {
+      return beamProfileRecords[currIdx + 1];
+    }
+    return null;
+  }, [selectedPrevBeamProfileRecordId, currBeamProfileRecord, beamProfileRecords]);
 
   const handleSaveBeamCheckFromMhc = (newRecord: BeamProfileCheckRecord) => {
-    const updatedRecords = [newRecord, ...(machine.beamProfileRecords || [])];
-    const updatedMachine: Machine = {
-      ...machine,
-      beamProfileRecords: updatedRecords
-    };
-    if (onUpdateMachine) {
-      onUpdateMachine(updatedMachine);
-    }
-    const allMachines = StorageService.getMachines();
-    const otherMachines = allMachines.filter(m => m.id !== machine.id);
-    StorageService.saveMachines([updatedMachine, ...otherMachines]);
+    try {
+      const existing = machine.beamProfileRecords || [];
+      const updatedRecords = [newRecord, ...existing].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      const updatedMachine: Machine = {
+        ...machine,
+        beamProfileRecords: updatedRecords
+      };
 
-    setSelectedCurrBeamProfileRecordId(newRecord.id);
-    setIsEnterBeamProfileModalOpen(false);
-    showToast('Beam Profile Check saved to Machine Passport & linked to MHC!');
+      const allMachines = StorageService.getMachines();
+      const otherMachines = allMachines.filter(m => m.id !== machine.id);
+      StorageService.saveMachines([updatedMachine, ...otherMachines]);
+
+      if (onUpdateMachine) {
+        onUpdateMachine(updatedMachine);
+      }
+
+      setSelectedCurrBeamProfileRecordId(newRecord.id);
+      setIsEnterBeamProfileModalOpen(false);
+      showToast('Beam Profile Check saved to Machine Passport & linked to MHC!');
+    } catch (err: any) {
+      console.error('Save beam profile error:', err);
+      showToast(`Failed to save record: ${err?.message || 'Storage error'}`);
+    }
+  };
+
+  const handleDeleteBeamProfileRecord = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this Beam Profile record?')) return;
+    try {
+      const existing = machine.beamProfileRecords || [];
+      const updatedRecords = existing.filter(r => r.id !== id);
+      const updatedMachine: Machine = {
+        ...machine,
+        beamProfileRecords: updatedRecords
+      };
+
+      const allMachines = StorageService.getMachines();
+      const otherMachines = allMachines.filter(m => m.id !== machine.id);
+      StorageService.saveMachines([updatedMachine, ...otherMachines]);
+
+      await ImageStore.deleteImagesForRecord(id);
+
+      if (onUpdateMachine) {
+        onUpdateMachine(updatedMachine);
+      }
+      if (selectedCurrBeamProfileRecordId === id) setSelectedCurrBeamProfileRecordId(null);
+      if (selectedPrevBeamProfileRecordId === id) setSelectedPrevBeamProfileRecordId(null);
+      showToast('Beam Profile record deleted.');
+    } catch (err: any) {
+      console.error('Delete error:', err);
+      showToast(`Failed to delete record: ${err?.message}`);
+    }
   };
 
   const renderBeamProfileWidget = (isPrintPreview: boolean) => {
@@ -1555,8 +1783,18 @@ export const SmartMhcWorkspace: React.FC<SmartMhcWorkspaceProps> = ({
       );
     }
 
-    const currRecord = currBeamProfileRecord || prevBeamProfileRecord!;
-    const prevRecord = prevBeamProfileRecord || currRecord;
+    const currRecord = currBeamProfileRecord;
+    const prevRecord = prevBeamProfileRecord;
+
+    if (!currRecord) {
+      return (
+        <div className={`py-4 text-center text-xs italic rounded border border-dashed p-3 ${
+          isPrintPreview ? 'bg-slate-50 border-slate-300 text-slate-500' : 'bg-slate-900/40 border-slate-800 text-slate-400'
+        }`}>
+          <p className="font-semibold text-slate-300">No Beam Profile record linked.</p>
+        </div>
+      );
+    }
 
     const evidenceSpecs = CHECKPOINT_SPECS.filter(s => selectedEvidenceCheckpoints.includes(s.id));
     const totalSelected = evidenceSpecs.length;
@@ -1570,7 +1808,7 @@ export const SmartMhcWorkspace: React.FC<SmartMhcWorkspaceProps> = ({
           isPrintPreview ? 'bg-slate-100 text-slate-800 border border-slate-300' : 'bg-slate-900 text-slate-200 border border-slate-800'
         }`}>
           <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-            <span>PREV: <strong>{prevRecord.date}</strong></span>
+            <span>PREV: <strong>{prevRecord ? prevRecord.date : 'No previous record'}</strong></span>
             <span>➔</span>
             <span>CURR: <strong>{currRecord.date}</strong></span>
             <span className="text-[10px] text-slate-400 font-sans">
@@ -1623,7 +1861,7 @@ export const SmartMhcWorkspace: React.FC<SmartMhcWorkspaceProps> = ({
         {/* Evidence Comparison Grid */}
         <div className={`grid ${gridCols} gap-2.5`}>
           {evidenceSpecs.map(spec => {
-            const prevReading = prevRecord.readings?.[spec.id];
+            const prevReading = prevRecord ? prevRecord.readings?.[spec.id] : null;
             const currReading = currRecord.readings?.[spec.id];
 
             const prevVal = prevReading?.measuredDiameterMm ?? null;
@@ -1677,7 +1915,7 @@ export const SmartMhcWorkspace: React.FC<SmartMhcWorkspaceProps> = ({
                 <div className="grid grid-cols-2 gap-2 pt-0.5">
                   {/* Previous */}
                   <div className="space-y-1">
-                    <span className="text-[9px] font-bold text-slate-500 uppercase block">PREV ({prevRecord.date})</span>
+                    <span className="text-[9px] font-bold text-slate-500 uppercase block">PREV ({prevRecord ? prevRecord.date : 'No record'})</span>
                     <div className="w-full aspect-square rounded bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 overflow-hidden flex items-center justify-center relative">
                       {prevReading?.imageDataUrl ? (
                         <img src={prevReading.imageDataUrl} alt={`Prev ${spec.stageLabel}`} className="w-full h-full object-cover" />
@@ -1738,7 +1976,10 @@ export const SmartMhcWorkspace: React.FC<SmartMhcWorkspaceProps> = ({
   const [productProcessEvidenceSelection, setProductProcessEvidenceSelection] = useState<('laser1' | 'laser2')[]>(['laser1', 'laser2']);
   const [isSelectProductProcessEvidenceModalOpen, setIsSelectProductProcessEvidenceModalOpen] = useState<boolean>(false);
 
-  const productProcessRecords = machine.productProcessRecords || [];
+  const productProcessRecords = useMemo(() => {
+    const raw = machine.productProcessRecords || [];
+    return [...raw].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [machine.productProcessRecords]);
 
   const currProductProcessRecord = useMemo<ProductProcessRecord | null>(() => {
     if (selectedCurrProductProcessRecordId) {
@@ -1753,25 +1994,66 @@ export const SmartMhcWorkspace: React.FC<SmartMhcWorkspaceProps> = ({
       const found = productProcessRecords.find(r => r.id === selectedPrevProductProcessRecordId);
       if (found) return found;
     }
-    return productProcessRecords[1] || productProcessRecords[0] || null;
-  }, [selectedPrevProductProcessRecordId, productProcessRecords]);
+    if (!currProductProcessRecord) return null;
+    const currIdx = productProcessRecords.findIndex(r => r.id === currProductProcessRecord.id);
+    if (currIdx >= 0 && currIdx + 1 < productProcessRecords.length) {
+      return productProcessRecords[currIdx + 1];
+    }
+    return null;
+  }, [selectedPrevProductProcessRecordId, currProductProcessRecord, productProcessRecords]);
 
   const handleSaveProductProcessFromMhc = (newRecord: ProductProcessRecord) => {
-    const updatedRecords = [newRecord, ...(machine.productProcessRecords || [])];
-    const updatedMachine: Machine = {
-      ...machine,
-      productProcessRecords: updatedRecords
-    };
-    if (onUpdateMachine) {
-      onUpdateMachine(updatedMachine);
-    }
-    const allMachines = StorageService.getMachines();
-    const otherMachines = allMachines.filter(m => m.id !== machine.id);
-    StorageService.saveMachines([updatedMachine, ...otherMachines]);
+    try {
+      const existing = machine.productProcessRecords || [];
+      const updatedRecords = [newRecord, ...existing].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      const updatedMachine: Machine = {
+        ...machine,
+        productProcessRecords: updatedRecords
+      };
 
-    setSelectedCurrProductProcessRecordId(newRecord.id);
-    setIsEnterProductProcessModalOpen(false);
-    showToast('Product & Process record saved to Machine Passport & linked to MHC!');
+      const allMachines = StorageService.getMachines();
+      const otherMachines = allMachines.filter(m => m.id !== machine.id);
+      StorageService.saveMachines([updatedMachine, ...otherMachines]);
+
+      if (onUpdateMachine) {
+        onUpdateMachine(updatedMachine);
+      }
+
+      setSelectedCurrProductProcessRecordId(newRecord.id);
+      setIsEnterProductProcessModalOpen(false);
+      showToast('Product & Process record saved to Machine Passport & linked to MHC!');
+    } catch (err: any) {
+      console.error('Save product process error:', err);
+      showToast(`Failed to save record: ${err?.message || 'Storage error'}`);
+    }
+  };
+
+  const handleDeleteProductProcessRecord = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this Product & Process record?')) return;
+    try {
+      const existing = machine.productProcessRecords || [];
+      const updatedRecords = existing.filter(r => r.id !== id);
+      const updatedMachine: Machine = {
+        ...machine,
+        productProcessRecords: updatedRecords
+      };
+
+      const allMachines = StorageService.getMachines();
+      const otherMachines = allMachines.filter(m => m.id !== machine.id);
+      StorageService.saveMachines([updatedMachine, ...otherMachines]);
+
+      await ImageStore.deleteImagesForRecord(id);
+
+      if (onUpdateMachine) {
+        onUpdateMachine(updatedMachine);
+      }
+      if (selectedCurrProductProcessRecordId === id) setSelectedCurrProductProcessRecordId(null);
+      if (selectedPrevProductProcessRecordId === id) setSelectedPrevProductProcessRecordId(null);
+      showToast('Product & Process record deleted.');
+    } catch (err: any) {
+      console.error('Delete error:', err);
+      showToast(`Failed to delete record: ${err?.message}`);
+    }
   };
 
   const renderProductProcessWidget = (isPrintPreview: boolean) => {
@@ -1806,11 +2088,12 @@ export const SmartMhcWorkspace: React.FC<SmartMhcWorkspaceProps> = ({
     }
 
     const curr = currProductProcessRecord || prevProductProcessRecord!;
-    const prev = prevProductProcessRecord || curr;
+    const prev = prevProductProcessRecord;
 
-    const renderParamVal = (currVal: number | null, prevVal: number | null, unit: string) => {
-      if (currVal === null) return '—';
-      const changed = prevVal !== null && prevVal !== currVal;
+    const renderParamVal = (currVal: number | null | undefined, prevVal: number | null | undefined, unit: string) => {
+      if (currVal === null || currVal === undefined) return '—';
+      if (!prev || prevVal === null || prevVal === undefined) return `${currVal}${unit}`;
+      const changed = prevVal !== currVal;
       if (changed) {
         return (
           <span className="font-bold text-amber-400">
@@ -1857,28 +2140,28 @@ export const SmartMhcWorkspace: React.FC<SmartMhcWorkspaceProps> = ({
             <tbody className="divide-y divide-slate-200 dark:divide-slate-800/60">
               <tr>
                 <td className="py-1 text-slate-400">Power</td>
-                <td className="py-1 text-center font-bold">{renderParamVal(curr.phase1?.powerWatts, prev.phase1?.powerWatts, ' W')}</td>
-                <td className="py-1 text-center font-bold">{renderParamVal(curr.phase2?.powerWatts, prev.phase2?.powerWatts, ' W')}</td>
+                <td className="py-1 text-center font-bold">{renderParamVal(curr.phase1?.powerWatts, prev?.phase1?.powerWatts, ' W')}</td>
+                <td className="py-1 text-center font-bold">{renderParamVal(curr.phase2?.powerWatts, prev?.phase2?.powerWatts, ' W')}</td>
               </tr>
               <tr>
                 <td className="py-1 text-slate-400">Frequency</td>
-                <td className="py-1 text-center font-bold">{renderParamVal(curr.phase1?.frequencyKhz, prev.phase1?.frequencyKhz, ' kHz')}</td>
-                <td className="py-1 text-center font-bold">{renderParamVal(curr.phase2?.frequencyKhz, prev.phase2?.frequencyKhz, ' kHz')}</td>
+                <td className="py-1 text-center font-bold">{renderParamVal(curr.phase1?.frequencyKhz, prev?.phase1?.frequencyKhz, ' kHz')}</td>
+                <td className="py-1 text-center font-bold">{renderParamVal(curr.phase2?.frequencyKhz, prev?.phase2?.frequencyKhz, ' kHz')}</td>
               </tr>
               <tr>
                 <td className="py-1 text-slate-400">Shot Count</td>
-                <td className="py-1 text-center font-bold">{renderParamVal(curr.phase1?.shotCount, prev.phase1?.shotCount, ' shots')}</td>
-                <td className="py-1 text-center font-bold">{renderParamVal(curr.phase2?.shotCount, prev.phase2?.shotCount, ' shots')}</td>
+                <td className="py-1 text-center font-bold">{renderParamVal(curr.phase1?.shotCount, prev?.phase1?.shotCount, ' shots')}</td>
+                <td className="py-1 text-center font-bold">{renderParamVal(curr.phase2?.shotCount, prev?.phase2?.shotCount, ' shots')}</td>
               </tr>
               <tr>
                 <td className="py-1 text-slate-400">Mask</td>
-                <td className="py-1 text-center font-bold">{renderParamVal(curr.phase1?.maskMm, prev.phase1?.maskMm, ' mm')}</td>
-                <td className="py-1 text-center font-bold">{renderParamVal(curr.phase2?.maskMm, prev.phase2?.maskMm, ' mm')}</td>
+                <td className="py-1 text-center font-bold">{renderParamVal(curr.phase1?.maskMm, prev?.phase1?.maskMm, ' mm')}</td>
+                <td className="py-1 text-center font-bold">{renderParamVal(curr.phase2?.maskMm, prev?.phase2?.maskMm, ' mm')}</td>
               </tr>
               <tr>
                 <td className="py-1 text-slate-400">Defocus</td>
-                <td className="py-1 text-center font-bold">{renderParamVal(curr.phase1?.defocusMm, prev.phase1?.defocusMm, ' mm')}</td>
-                <td className="py-1 text-center font-bold">{renderParamVal(curr.phase2?.defocusMm, prev.phase2?.defocusMm, ' mm')}</td>
+                <td className="py-1 text-center font-bold">{renderParamVal(curr.phase1?.defocusMm, prev?.phase1?.defocusMm, ' mm')}</td>
+                <td className="py-1 text-center font-bold">{renderParamVal(curr.phase2?.defocusMm, prev?.phase2?.defocusMm, ' mm')}</td>
               </tr>
             </tbody>
           </table>
@@ -1900,10 +2183,10 @@ export const SmartMhcWorkspace: React.FC<SmartMhcWorkspaceProps> = ({
               <div className="grid grid-cols-2 gap-3 pt-1">
                 {/* Previous */}
                 <div className="space-y-1 text-center">
-                  <span className="text-[10px] font-bold text-slate-400 block uppercase">PREVIOUS ({prev.date})</span>
+                  <span className="text-[10px] font-bold text-slate-400 block uppercase">PREVIOUS ({prev ? prev.date : 'No previous record'})</span>
                   <div className="w-full aspect-square rounded bg-slate-950 border border-slate-800 overflow-hidden flex items-center justify-center p-1">
-                    {prev.laser1Via?.viaImageDataUrl ? (
-                      <img src={prev.laser1Via.viaImageDataUrl} alt="Prev L1 Via" className="w-full h-full object-contain rounded" />
+                    {prev?.laser1Via?.viaImageDataUrl ? (
+                      <img src={prev?.laser1Via?.viaImageDataUrl} alt="Prev L1 Via" className="w-full h-full object-contain rounded" />
                     ) : (
                       <ImageIcon className="w-6 h-6 text-slate-600" />
                     )}
@@ -1911,14 +2194,14 @@ export const SmartMhcWorkspace: React.FC<SmartMhcWorkspaceProps> = ({
                   <div className="text-[10px] space-y-0.5 pt-1 text-slate-300 font-mono text-left bg-slate-950/60 p-1.5 rounded border border-slate-800">
                     <div className="flex justify-between">
                       <span className="text-slate-400">Top Drill (51±10µm):</span>
-                      <strong className={prev.laser1Via?.topPass ? 'text-emerald-400' : 'text-rose-400'}>
-                        {prev.laser1Via?.topWidthUm ?? '—'} µm
+                      <strong className={prev?.laser1Via?.topPass ? 'text-emerald-400' : 'text-rose-400'}>
+                        {prev?.laser1Via?.topWidthUm ?? '—'} µm
                       </strong>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-slate-400">Bottom Drill (23±10µm):</span>
-                      <strong className={prev.laser1Via?.bottomPass ? 'text-emerald-400' : 'text-rose-400'}>
-                        {prev.laser1Via?.bottomWidthUm ?? '—'} µm
+                      <strong className={prev?.laser1Via?.bottomPass ? 'text-emerald-400' : 'text-rose-400'}>
+                        {prev?.laser1Via?.bottomWidthUm ?? '—'} µm
                       </strong>
                     </div>
                   </div>
@@ -1967,10 +2250,10 @@ export const SmartMhcWorkspace: React.FC<SmartMhcWorkspaceProps> = ({
               <div className="grid grid-cols-2 gap-3 pt-1">
                 {/* Previous */}
                 <div className="space-y-1 text-center">
-                  <span className="text-[10px] font-bold text-slate-400 block uppercase">PREVIOUS ({prev.date})</span>
+                  <span className="text-[10px] font-bold text-slate-400 block uppercase">PREVIOUS ({prev ? prev.date : 'No previous record'})</span>
                   <div className="w-full aspect-square rounded bg-slate-950 border border-slate-800 overflow-hidden flex items-center justify-center p-1">
-                    {prev.laser2Via?.viaImageDataUrl ? (
-                      <img src={prev.laser2Via.viaImageDataUrl} alt="Prev L2 Via" className="w-full h-full object-contain rounded" />
+                    {prev?.laser2Via?.viaImageDataUrl ? (
+                      <img src={prev?.laser2Via?.viaImageDataUrl} alt="Prev L2 Via" className="w-full h-full object-contain rounded" />
                     ) : (
                       <ImageIcon className="w-6 h-6 text-slate-600" />
                     )}
@@ -1978,14 +2261,14 @@ export const SmartMhcWorkspace: React.FC<SmartMhcWorkspaceProps> = ({
                   <div className="text-[10px] space-y-0.5 pt-1 text-slate-300 font-mono text-left bg-slate-950/60 p-1.5 rounded border border-slate-800">
                     <div className="flex justify-between">
                       <span className="text-slate-400">Top Drill (51±10µm):</span>
-                      <strong className={prev.laser2Via?.topPass ? 'text-emerald-400' : 'text-rose-400'}>
-                        {prev.laser2Via?.topWidthUm ?? '—'} µm
+                      <strong className={prev?.laser2Via?.topPass ? 'text-emerald-400' : 'text-rose-400'}>
+                        {prev?.laser2Via?.topWidthUm ?? '—'} µm
                       </strong>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-slate-400">Bottom Drill (23±10µm):</span>
-                      <strong className={prev.laser2Via?.bottomPass ? 'text-emerald-400' : 'text-rose-400'}>
-                        {prev.laser2Via?.bottomWidthUm ?? '—'} µm
+                      <strong className={prev?.laser2Via?.bottomPass ? 'text-emerald-400' : 'text-rose-400'}>
+                        {prev?.laser2Via?.bottomWidthUm ?? '—'} µm
                       </strong>
                     </div>
                   </div>
@@ -2249,10 +2532,10 @@ export const SmartMhcWorkspace: React.FC<SmartMhcWorkspaceProps> = ({
       </div>
 
       {/* 3. MAIN WORKSPACE CONTAINER (DESKTOP HIERARCHY: [ DATA/WIDGETS ] [ LARGE A4 CANVAS ] [ PROPERTIES ]) */}
-      <div className="flex gap-2 sm:gap-3 min-h-[calc(100vh-13rem)] items-stretch w-full">
+      <div className="flex gap-2 sm:gap-3 min-h-[calc(100vh-13rem)] items-start w-full">
         {/* LEFT SUPPORTING PANEL: DATA TRAY & WIDGET LIBRARY */}
         {(showDataTray || showWidgetLibrary) ? (
-          <div className="w-60 lg:w-64 xl:w-72 shrink-0 flex flex-col gap-3 transition-all">
+          <div className="w-60 lg:w-64 xl:w-72 shrink-0 flex flex-col gap-3 transition-all sticky top-4 max-h-[calc(100vh-5rem)] overflow-y-auto z-20">
             {/* Tabs header when left panel is active */}
             <div className="flex items-center justify-between bg-[#15181C] p-1 rounded-md border border-[#2B323A] text-xs">
               <div className="flex items-center gap-1 flex-1">
@@ -2445,8 +2728,13 @@ export const SmartMhcWorkspace: React.FC<SmartMhcWorkspaceProps> = ({
                     {filteredLibraryWidgets.map((wt, i) => (
                       <div
                         key={i}
+                        draggable
+                        onDragStart={(e) => {
+                          e.dataTransfer.setData('application/json', JSON.stringify({ type: wt.type, defaultWidth: wt.defaultWidth }));
+                          e.dataTransfer.setData('text/plain', wt.type);
+                        }}
                         onClick={() => handleAddWidgetToCanvas(wt.type, wt.defaultWidth)}
-                        className={`p-2 rounded border flex items-center justify-between group cursor-pointer transition ${
+                        className={`p-2 rounded border flex items-center justify-between group cursor-grab active:cursor-grabbing transition ${
                           isDark
                             ? 'bg-[#1A1D21] border-[#2B323A] hover:border-emerald-500/60 hover:bg-slate-800/80'
                             : 'bg-slate-50 border-slate-200 hover:border-slate-400'
@@ -2473,7 +2761,7 @@ export const SmartMhcWorkspace: React.FC<SmartMhcWorkspaceProps> = ({
                 </div>
 
                 <div className="pt-2 border-t border-slate-800 text-[10px] text-slate-400 font-mono text-center">
-                  Click widget to add to A4 Canvas
+                  Click or drag widget to add to Report Canvas
                 </div>
               </div>
             )}
@@ -2481,7 +2769,7 @@ export const SmartMhcWorkspace: React.FC<SmartMhcWorkspaceProps> = ({
         ) : (
           <div
             onClick={() => setShowDataTray(true)}
-            className="w-9 shrink-0 bg-[#15181C] border border-[#2B323A] rounded-lg p-2 flex flex-col items-center py-4 gap-4 hover:bg-[#1A1D21] cursor-pointer transition-all group"
+            className="w-9 shrink-0 bg-[#15181C] border border-[#2B323A] rounded-lg p-2 flex flex-col items-center py-4 gap-4 hover:bg-[#1A1D21] cursor-pointer transition-all group sticky top-4"
             title="Expand Data Tray & Widget Library"
           >
             <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-[#8B9DFF]" />
@@ -2493,38 +2781,31 @@ export const SmartMhcWorkspace: React.FC<SmartMhcWorkspaceProps> = ({
           </div>
         )}
 
-        {/* PRIMARY WORKSPACE: LARGE A4 CANVAS (EXPANDS & RECENTERS WHEN PANELS ARE COLLAPSED) */}
+        {/* PRIMARY WORKSPACE: UNRESTRICTED CONTINUOUS REPORT STUDIO CANVAS */}
         <div 
           ref={canvasContainerRef}
-          className={`flex-1 min-w-0 p-4 rounded-lg border flex flex-col justify-between overflow-y-auto ${
+          className={`flex-1 min-w-0 p-4 rounded-lg border flex flex-col justify-between ${
             isDark ? 'bg-[#0B0D10] border-[#2B323A]' : 'bg-slate-200 border-slate-300 shadow-inner'
           }`}
         >
           <div className="space-y-3">
-            {/* Canvas View Controls Bar */}
-            <div className="p-2.5 rounded-md bg-[#15181C] border border-[#2B323A] flex flex-wrap items-center justify-between gap-3">
+            {/* Sticky Canvas View Controls Bar */}
+            <div className="p-2.5 rounded-md bg-[#15181C] border border-[#2B323A] flex flex-wrap items-center justify-between gap-3 sticky top-4 z-10 shadow-lg">
               <div className="flex items-center gap-2">
                 <FileCode className="w-4 h-4 text-amber-400" />
                 <h3 className="text-xs font-bold text-slate-100 uppercase tracking-wider">
-                  PRIMARY A4 REPORT CANVAS
+                  ENGINEERING REPORT STUDIO CANVAS
                 </h3>
               </div>
 
-              {/* View & Capacity Controls */}
+              {/* View & Continuous Canvas Indicators */}
               <div className="flex items-center gap-3 text-xs font-mono">
-                {/* Real A4 Capacity Indicator */}
+                {/* Continuous Canvas Indicator */}
                 <div className="flex items-center gap-2 bg-[#1A1D21] border border-[#2B323A] px-2.5 py-1 rounded">
-                  <span className="text-slate-400">A4 Capacity:</span>
-                  <div className="w-24 bg-slate-800 h-2 rounded-full overflow-hidden">
-                    <div 
-                      className={`h-full transition-all ${
-                        actualA4Capacity > 100 ? 'bg-rose-500' : actualA4Capacity > 85 ? 'bg-amber-400' : 'bg-emerald-400'
-                      }`}
-                      style={{ width: `${Math.min(100, actualA4Capacity)}%` }}
-                    />
-                  </div>
-                  <span className={`font-bold ${actualA4Capacity > 100 ? 'text-rose-400' : 'text-emerald-400'}`}>
-                    {actualA4Capacity}% {actualA4Capacity <= 100 ? '✔ Fits on 1 page' : '⚠️ Exceeds 1 page'}
+                  <span className="text-slate-400">Studio:</span>
+                  <span className="font-bold text-emerald-400 flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    Continuous Canvas ({canvasWidgets.length} Widgets)
                   </span>
                 </div>
 
@@ -2554,43 +2835,29 @@ export const SmartMhcWorkspace: React.FC<SmartMhcWorkspaceProps> = ({
                     onClick={handleFitPage}
                     className="px-2 py-0.5 rounded bg-[#8B9DFF]/20 text-[#8B9DFF] border border-[#8B9DFF]/30 font-bold text-[10px] hover:bg-[#8B9DFF]/30"
                   >
-                    Fit Page
+                    Fit Width
                   </button>
                 </div>
               </div>
             </div>
 
-            {/* Overflow Alert Banner if A4 Capacity > 100% */}
-            {actualA4Capacity > 100 && (
-              <div className="p-3 rounded bg-rose-950/60 border border-rose-800 text-rose-200 text-xs flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
-                  <span>
-                    <strong>A4 Overflow Detected ({actualA4Capacity}%):</strong> Report height exceeds 1 printable page. Resize or remove widgets to enable 1-page PDF export.
-                  </span>
-                </div>
-              </div>
-            )}
-
-            {/* A4 CANVAS DOCUMENT CONTAINER (TRUE 210:297 PROPORTION) */}
-            <div className="flex justify-center items-start w-full py-2 overflow-auto">
+            {/* UNRESTRICTED CONTINUOUS WORKSPACE CANVAS */}
+            <div className="flex justify-center items-start w-full py-2 overflow-x-auto">
               <div 
                 ref={canvasPaperRef}
                 style={{ 
                   transform: `scale(${zoomLevel / 100})`, 
                   transformOrigin: 'top center',
-                  width: '820px',
-                  minHeight: '1160px',
-                  marginBottom: zoomLevel < 100 ? `-${(1 - zoomLevel / 100) * 1160}px` : undefined
+                  width: '820px'
                 }}
-                className={`p-8 rounded-lg border space-y-4 transition-transform duration-150 ${
+                className={`p-6 sm:p-7 rounded-lg border space-y-3 transition-transform duration-150 min-h-[500px] h-auto ${
                   isDark ? 'bg-[#15181C] border-slate-700 shadow-2xl' : 'bg-white border-slate-300 shadow-xl text-slate-900'
                 }`}
               >
                 {/* 1. REPORT DOCUMENT HEADER */}
-                <div className="pb-4 border-b-2 border-slate-700 flex items-center justify-between">
+                <div className="pb-3 border-b-2 border-slate-700 flex items-center justify-between">
                   <div>
-                    <h1 className="text-xl font-black tracking-tight text-slate-100 uppercase">
+                    <h1 className="text-lg font-black tracking-tight text-slate-100 uppercase">
                       MACHINE HEALTH REPORT
                     </h1>
                     <p className="text-xs text-slate-400 font-mono mt-0.5">
@@ -2605,16 +2872,83 @@ export const SmartMhcWorkspace: React.FC<SmartMhcWorkspaceProps> = ({
                 </div>
 
                 {/* 2. REPORT CANVAS WIDGETS GRID */}
-                <div className="grid grid-cols-2 gap-3.5">
-                  {canvasWidgets.map((widget) => {
+                <div 
+                  className="grid grid-cols-2 gap-3 min-h-[300px]"
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const raw = e.dataTransfer.getData('application/json');
+                    if (raw) {
+                      try {
+                        const data = JSON.parse(raw);
+                        if (data.isReorder && data.widgetId) {
+                          const fromIdx = canvasWidgets.findIndex(w => w.id === data.widgetId);
+                          if (fromIdx >= 0) {
+                            const nextWidgets = [...canvasWidgets];
+                            const [moved] = nextWidgets.splice(fromIdx, 1);
+                            nextWidgets.push(moved);
+                            setCanvasWidgets(nextWidgets);
+                          }
+                        } else if (data.type) {
+                          handleAddWidgetToCanvas(data.type, data.defaultWidth);
+                        }
+                      } catch (err) {}
+                    }
+                  }}
+                >
+                  {canvasWidgets.map((widget, targetIndex) => {
                     const isSelected = selectedWidgetId === widget.id;
                     const colSpanClass = widget.width === '1/1' ? 'col-span-2' : 'col-span-1';
 
                     return (
                       <div
                         key={widget.id}
+                        draggable
+                        onDragStart={(e) => {
+                          e.dataTransfer.setData('application/json', JSON.stringify({ widgetId: widget.id, isReorder: true }));
+                          e.dataTransfer.effectAllowed = 'move';
+                        }}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          e.dataTransfer.dropEffect = 'move';
+                        }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          const raw = e.dataTransfer.getData('application/json');
+                          if (!raw) return;
+                          try {
+                            const data = JSON.parse(raw);
+                            if (data.isReorder && data.widgetId) {
+                              const fromIdx = canvasWidgets.findIndex(w => w.id === data.widgetId);
+                              if (fromIdx >= 0 && fromIdx !== targetIndex) {
+                                const nextWidgets = [...canvasWidgets];
+                                const [moved] = nextWidgets.splice(fromIdx, 1);
+                                nextWidgets.splice(targetIndex, 0, moved);
+                                setCanvasWidgets(nextWidgets);
+                              }
+                            } else if (data.type) {
+                              const template = availableWidgetTemplates.find(t => t.type === data.type);
+                              const newWidget: SmartMhcWidget = {
+                                id: `w-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+                                type: data.type,
+                                title: template?.label || data.type,
+                                subtitle: template?.description || 'Custom report section',
+                                width: data.defaultWidth || '1/1',
+                                status: 'NORMAL',
+                                comparisonSource: 'Baseline vs Current',
+                                displayFields: { showGauge: true, showTable: true }
+                              };
+                              const nextWidgets = [...canvasWidgets];
+                              nextWidgets.splice(targetIndex, 0, newWidget);
+                              setCanvasWidgets(nextWidgets);
+                              setSelectedWidgetId(newWidget.id);
+                              showToast(`Added "${newWidget.title}" to Report Canvas`);
+                            }
+                          } catch (err) {}
+                        }}
                         onClick={() => setSelectedWidgetId(widget.id)}
-                        className={`${colSpanClass} p-3.5 rounded-lg border transition relative group ${
+                        className={`${colSpanClass} p-3 rounded-lg border transition relative group ${
                           isSelected
                             ? 'border-[#8B9DFF] ring-2 ring-[#8B9DFF]/30 bg-[#1A1D24]'
                             : isDark
@@ -2623,10 +2957,11 @@ export const SmartMhcWorkspace: React.FC<SmartMhcWorkspaceProps> = ({
                         }`}
                       >
                         {/* Widget Header Controls */}
-                        <div className="flex items-center justify-between pb-2 border-b border-slate-800/60 mb-2.5">
-                          <div className="flex items-center gap-2">
+                        <div className="flex items-center justify-between pb-1.5 border-b border-slate-800/60 mb-2">
+                          <div className="flex items-center gap-1.5 cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-200">
+                            <GripVertical className="w-3.5 h-3.5 shrink-0 text-slate-500" />
                             <span className="font-bold text-xs text-slate-100 truncate">{widget.title}</span>
-                            <Badge variant={widget.status === 'NORMAL' ? 'success' : 'warning'} className="text-[9px]">
+                            <Badge variant={widget.status === 'NORMAL' ? 'success' : 'warning'} className="text-[9px] px-1.5 py-0.2">
                               {widget.status}
                             </Badge>
                           </div>
@@ -2665,23 +3000,7 @@ export const SmartMhcWorkspace: React.FC<SmartMhcWorkspaceProps> = ({
 
                         {/* WIDGET CONTENT RENDERERS MATCHING REFERENCE DESIGNS */}
                         {/* WIDGET 1: LASER LIFE */}
-                        {widget.type === 'Laser Life' && (
-                          <div className="space-y-2 text-xs font-mono">
-                            <div className="flex items-center justify-between text-slate-200">
-                              <span className="text-base font-black text-emerald-400">18,240 hrs</span>
-                              <span className="text-xs font-bold text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/60">
-                                73%
-                              </span>
-                            </div>
-                            <div className="w-full bg-slate-900 h-2.5 rounded-full overflow-hidden border border-slate-800">
-                              <div className="bg-emerald-500 h-full w-[73%]" />
-                            </div>
-                            <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-400 pt-1">
-                              <div>Remaining: <strong className="text-slate-200">6,760 hrs</strong></div>
-                              <div>Replace @: <strong className="text-slate-200">25,000 hrs</strong></div>
-                            </div>
-                          </div>
-                        )}
+                        {widget.type === 'Laser Life' && renderLaserLifeWidget(false)}
 
                         {/* WIDGET 2: LASER TEMPERATURE */}
                         {widget.type === 'Laser Temperature' && renderLaserTemperatureWidget(false)}
@@ -2692,25 +3011,8 @@ export const SmartMhcWorkspace: React.FC<SmartMhcWorkspaceProps> = ({
                         {/* WIDGET 4: BEAM / OPTICAL CONDITION */}
                         {widget.type === 'Beam Comparison' && renderBeamProfileWidget(false)}
 
-                        {/* WIDGET 5: CURRENT PRODUCT */}
-                        {widget.type === 'Product Info' && (
-                          <div className="grid grid-cols-2 gap-2 text-xs font-mono">
-                            <div><span className="text-slate-400 block text-[10px]">Product</span><strong className="text-slate-200">Semiconductor Wafer</strong></div>
-                            <div><span className="text-slate-400 block text-[10px]">Recipe</span><strong className="text-slate-200">ABC-123_RECIPE</strong></div>
-                            <div><span className="text-slate-400 block text-[10px]">Lot / Panel</span><strong className="text-slate-200">LOT20260806-01</strong></div>
-                            <div><span className="text-slate-400 block text-[10px]">Total Panels</span><strong className="text-slate-200">120</strong></div>
-                          </div>
-                        )}
-
-                        {/* WIDGET 6: PROCESS PARAMETERS */}
-                        {widget.type === 'Process Parameters' && (
-                          <div className="grid grid-cols-2 gap-2 text-xs font-mono">
-                            <div><span className="text-slate-400 block text-[10px]">Power</span><strong className="text-cyan-400">72%</strong></div>
-                            <div><span className="text-slate-400 block text-[10px]">Shots</span><strong className="text-slate-200">24</strong></div>
-                            <div><span className="text-slate-400 block text-[10px]">Frequency</span><strong className="text-slate-200">80 kHz</strong></div>
-                            <div><span className="text-slate-400 block text-[10px]">Pulse Width</span><strong className="text-slate-200">8 ns</strong></div>
-                          </div>
-                        )}
+                        {/* WIDGET 5: PRODUCT / PROCESS / VIA QUALITY */}
+                        {(widget.type === 'Product / Process / Via' || widget.type === 'Product Info' || widget.type === 'Process Parameters') && renderProductProcessWidget(false)}
 
                         {/* WIDGET 7: MAINTENANCE RECOMMENDATION */}
                         {widget.type === 'Recommendations' && (
@@ -2828,7 +3130,7 @@ export const SmartMhcWorkspace: React.FC<SmartMhcWorkspaceProps> = ({
                 className="bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs py-1.5 px-4 flex items-center gap-2 shadow-md"
               >
                 <FileDown className="w-4 h-4" />
-                Export PDF (1 Page)
+                Export PDF Report
               </Button>
             </div>
           </div>
@@ -2836,7 +3138,7 @@ export const SmartMhcWorkspace: React.FC<SmartMhcWorkspaceProps> = ({
 
         {/* RIGHT SUPPORTING PANEL: PROPERTIES PANEL */}
         {showPropertiesPanel && selectedWidget ? (
-          <div className={`w-60 lg:w-64 xl:w-72 shrink-0 p-3.5 rounded-lg border flex flex-col justify-between ${
+          <div className={`w-60 lg:w-64 xl:w-72 shrink-0 p-3.5 rounded-lg border flex flex-col justify-between sticky top-4 max-h-[calc(100vh-5rem)] overflow-y-auto z-20 ${
             isDark ? 'bg-[#15181C] border-[#2B323A]' : 'bg-white border-slate-300 shadow-xs'
           }`}>
             <div className="space-y-4">
@@ -3073,12 +3375,16 @@ export const SmartMhcWorkspace: React.FC<SmartMhcWorkspaceProps> = ({
                     <span>{w.title}</span>
                     <span className="text-[10px] text-slate-600 uppercase font-mono">{w.status}</span>
                   </div>
-                  {w.type === 'Laser Temperature' ? (
+                  {w.type === 'Laser Life' ? (
+                    renderLaserLifeWidget(true)
+                  ) : w.type === 'Laser Temperature' ? (
                     renderLaserTemperatureWidget(true)
                   ) : w.type === 'Laser Power / Trend' ? (
                     renderLaserPowerWidget(true)
                   ) : w.type === 'Beam Comparison' ? (
                     renderBeamProfileWidget(true)
+                  ) : (w.type === 'Product / Process / Via' || w.type === 'Product Info' || w.type === 'Process Parameters') ? (
+                    renderProductProcessWidget(true)
                   ) : (
                     <p className="text-slate-700 font-mono text-[11px]">{w.subtitle || 'Verified live machine telemetry.'}</p>
                   )}
@@ -3561,11 +3867,24 @@ export const SmartMhcWorkspace: React.FC<SmartMhcWorkspaceProps> = ({
                       </div>
                     </div>
 
-                    <Button className={`text-xs py-1 px-3 shrink-0 font-bold ${
-                      isSelected ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-200 hover:bg-slate-700'
-                    }`}>
-                      {isSelected ? 'Selected' : 'Use Record'}
-                    </Button>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Button className={`text-xs py-1 px-3 font-bold ${
+                        isSelected ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-200 hover:bg-slate-700'
+                      }`}>
+                        {isSelected ? 'Selected' : 'Use Record'}
+                      </Button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteLaserPowerRecord(rec.id);
+                        }}
+                        className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-950/40 rounded transition"
+                        title="Delete Record"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 );
               })
@@ -3597,6 +3916,7 @@ export const SmartMhcWorkspace: React.FC<SmartMhcWorkspaceProps> = ({
         onClose={() => setIsEnterLaserPowerModalOpen(false)}
         machine={machine}
         onSave={handleSavePowerCheckFromMhc}
+        isHistorical={isHistoricalLaserPower}
       />
 
       {/* MODAL 13: SELECT SAVED BEAM PROFILE RECORDS */}
@@ -3673,9 +3993,20 @@ export const SmartMhcWorkspace: React.FC<SmartMhcWorkspaceProps> = ({
                     </Badge>
                   </div>
 
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1.5">
                     {isPrev && <Badge variant="warning" className="text-[9px]">PREVIOUS</Badge>}
                     {isCurr && <Badge variant="cyan" className="text-[9px]">CURRENT</Badge>}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteBeamProfileRecord(rec.id);
+                      }}
+                      className="p-1 text-slate-400 hover:text-rose-400 hover:bg-rose-950/40 rounded transition ml-2"
+                      title="Delete Record"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 </div>
               );

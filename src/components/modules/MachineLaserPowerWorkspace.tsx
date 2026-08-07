@@ -22,6 +22,7 @@ import {
 } from '../../types/laserPower';
 import { LaserPowerEngine } from '../../utils/laserPowerEngine';
 import { StorageService } from '../../utils/persistence';
+import { getLocalDateString } from '../../utils/timeUtils';
 import { Card } from '../common/Card';
 import { Badge } from '../common/Badge';
 import { Button } from '../common/Button';
@@ -48,7 +49,7 @@ export const MachineLaserPowerWorkspace: React.FC<MachineLaserPowerWorkspaceProp
   const [selectedRecordDetail, setSelectedRecordDetail] = useState<LaserPowerCheckRecord | null>(null);
 
   // Form State for New Check
-  const [formDate, setFormDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [formDate, setFormDate] = useState<string>(getLocalDateString());
   const [formFreq, setFormFreq] = useState<number>(50);
   const [formRemarks, setFormRemarks] = useState<string>('');
 

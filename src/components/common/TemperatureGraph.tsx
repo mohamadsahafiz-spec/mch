@@ -25,6 +25,9 @@ interface TemperatureGraphProps {
   showStatsBanner?: boolean;
   title?: string;
   className?: string;
+  showYAxisControls?: boolean;
+  yMinOverride?: number | null;
+  yMaxOverride?: number | null;
 }
 
 const CHANNEL_COLORS: Record<number, string> = {
@@ -46,8 +49,14 @@ export const TemperatureGraph: React.FC<TemperatureGraphProps> = ({
   showLegend = true,
   showStatsBanner = true,
   title,
-  className = ''
+  className = '',
+  showYAxisControls = true,
+  yMinOverride = null,
+  yMaxOverride = null
 }) => {
+  const [isAutoY, setIsAutoY] = React.useState<boolean>(yMinOverride === null && yMaxOverride === null);
+  const [customMinStr, setCustomMinStr] = React.useState<string>(yMinOverride !== null && yMinOverride !== undefined ? String(yMinOverride) : '');
+  const [customMaxStr, setCustomMaxStr] = React.useState<string>(yMaxOverride !== null && yMaxOverride !== undefined ? String(yMaxOverride) : '');
   // Merge channel data into chart-compatible time-series points with target max 1500 points per channel
   const { chartData, minVal, maxVal } = useMemo(() => {
     let globalMin = Infinity;
@@ -173,8 +182,15 @@ export const TemperatureGraph: React.FC<TemperatureGraphProps> = ({
     );
   }
 
-  const yMin = Math.max(0, Math.floor(minVal - 2));
-  const yMax = Math.ceil(maxVal + 2);
+  const autoYMin = Math.max(0, Math.floor(minVal - 2));
+  const autoYMax = Math.ceil(maxVal + 2);
+
+  const parsedCustomMin = parseFloat(customMinStr);
+  const parsedCustomMax = parseFloat(customMaxStr);
+
+  const yMin = !isAutoY && !isNaN(parsedCustomMin) ? parsedCustomMin : autoYMin;
+  const yMax = !isAutoY && !isNaN(parsedCustomMax) ? parsedCustomMax : autoYMax;
+
   const showDots = chartData.length <= 100;
 
   if (preset === 'report') {
@@ -249,6 +265,67 @@ export const TemperatureGraph: React.FC<TemperatureGraphProps> = ({
   // Default: Engineering preset
   return (
     <div className={`space-y-3 ${className}`}>
+      {showYAxisControls && (
+        <div className="flex flex-wrap items-center justify-between gap-2 p-2 rounded-lg bg-slate-900/60 border border-slate-800/80 font-mono text-xs">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] uppercase font-bold text-slate-400">Y-Axis Scale:</span>
+            <button
+              type="button"
+              onClick={() => setIsAutoY(true)}
+              className={`px-2 py-0.5 rounded text-[10px] font-bold border transition ${
+                isAutoY
+                  ? 'bg-sky-500/20 text-sky-400 border-sky-500/50'
+                  : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-slate-200'
+              }`}
+            >
+              Auto ({autoYMin}°C – {autoYMax}°C)
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setIsAutoY(false);
+                if (!customMinStr) setCustomMinStr(String(autoYMin));
+                if (!customMaxStr) setCustomMaxStr(String(autoYMax));
+              }}
+              className={`px-2 py-0.5 rounded text-[10px] font-bold border transition ${
+                !isAutoY
+                  ? 'bg-amber-500/20 text-amber-400 border-amber-500/50'
+                  : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-slate-200'
+              }`}
+            >
+              Manual Bounds
+            </button>
+          </div>
+
+          {!isAutoY && (
+            <div className="flex items-center gap-2">
+              <label className="flex items-center gap-1 text-[11px] text-slate-300">
+                <span>Min:</span>
+                <input
+                  type="number"
+                  value={customMinStr}
+                  onChange={(e) => setCustomMinStr(e.target.value)}
+                  placeholder={String(autoYMin)}
+                  className="w-16 px-1.5 py-0.5 rounded bg-slate-950 border border-slate-700 text-slate-100 font-mono text-xs focus:outline-none focus:border-amber-500"
+                />
+                <span>°C</span>
+              </label>
+              <label className="flex items-center gap-1 text-[11px] text-slate-300">
+                <span>Max:</span>
+                <input
+                  type="number"
+                  value={customMaxStr}
+                  onChange={(e) => setCustomMaxStr(e.target.value)}
+                  placeholder={String(autoYMax)}
+                  className="w-16 px-1.5 py-0.5 rounded bg-slate-950 border border-slate-700 text-slate-100 font-mono text-xs focus:outline-none focus:border-amber-500"
+                />
+                <span>°C</span>
+              </label>
+            </div>
+          )}
+        </div>
+      )}
+
       {showStatsBanner && stats && (
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 font-mono text-xs">
           <div className="p-2 rounded-lg bg-slate-900/80 border border-slate-800 text-center">

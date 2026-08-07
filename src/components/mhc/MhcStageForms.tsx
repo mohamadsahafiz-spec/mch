@@ -1313,13 +1313,13 @@ export const MhcStageForms: React.FC<MhcStageFormsProps> = ({
       const baseTs = rDate ? `${rDate}T${timePart}:00` : null;
 
       // Authoritative LaserEngine calculation
-      const curHour = LaserEngine.calculateCurrentHour(rec, baseTs, new Date());
-      item.calculatedCurrentHour = curHour !== null ? curHour : rec;
+      const curHour = rec !== null && rec !== undefined ? LaserEngine.calculateEstimatedHour(rec, baseTs, new Date()) : null;
+      item.calculatedCurrentHour = curHour !== null ? curHour : (rec || 0);
 
       const warn = Number(field === 'warningThreshold' ? value : item.warningThreshold || 20000);
       const crit = Number(field === 'criticalThreshold' ? value : item.criticalThreshold || 25000);
 
-      const engineStatus = LaserEngine.evaluateStatus(item.calculatedCurrentHour, warn, crit);
+      const engineStatus = LaserEngine.calculateLaserStatus(item.calculatedCurrentHour, crit, warn);
       item.runtimeStatus = engineStatus === 'ALARM' ? 'CRITICAL' : engineStatus === 'WARNING' ? 'WARNING' : 'NORMAL';
 
       updated[index] = item;

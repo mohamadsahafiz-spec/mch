@@ -81,6 +81,20 @@ export interface MachineDomain {
   id: string;
   machineNo?: string;
   machineName?: string;
+  machineNumber?: string;
+  customerName?: string;
+  customerId?: string;
+  plantName?: string;
+  lineId?: string;
+  contractType?: string;
+  status?: string;
+  installDate?: string;
+  lastServiceDate?: string;
+  nextServiceDue?: string;
+  healthScore?: number;
+  opticalPowerWatts?: number;
+  laserModel?: string;
+  consumables?: any[];
   serialNo?: string;
   manufacturer?: string;
   model?: string;
@@ -936,10 +950,53 @@ export const LaserEngine = {
   /**
    * Normalize raw machine object or list into well-formed MachineDomain objects
    * ensuring all laser head domain parameters (baseLaserHour, baseTimestamp, ratedLife, calibrationHistory) exist.
+   * Naturally sorts machines by machine number / name.
    */
   normalizeMachines(list: any[]): MachineDomain[] {
     if (!Array.isArray(list)) return [];
-    return list.map(m => this.normalizeMachine(m));
+    const normalized = list.map(m => this.normalizeMachine(m));
+    return normalized.sort((a, b) => {
+      const nameA = a.machineNo || a.machineName || a.id || '';
+      const nameB = b.machineNo || b.machineName || b.id || '';
+      return nameA.localeCompare(nameB, undefined, { numeric: true, sensitivity: 'base' });
+    });
+  },
+
+  /**
+   * Calculate overall machine engineering status: PASS | WARNING | FAIL
+   * Derived from laser head remaining life and runtime state
+   */
+  getMachineHealthStatus(machine: MachineDomain | any): 'PASS' | 'WARNING' | 'FAIL' {
+    if (!machine) return 'FAIL';
+    const lasers = Array.isArray(machine.lasers) && machine.lasers.length > 0
+      ? machine.lasers
+      : (Array.isArray(machine.laserHeads) ? machine.laserHeads : []);
+    
+    if (lasers.length === 0) return 'PASS';
+
+    let minRemainingLifePct = 100;
+    let hasFail = false;
+    let hasWarning = false;
+
+    for (const laser of lasers) {
+      const metrics = this.calculateLaserMetrics(laser);
+      if (metrics) {
+        if (metrics.runtimeState === 'EXCEEDED_CEILING' || metrics.runtimeState === 'EXCEEDED_RATED') {
+          hasFail = true;
+        } else if (metrics.runtimeState === 'WARNING_ZONE') {
+          hasWarning = true;
+        }
+        if (typeof metrics.lifeRemainingPct === 'number' && !isNaN(metrics.lifeRemainingPct)) {
+          if (metrics.lifeRemainingPct < minRemainingLifePct) {
+            minRemainingLifePct = metrics.lifeRemainingPct;
+          }
+        }
+      }
+    }
+
+    if (hasFail || minRemainingLifePct <= 5) return 'FAIL';
+    if (hasWarning || minRemainingLifePct <= 20) return 'WARNING';
+    return 'PASS';
   },
 
   normalizeMachine(m: any): MachineDomain {

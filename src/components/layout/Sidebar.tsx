@@ -235,7 +235,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <span className={`text-[9px] font-mono px-1.5 py-0.2 rounded border font-semibold ${
                   isDark ? 'bg-[#8B9DFF]/10 text-[#8B9DFF] border-[#8B9DFF]/30' : 'bg-indigo-50 text-indigo-800 border-indigo-200'
                 }`}>
-                  v0.9.0
+                  v0.9.1
                 </span>
               </div>
               <p className={`text-[10px] font-mono truncate ${isDark ? 'text-slate-400' : 'text-slate-600 font-medium'}`}>Precision Laser Eng</p>
@@ -431,10 +431,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
               <span>FSO Engine</span>
             </div>
-            <span className="font-semibold text-slate-700 dark:text-slate-300">v0.9.0</span>
+            <span className="font-semibold text-slate-700 dark:text-slate-300">v0.9.1</span>
           </>
         ) : (
-          <span className="w-2 h-2 rounded-full bg-emerald-500 mx-auto" title="FSO Engine Online v0.9.0" />
+          <span className="w-2 h-2 rounded-full bg-emerald-500 mx-auto" title="FSO Engine Online v0.9.1" />
         )}
       </div>
     </aside>

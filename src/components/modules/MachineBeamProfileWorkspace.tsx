@@ -24,6 +24,8 @@ import {
 } from '../../types/beamProfile';
 import { BeamProfileEngine } from '../../utils/beamProfileEngine';
 import { StorageService } from '../../utils/persistence';
+import { ImageStore } from '../../utils/imageStore';
+import { getLocalDateString } from '../../utils/timeUtils';
 import { Card } from '../common/Card';
 import { Badge } from '../common/Badge';
 import { Button } from '../common/Button';
@@ -50,7 +52,7 @@ export const MachineBeamProfileWorkspace: React.FC<MachineBeamProfileWorkspacePr
   const [selectedRecordDetail, setSelectedRecordDetail] = useState<BeamProfileCheckRecord | null>(null);
 
   // Form State for New Check
-  const [formDate, setFormDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [formDate, setFormDate] = useState<string>(getLocalDateString());
   const [formRemarks, setFormRemarks] = useState<string>('');
 
   // Local state for the checkpoint inputs in the modal
@@ -131,7 +133,7 @@ export const MachineBeamProfileWorkspace: React.FC<MachineBeamProfileWorkspacePr
   };
 
   // Delete Record
-  const handleDeleteRecord = (id: string) => {
+  const handleDeleteRecord = async (id: string) => {
     if (!confirm('Are you sure you want to delete this Beam Profile record?')) return;
     const updatedRecords = records.filter(r => r.id !== id);
     const updatedMachine: Machine = {
@@ -142,6 +144,11 @@ export const MachineBeamProfileWorkspace: React.FC<MachineBeamProfileWorkspacePr
     const allMachines = StorageService.getMachines();
     const otherMachines = allMachines.filter(m => m.id !== machine.id);
     StorageService.saveMachines([updatedMachine, ...otherMachines]);
+    try {
+      await ImageStore.deleteImagesForRecord(id);
+    } catch (err) {
+      console.error('Failed to clean up IDB images:', err);
+    }
   };
 
   // Quick pointers for latest record metrics

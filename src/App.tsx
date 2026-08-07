@@ -25,6 +25,7 @@ import {
   UserSession
 } from './types';
 import { StorageService } from './utils/persistence';
+import { ImageStore } from './utils/imageStore';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
@@ -97,6 +98,12 @@ function AppLayout() {
   useEffect(() => {
     // Check Auth Session
     const authSession = StorageService.getAuth();
+    // Preload IDB images and initialize app state
+    ImageStore.preloadAllImagesFromIDB().then(() => {
+      const loadedMachines = StorageService.getMachines();
+      setMachines(loadedMachines);
+    });
+
     if (authSession && authSession.isAuthenticated) {
       setIsAuthenticated(true);
       const storedMode = authSession.workspaceMode || StorageService.getWorkspaceMode() || 'MHC_MODE';

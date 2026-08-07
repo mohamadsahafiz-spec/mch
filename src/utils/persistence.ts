@@ -1,4 +1,5 @@
 import { LaserEngine } from './laserEngine';
+import { ImageStore } from './imageStore';
 import { 
   Customer, 
   Plant, 
@@ -90,8 +91,9 @@ function getStorage<T>(key: string, defaultValue: T): T {
 function setStorage<T>(key: string, value: T): void {
   try {
     localStorage.setItem(key, JSON.stringify(value));
-  } catch (e) {
-    console.error(`Error writing ${key} to localStorage`, e);
+  } catch (e: any) {
+    console.error(`[StorageService] Error writing ${key} to localStorage:`, e);
+    throw new Error(`Failed to persist data to local storage (${e?.message || 'Storage Quota Exceeded'}).`);
   }
 }
 
@@ -107,9 +109,16 @@ export const StorageService = {
 
   getMachines: (): Machine[] => {
     const raw = getStorage(KEYS.MACHINES, INITIAL_MACHINES);
-    return LaserEngine.normalizeMachines(raw) as unknown as Machine[];
+    const normalized = LaserEngine.normalizeMachines(raw) as unknown as Machine[];
+    return ImageStore.hydrateImagesSync(normalized);
   },
-  saveMachines: (data: Machine[]) => setStorage(KEYS.MACHINES, data),
+  saveMachines: (data: Machine[]) => {
+    const processedMachines = data.map(m => {
+      const recordId = m.id || `M-${Date.now()}`;
+      return ImageStore.extractAndStoreImagesSync(m, recordId);
+    });
+    setStorage(KEYS.MACHINES, processedMachines);
+  },
 
   getContracts: (): Contract[] => getStorage(KEYS.CONTRACTS, INITIAL_CONTRACTS),
   saveContracts: (data: Contract[]) => setStorage(KEYS.CONTRACTS, data),

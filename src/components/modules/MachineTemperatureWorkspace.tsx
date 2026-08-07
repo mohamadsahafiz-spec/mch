@@ -48,6 +48,12 @@ const CHANNEL_COLORS: Record<number, string> = {
   6: '#6A4C93'
 };
 
+// In-memory cache for unsaved imported temperature drafts per machine
+const tempDraftCache: Record<string, {
+  selectedFiles: { name: string; text: string }[];
+  analysisResult: any;
+}> = {};
+
 export const MachineTemperatureWorkspace: React.FC<MachineTemperatureWorkspaceProps> = ({
   machine,
   onUpdateMachine
@@ -55,8 +61,10 @@ export const MachineTemperatureWorkspace: React.FC<MachineTemperatureWorkspacePr
   const { effectiveTheme } = useTheme();
   const isDark = effectiveTheme === 'dark';
 
+  const cachedDraft = tempDraftCache[machine.id];
+
   // State for raw log processing
-  const [selectedFiles, setSelectedFiles] = useState<{ name: string; text: string }[]>([]);
+  const [selectedFiles, setSelectedFiles] = useState<{ name: string; text: string }[]>(cachedDraft?.selectedFiles || []);
   const [cmdFilter, setCmdFilter] = useState<string>('1');
   const [intervalSec, setIntervalSec] = useState<number>(30);
   const [filterMin, setFilterMin] = useState<number>(0);
@@ -70,7 +78,7 @@ export const MachineTemperatureWorkspace: React.FC<MachineTemperatureWorkspacePr
     stats: ChannelStats | null;
     channelStats: Record<number, ChannelStats>;
     sourceFileNames: string[];
-  } | null>(null);
+  } | null>(cachedDraft?.analysisResult || null);
 
   const [activeChannels, setActiveChannels] = useState<number[]>([1, 2, 3, 4, 5, 6]);
   const [graphPreset, setGraphPreset] = useState<GraphPreset>('engineering');
@@ -139,19 +147,23 @@ export const MachineTemperatureWorkspace: React.FC<MachineTemperatureWorkspacePr
       filterMax: fMax
     });
 
-    setAnalysisResult({
+    const resData = {
       rawRecords: result.rawRecords,
       resampledChannels: result.resampledChannels,
       dayBoundaries: result.dayBoundaries,
       stats: result.combinedStats,
       channelStats: result.channelStats,
       sourceFileNames: files.map((f) => f.name)
-    });
+    };
+
+    setAnalysisResult(resData);
+    tempDraftCache[machine.id] = { selectedFiles: files, analysisResult: resData };
   };
 
   const handleClearFiles = () => {
     setSelectedFiles([]);
     setAnalysisResult(null);
+    delete tempDraftCache[machine.id];
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -189,6 +201,9 @@ export const MachineTemperatureWorkspace: React.FC<MachineTemperatureWorkspacePr
     };
 
     onUpdateMachine(updatedMachine);
+    delete tempDraftCache[machine.id];
+    setSelectedFiles([]);
+    setAnalysisResult(null);
     alert('Temperature inspection record saved successfully to Machine Passport history.');
   };
 
@@ -583,7 +598,7 @@ export const MachineTemperatureWorkspace: React.FC<MachineTemperatureWorkspacePr
                     </thead>
                     <tbody className={`divide-y ${isDark ? 'divide-[#2B323A]/50' : 'divide-slate-200'}`}>
                       {Object.entries(analysisResult.resampledChannels)
-                        .flatMap(([chStr, pts]) => pts.map((p) => ({ ch: parseInt(chStr, 10), ts: p.ts, val: p.val })))
+                        .flatMap(([chStr, pts]) => (pts as Array<{ ts: Date; val: number }>).map((p) => ({ ch: parseInt(chStr, 10), ts: p.ts, val: p.val })))
                         .filter((p) => activeChannels.includes(p.ch))
                         .slice(0, 50)
                         .map((p, idx) => (

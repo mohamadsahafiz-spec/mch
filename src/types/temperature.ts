@@ -64,3 +64,9 @@ export interface ManualTemperatureReading {
   createdAt: string;
 }
 
+export interface ChartDataset {
+  label: string;
+  channel: number;
+  data: Array<{ x: Date; y: number }>;
+}
+
