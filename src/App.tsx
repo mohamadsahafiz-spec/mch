@@ -506,6 +506,7 @@ function AppLayout() {
               activeSubTab={activeTab}
               onSaveMhcRecord={handleSaveMhcRecord}
               onGenerateReport={handleGenerateExecutiveReport}
+              onUpdateMachine={handleEditMachine}
             />
           )}
 

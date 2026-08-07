@@ -196,6 +196,10 @@ export interface Machine {
   ratedLife?: number;
   warningLife?: number;
   contingencyCeiling?: number;
+  temperatureRecords?: import('./temperature').SavedTemperatureRecord[];
+  manualTemperatureReadings?: import('./temperature').ManualTemperatureReading[];
+  laserPowerRecords?: import('./laserPower').LaserPowerCheckRecord[];
+  beamProfileRecords?: import('./beamProfile').BeamProfileCheckRecord[];
 }
 
 export interface SubsystemHealth {

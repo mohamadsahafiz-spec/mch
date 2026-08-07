@@ -29,9 +29,14 @@ import {
   Download,
   FileJson,
   Check,
-  Camera
+  Camera,
+  Thermometer,
+  Aperture
 } from 'lucide-react';
 import { Machine, MHCRecord, ExecutiveReport, Customer } from '../../types';
+import { MachineTemperatureWorkspace } from './MachineTemperatureWorkspace';
+import { MachineLaserPowerWorkspace } from './MachineLaserPowerWorkspace';
+import { MachineBeamProfileWorkspace } from './MachineBeamProfileWorkspace';
 import { INITIAL_CUSTOMERS } from '../../data/mockData';
 import { Card } from '../common/Card';
 import { Badge } from '../common/Badge';
@@ -85,6 +90,9 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
   const { effectiveTheme } = useTheme();
   const isDark = effectiveTheme === 'dark';
   const selectedMachine = machines.find((m) => m.id === selectedMachineId) || machines[0];
+
+  // Machine Passport Sub-Category Active Tab State ('lifecycle' | 'temperature' | 'laser_power' | 'beam_profile')
+  const [passportSubTab, setPassportSubTab] = useState<'lifecycle' | 'temperature' | 'laser_power' | 'beam_profile'>('lifecycle');
 
   // Authoritative Machine Laser Lifecycle Metrics derived via LaserEngine
   const machineMetrics: MachineMetrics = React.useMemo(() => {
@@ -1592,7 +1600,100 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
             </div>
           </div>
 
-          <div className="space-y-6">
+          {/* Machine Passport Sub-Category Navigation Tabs */}
+          <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
+            <button
+              type="button"
+              onClick={() => setPassportSubTab('lifecycle')}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+                passportSubTab === 'lifecycle'
+                  ? isDark
+                    ? 'bg-[#8B9DFF]/20 text-[#8B9DFF] border border-[#8B9DFF]/40 shadow-xs'
+                    : 'bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-xs'
+                  : isDark
+                  ? 'text-slate-400 hover:text-slate-200'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Zap className="w-3.5 h-3.5 text-amber-400" />
+              Laser Lifecycle & Health
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setPassportSubTab('temperature')}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+                passportSubTab === 'temperature'
+                  ? isDark
+                    ? 'bg-rose-500/20 text-rose-400 border border-rose-500/40 shadow-xs'
+                    : 'bg-rose-50 text-rose-700 border border-rose-200 shadow-xs'
+                  : isDark
+                  ? 'text-slate-400 hover:text-slate-200'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Thermometer className="w-3.5 h-3.5 text-rose-400" />
+              Machine Temperature
+              {((selectedMachine?.temperatureRecords?.length || 0) > 0 || (selectedMachine?.manualTemperatureReadings?.length || 0) > 0) && (
+                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
+                  isDark ? 'bg-rose-500/30 text-rose-300' : 'bg-rose-100 text-rose-800'
+                }`}>
+                  {(selectedMachine?.temperatureRecords?.length || 0) + (selectedMachine?.manualTemperatureReadings?.length || 0)}
+                </span>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setPassportSubTab('laser_power')}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+                passportSubTab === 'laser_power'
+                  ? isDark
+                    ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40 shadow-xs'
+                    : 'bg-amber-50 text-amber-800 border border-amber-200 shadow-xs'
+                  : isDark
+                  ? 'text-slate-400 hover:text-slate-200'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Zap className="w-3.5 h-3.5 text-amber-400" />
+              Laser Power
+              {(selectedMachine?.laserPowerRecords?.length || 0) > 0 && (
+                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
+                  isDark ? 'bg-amber-500/30 text-amber-300' : 'bg-amber-100 text-amber-800'
+                }`}>
+                  {selectedMachine.laserPowerRecords?.length}
+                </span>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setPassportSubTab('beam_profile')}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+                passportSubTab === 'beam_profile'
+                  ? isDark
+                    ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/40 shadow-xs'
+                    : 'bg-cyan-50 text-cyan-800 border border-cyan-200 shadow-xs'
+                  : isDark
+                  ? 'text-slate-400 hover:text-slate-200'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Aperture className="w-3.5 h-3.5 text-cyan-400" />
+              Beam Profile
+              {(selectedMachine?.beamProfileRecords?.length || 0) > 0 && (
+                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
+                  isDark ? 'bg-cyan-500/30 text-cyan-300' : 'bg-cyan-100 text-cyan-800'
+                }`}>
+                  {selectedMachine.beamProfileRecords?.length}
+                </span>
+              )}
+            </button>
+          </div>
+
+          {passportSubTab === 'lifecycle' ? (
+            <div className="space-y-6">
           {/* Hardware & Installation Telemetry */}
           <div className={`grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 rounded-xl border ${
             isDark ? 'bg-[#1A1D21] border-[#2B323A]' : 'bg-slate-50 border-slate-200'
@@ -1909,6 +2010,22 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
             </Card>
           </div>
         </div>
+        ) : passportSubTab === 'temperature' ? (
+          <MachineTemperatureWorkspace
+            machine={selectedMachine}
+            onUpdateMachine={(updated) => onEditMachine?.(updated)}
+          />
+        ) : passportSubTab === 'laser_power' ? (
+          <MachineLaserPowerWorkspace
+            machine={selectedMachine}
+            onUpdateMachine={(updated) => onEditMachine?.(updated)}
+          />
+        ) : (
+          <MachineBeamProfileWorkspace
+            machine={selectedMachine}
+            onUpdateMachine={(updated) => onEditMachine?.(updated)}
+          />
+        )}
         </>
       )}
 

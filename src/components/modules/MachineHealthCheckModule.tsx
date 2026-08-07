@@ -52,6 +52,7 @@ interface MachineHealthCheckProps {
   activeSubTab?: NavigationTab;
   onSaveMhcRecord: (record: MHCRecord) => void;
   onGenerateReport: (report: ExecutiveReport) => void;
+  onUpdateMachine?: (machine: Machine) => void;
 }
 
 export const MachineHealthCheckModule: React.FC<MachineHealthCheckProps> = ({
@@ -59,7 +60,8 @@ export const MachineHealthCheckModule: React.FC<MachineHealthCheckProps> = ({
   initialMachineId,
   activeSubTab = 'mhc',
   onSaveMhcRecord,
-  onGenerateReport
+  onGenerateReport,
+  onUpdateMachine
 }) => {
   // 1. Selected Machine
   const [selectedMachineId, setSelectedMachineId] = useState<string>(
@@ -270,6 +272,7 @@ export const MachineHealthCheckModule: React.FC<MachineHealthCheckProps> = ({
           machine={selectedMachine}
           session={activeSession}
           onUpdateSession={handleUpdateSession}
+          onUpdateMachine={onUpdateMachine}
           onOpenStageForm={(stageNum) => {
             setActiveStage(stageNum);
             setViewMode('stage_forms');

@@ -57,7 +57,8 @@ import {
   CheckCircle,
   XCircle,
   Wrench,
-  UserCheck
+  UserCheck,
+  Aperture
 } from 'lucide-react';
 import { 
   Machine, 
@@ -73,11 +74,321 @@ import { Button } from '../common/Button';
 import { Modal } from '../common/Modal';
 import { useTheme } from '../../context/ThemeContext';
 import { StorageService } from '../../utils/persistence';
+import { TemperatureGraph } from '../common/TemperatureGraph';
+import { TemperatureEngine } from '../../utils/temperatureEngine';
+import { SavedTemperatureRecord } from '../../types/temperature';
+import { LaserPowerCheckRecord, MaskSize, MASK_SPECS } from '../../types/laserPower';
+import { LaserPowerEngine } from '../../utils/laserPowerEngine';
+import { BeamProfileCheckRecord, CHECKPOINT_SPECS, CheckpointId, DEFAULT_EVIDENCE_CHECKPOINTS } from '../../types/beamProfile';
+import { BeamProfileEngine } from '../../utils/beamProfileEngine';
+import { MhcEnterBeamProfileModal } from './MhcEnterBeamProfileModal';
+
+const MhcEnterLaserPowerModal: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+  machine: Machine;
+  onSave: (record: LaserPowerCheckRecord) => void;
+}> = ({ isOpen, onClose, machine, onSave }) => {
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [freq, setFreq] = useState(50);
+  const [remarks, setRemarks] = useState('');
+
+  const [lsHeadA, setLsHeadA] = useState('15.2');
+  const [lsHeadB, setLsHeadB] = useState('15.0');
+
+  const [optHeadA, setOptHeadA] = useState('14.8');
+  const [optHeadB, setOptHeadB] = useState('14.6');
+
+  const [maskInputs, setMaskInputs] = useState<Record<MaskSize, { headA: string; headB: string }>>({
+    '2.2mm': { headA: '3.4', headB: '3.3' },
+    '2.0mm': { headA: '2.7', headB: '2.6' },
+    '1.8mm': { headA: '2.1', headB: '2.0' },
+    '1.3mm': { headA: '1.2', headB: '1.1' },
+    '1.1mm': { headA: '0.8', headB: '0.8' },
+    '0.9mm': { headA: '0.5', headB: '0.4' }
+  });
+
+  const currentFormParsed = React.useMemo(() => {
+    const parseNum = (s: string) => {
+      const n = parseFloat(s);
+      return isNaN(n) ? null : n;
+    };
+    return LaserPowerEngine.evaluateRecord({
+      date,
+      frequencyKhz: freq,
+      engineerRemarks: remarks,
+      laserSource: {
+        specText: '15W ±10% (13.5–16.5W)',
+        minWatts: 13.5,
+        maxWatts: 16.5,
+        headA: parseNum(lsHeadA),
+        headB: parseNum(lsHeadB),
+        passA: false,
+        passB: false
+      },
+      opticsTopHat: {
+        specText: '15W ±10% (13.5–16.5W)',
+        minWatts: 13.5,
+        maxWatts: 16.5,
+        headA: parseNum(optHeadA),
+        headB: parseNum(optHeadB),
+        passA: false,
+        passB: false
+      },
+      workingZoneMasks: MASK_SPECS.map(s => ({
+        maskSize: s.size,
+        specText: s.specText,
+        minWatts: s.minWatts,
+        headA: parseNum(maskInputs[s.size].headA),
+        headB: parseNum(maskInputs[s.size].headB),
+        passA: false,
+        passB: false
+      }))
+    });
+  }, [date, freq, remarks, lsHeadA, lsHeadB, optHeadA, optHeadB, maskInputs]);
+
+  const handleSave = () => {
+    const record = LaserPowerEngine.evaluateRecord(currentFormParsed);
+    onSave(record);
+  };
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={`Enter Laser Power Check — ${machine.model} (${machine.machineNumber})`}
+      maxWidth="max-w-3xl"
+    >
+      <div className="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
+        {/* Form Header info */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl bg-slate-900 border border-slate-800 text-xs">
+          <div>
+            <label className="block font-semibold text-slate-300 mb-1">Check Date</label>
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-slate-100 font-mono"
+            />
+          </div>
+          <div>
+            <label className="block font-semibold text-slate-300 mb-1">Frequency (kHz)</label>
+            <input
+              type="number"
+              value={freq}
+              onChange={(e) => setFreq(Number(e.target.value))}
+              className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-slate-100 font-mono"
+            />
+          </div>
+        </div>
+
+        {/* Laser Source */}
+        <div className="p-3.5 rounded-xl border border-slate-800 bg-slate-950 space-y-3 text-xs">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
+            <h4 className="font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+              <Zap className="w-4 h-4" />
+              LASER SOURCE — External Meter
+            </h4>
+            <span className="text-[11px] text-slate-400">Spec: 15W ±10% (13.5–16.5W)</span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-slate-400 mb-1">Head A Measured W</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  step="0.1"
+                  value={lsHeadA}
+                  onChange={(e) => setLsHeadA(e.target.value)}
+                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-slate-100 font-mono"
+                />
+                <span className={`text-[10px] font-bold px-2 py-1 rounded shrink-0 ${
+                  currentFormParsed.laserSource.passA ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-rose-950 text-rose-400 border border-rose-800'
+                }`}>
+                  {currentFormParsed.laserSource.passA ? 'PASS' : 'FAIL'}
+                </span>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-slate-400 mb-1">Head B Measured W</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  step="0.1"
+                  value={lsHeadB}
+                  onChange={(e) => setLsHeadB(e.target.value)}
+                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-slate-100 font-mono"
+                />
+                <span className={`text-[10px] font-bold px-2 py-1 rounded shrink-0 ${
+                  currentFormParsed.laserSource.passB ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-rose-950 text-rose-400 border border-rose-800'
+                }`}>
+                  {currentFormParsed.laserSource.passB ? 'PASS' : 'FAIL'}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Optics / Top Hat */}
+        <div className="p-3.5 rounded-xl border border-slate-800 bg-slate-950 space-y-3 text-xs">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
+            <h4 className="font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-1.5">
+              <Sliders className="w-4 h-4" />
+              AFTER TOP HAT / OPTICS — External Meter
+            </h4>
+            <span className="text-[11px] text-slate-400">Spec: 15W ±10% (13.5–16.5W)</span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-slate-400 mb-1">Head A Measured W</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  step="0.1"
+                  value={optHeadA}
+                  onChange={(e) => setOptHeadA(e.target.value)}
+                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-slate-100 font-mono"
+                />
+                <span className={`text-[10px] font-bold px-2 py-1 rounded shrink-0 ${
+                  currentFormParsed.opticsTopHat.passA ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-rose-950 text-rose-400 border border-rose-800'
+                }`}>
+                  {currentFormParsed.opticsTopHat.passA ? 'PASS' : 'FAIL'}
+                </span>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-slate-400 mb-1">Head B Measured W</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  step="0.1"
+                  value={optHeadB}
+                  onChange={(e) => setOptHeadB(e.target.value)}
+                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-slate-100 font-mono"
+                />
+                <span className={`text-[10px] font-bold px-2 py-1 rounded shrink-0 ${
+                  currentFormParsed.opticsTopHat.passB ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-rose-950 text-rose-400 border border-rose-800'
+                }`}>
+                  {currentFormParsed.opticsTopHat.passB ? 'PASS' : 'FAIL'}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Working Zone Mask Readings */}
+        <div className="p-3.5 rounded-xl border border-slate-800 bg-slate-950 space-y-3 text-xs">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
+            <h4 className="font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+              <Activity className="w-4 h-4" />
+              WORKING ZONE — Internal Power Meter Masks
+            </h4>
+            <span className="text-[11px] text-slate-400">Mask thresholds evaluation</span>
+          </div>
+
+          <table className="w-full text-left font-mono text-xs">
+            <thead>
+              <tr className="border-b border-slate-800 text-[10px] text-slate-400 uppercase">
+                <th className="py-1.5 px-2">Mask</th>
+                <th className="py-1.5 px-2">Spec</th>
+                <th className="py-1.5 px-2">Head A (W)</th>
+                <th className="py-1.5 px-2">Head B (W)</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-800/60">
+              {MASK_SPECS.map(s => {
+                const parsedM = currentFormParsed.workingZoneMasks.find(m => m.maskSize === s.size);
+                return (
+                  <tr key={s.size}>
+                    <td className="py-1.5 px-2 font-bold text-slate-200">{s.size}</td>
+                    <td className="py-1.5 px-2 text-slate-400">{s.specText}</td>
+                    <td className="py-1.5 px-2">
+                      <div className="flex items-center gap-1.5">
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={maskInputs[s.size].headA}
+                          onChange={(e) => setMaskInputs(prev => ({
+                            ...prev,
+                            [s.size]: { ...prev[s.size], headA: e.target.value }
+                          }))}
+                          className="w-20 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-slate-100 font-mono"
+                        />
+                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
+                          parsedM?.passA ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-rose-950 text-rose-400 border border-rose-800'
+                        }`}>
+                          {parsedM?.passA ? 'PASS' : 'FAIL'}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="py-1.5 px-2">
+                      <div className="flex items-center gap-1.5">
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={maskInputs[s.size].headB}
+                          onChange={(e) => setMaskInputs(prev => ({
+                            ...prev,
+                            [s.size]: { ...prev[s.size], headB: e.target.value }
+                          }))}
+                          className="w-20 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-slate-100 font-mono"
+                        />
+                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
+                          parsedM?.passB ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-rose-950 text-rose-400 border border-rose-800'
+                        }`}>
+                          {parsedM?.passB ? 'PASS' : 'FAIL'}
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        <div>
+          <label className="block text-xs font-semibold text-slate-300 mb-1">Remarks</label>
+          <input
+            type="text"
+            value={remarks}
+            onChange={(e) => setRemarks(e.target.value)}
+            placeholder="e.g. Power check conducted during preventive maintenance."
+            className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-100"
+          />
+        </div>
+
+        <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-slate-300">OVERALL VERDICT:</span>
+            <Badge variant={currentFormParsed.overallResult === 'PASS' ? 'success' : 'danger'}>
+              {currentFormParsed.overallResult}
+            </Badge>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={onClose} className="text-xs py-1.5 px-3">
+              Cancel
+            </Button>
+            <Button onClick={handleSave} className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-1.5 px-4">
+              Save & Link to MHC
+            </Button>
+          </div>
+        </div>
+      </div>
+    </Modal>
+  );
+};
 
 interface SmartMhcWorkspaceProps {
   machine: Machine;
   session?: MHCSession;
   onUpdateSession?: (session: MHCSession) => void;
+  onUpdateMachine?: (updatedMachine: Machine) => void;
   onOpenStageForm?: (stageNum: number) => void;
 }
 
@@ -230,6 +541,7 @@ export const SmartMhcWorkspace: React.FC<SmartMhcWorkspaceProps> = ({
   machine,
   session,
   onUpdateSession,
+  onUpdateMachine,
   onOpenStageForm
 }) => {
   const { effectiveTheme } = useTheme();
@@ -238,6 +550,77 @@ export const SmartMhcWorkspace: React.FC<SmartMhcWorkspaceProps> = ({
   // DOM Refs for Real A4 Capacity Measurement
   const canvasPaperRef = useRef<HTMLDivElement>(null);
   const canvasContainerRef = useRef<HTMLDivElement>(null);
+
+  // Temperature Record Selection & Import State
+  const [selectedTempRecordId, setSelectedTempRecordId] = useState<string | null>(null);
+  const [isSelectTempRecordModalOpen, setIsSelectTempRecordModalOpen] = useState<boolean>(false);
+  const [activeImportedTempRecord, setActiveImportedTempRecord] = useState<SavedTemperatureRecord | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const tempRecords = machine.temperatureRecords || [];
+  const activeTempRecord = useMemo<SavedTemperatureRecord | null>(() => {
+    if (selectedTempRecordId) {
+      const found = tempRecords.find(r => r.id === selectedTempRecordId);
+      if (found) return found;
+    }
+    if (activeImportedTempRecord) {
+      return activeImportedTempRecord;
+    }
+    return tempRecords[0] || null;
+  }, [selectedTempRecordId, tempRecords, activeImportedTempRecord]);
+
+  // Laser Power Record Selection & Entry State
+  const [selectedLaserPowerRecordId, setSelectedLaserPowerRecordId] = useState<string | null>(null);
+  const [isSelectLaserPowerModalOpen, setIsSelectLaserPowerModalOpen] = useState<boolean>(false);
+  const [isEnterLaserPowerModalOpen, setIsEnterLaserPowerModalOpen] = useState<boolean>(false);
+
+  const laserPowerRecords = machine.laserPowerRecords || [];
+  const activeLaserPowerRecord = useMemo<LaserPowerCheckRecord | null>(() => {
+    if (selectedLaserPowerRecordId) {
+      const found = laserPowerRecords.find(r => r.id === selectedLaserPowerRecordId);
+      if (found) return found;
+    }
+    return laserPowerRecords[0] || null;
+  }, [selectedLaserPowerRecordId, laserPowerRecords]);
+
+  const handleFileUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    try {
+      const fileArray = Array.from(files);
+      const textPromises = fileArray.map(f => f.text());
+      const rawTexts = await Promise.all(textPromises);
+
+      const parsedDataMap = TemperatureEngine.analyzeTemperatureLogs(rawTexts);
+      if (!parsedDataMap || Object.keys(parsedDataMap).length === 0) {
+        showToast('Error: No valid temperature data found in uploaded files.');
+        return;
+      }
+
+      const stats = TemperatureEngine.calculateGlobalStats(parsedDataMap);
+      const newRecord: SavedTemperatureRecord = {
+        id: `TR-${Date.now()}`,
+        createdAt: new Date().toISOString(),
+        sourceFileNames: fileArray.map(f => f.name),
+        channelData: parsedDataMap,
+        stats
+      };
+
+      const updatedRecords = [newRecord, ...(machine.temperatureRecords || [])];
+      const updatedMachine = { ...machine, temperatureRecords: updatedRecords };
+
+      if (onUpdateMachine) {
+        onUpdateMachine(updatedMachine);
+      }
+      StorageService.saveMachines([updatedMachine, ...StorageService.getMachines().filter(m => m.id !== machine.id)]);
+
+      setActiveImportedTempRecord(newRecord);
+      setSelectedTempRecordId(newRecord.id);
+      showToast(`Imported ${fileArray.length} file(s) & saved to Machine Passport!`);
+    } catch (err: any) {
+      console.error('Error parsing temperature log:', err);
+      showToast('Error parsing temperature log files.');
+    }
+  };
 
   // 1. Local Active Session State
   const activeSession: MHCSession = useMemo(() => {
@@ -448,12 +831,12 @@ export const SmartMhcWorkspace: React.FC<SmartMhcWorkspaceProps> = ({
       // Laser Category (Authoritative LaserEngine Data Tray)
       { id: 'dt-l1', category: 'Laser', key: 'laser_model', label: 'Laser Head Model', value: lm?.name || lh1?.model || 'TruMicro 7070', status: 'AVAILABLE' },
       { id: 'dt-l2', category: 'Laser', key: 'recorded_hours', label: 'Base Physical Meter (Hours)', value: sLh1?.recordedLaserHour || lm?.baseLaserHour || 12000, unit: 'hrs', status: 'AVAILABLE' },
-      { id: 'dt-l3', category: 'Laser', key: 'calculated_hours', label: 'Calculated Current Hour', value: sLh1?.calculatedCurrentHour || lm?.calculatedCurrentHour || 12048, unit: 'hrs', status: 'AVAILABLE' },
+      { id: 'dt-l3', category: 'Laser', key: 'calculated_hours', label: 'Calculated Current Hour', value: sLh1?.calculatedCurrentHour || lm?.currentHour || lm?.estimatedCurrentHour || 12048, unit: 'hrs', status: 'AVAILABLE' },
       { id: 'dt-l3a', category: 'Laser', key: 'life_remaining_pct', label: 'Laser Life Remaining', value: lm?.formattedLifeRemaining || '75.2%', status: 'AVAILABLE' },
       { id: 'dt-l3b', category: 'Laser', key: 'remaining_hours', label: 'Remaining Hours', value: lm?.recommendedRemainingHour ? lm.recommendedRemainingHour.toLocaleString() : '12,952', unit: 'hrs', status: 'AVAILABLE' },
-      { id: 'dt-l4', category: 'Laser', key: 'rated_power', label: 'Rated Laser Power', value: sPower?.ratedPowerWatts || lh1?.ratedPowerWatts || 250, unit: 'W', status: 'AVAILABLE' },
-      { id: 'dt-l5', category: 'Laser', key: 'before_power', label: 'Laser Power (Before)', value: sPower?.beforeValueWatts || 240, unit: 'W', status: sPower?.beforeValueWatts ? 'AVAILABLE' : 'MISSING' },
-      { id: 'dt-l6', category: 'Laser', key: 'after_power', label: 'Laser Power (After)', value: sPower?.afterValueWatts || 242, unit: 'W', status: sPower?.afterValueWatts ? 'AVAILABLE' : 'MISSING' },
+      { id: 'dt-l4', category: 'Laser', key: 'rated_power', label: 'Laser Source Power (A/B)', value: activeLaserPowerRecord ? `${activeLaserPowerRecord.laserSource.headA ?? '—'} W / ${activeLaserPowerRecord.laserSource.headB ?? '—'} W` : '15W ±10%', status: 'AVAILABLE' },
+      { id: 'dt-l5', category: 'Laser', key: 'optics_power', label: 'Optics Power (A/B)', value: activeLaserPowerRecord ? `${activeLaserPowerRecord.opticsTopHat.headA ?? '—'} W / ${activeLaserPowerRecord.opticsTopHat.headB ?? '—'} W` : '15W ±10%', status: activeLaserPowerRecord ? 'AVAILABLE' : 'MISSING' },
+      { id: 'dt-l6', category: 'Laser', key: 'mask13_power', label: 'Working Zone 1.3mm (A/B)', value: activeLaserPowerRecord ? `${activeLaserPowerRecord.workingZoneMasks.find(m => m.maskSize === '1.3mm')?.headA ?? '—'} W / ${activeLaserPowerRecord.workingZoneMasks.find(m => m.maskSize === '1.3mm')?.headB ?? '—'} W` : '≥1.0W', status: activeLaserPowerRecord ? 'AVAILABLE' : 'MISSING' },
       { id: 'dt-l7', category: 'Laser', key: 'laser_temp', label: 'Laser Temperature', value: '22.8', unit: '°C', status: 'AVAILABLE' },
 
       // Optical / Quality
@@ -845,6 +1228,503 @@ export const SmartMhcWorkspace: React.FC<SmartMhcWorkspaceProps> = ({
 
   const handleExecutePrint = () => {
     window.print();
+  };
+
+  // Render Laser Temperature Widget with Real Data
+  const renderLaserTemperatureWidget = (isPrintPreview: boolean = false) => {
+    return (
+      <div className={`space-y-2 text-xs font-mono ${isPrintPreview ? 'text-slate-900' : 'text-slate-200'}`}>
+        {!isPrintPreview && (
+          <div className="flex flex-wrap items-center justify-between gap-1 pb-1.5 border-b border-slate-800/60 text-[11px]">
+            <span className="text-slate-400 font-medium truncate max-w-[200px]" title={activeTempRecord?.sourceFileNames.join(', ')}>
+              {activeTempRecord
+                ? `Log: ${activeTempRecord.sourceFileNames.join(', ')}`
+                : 'No Record Selected'}
+            </span>
+            <div className="flex items-center gap-1.5 shrink-0">
+              {tempRecords.length > 0 && (
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setIsSelectTempRecordModalOpen(true); }}
+                  className="px-2 py-0.5 rounded bg-purple-950 hover:bg-purple-900 text-purple-200 text-[10px] border border-purple-700/60 flex items-center gap-1 transition cursor-pointer"
+                  title="Select from saved Machine Passport records"
+                >
+                  <FolderOpen className="w-3 h-3 text-purple-400" />
+                  Use Passport Record
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
+                className="px-2 py-0.5 rounded bg-cyan-950 hover:bg-cyan-900 text-cyan-200 text-[10px] border border-cyan-700/60 flex items-center gap-1 transition cursor-pointer"
+                title="Import new .log / .txt temperature log file"
+              >
+                <Upload className="w-3 h-3 text-cyan-400" />
+                Import New Log
+              </button>
+            </div>
+          </div>
+        )}
+
+        {activeTempRecord ? (
+          <div className="space-y-2">
+            <div className={`grid grid-cols-4 gap-1 text-[11px] text-center p-1.5 rounded border ${
+              isPrintPreview 
+                ? 'bg-slate-100 border-slate-300 text-slate-800' 
+                : 'bg-slate-900/80 border-slate-800 text-slate-200'
+            }`}>
+              <div>
+                <span className="text-slate-500 block text-[9px] font-bold">MIN</span>
+                <strong className="text-sky-500 font-mono">{activeTempRecord.stats.min.toFixed(1)}°C</strong>
+              </div>
+              <div>
+                <span className="text-slate-500 block text-[9px] font-bold">AVG</span>
+                <strong className="text-cyan-500 font-mono">{activeTempRecord.stats.avg.toFixed(1)}°C</strong>
+              </div>
+              <div>
+                <span className="text-slate-500 block text-[9px] font-bold">MAX</span>
+                <strong className="text-rose-500 font-mono">{activeTempRecord.stats.max.toFixed(1)}°C</strong>
+              </div>
+              <div>
+                <span className="text-slate-500 block text-[9px] font-bold">RANGE</span>
+                <strong className="text-amber-500 font-mono">{activeTempRecord.stats.range.toFixed(1)}°C</strong>
+              </div>
+            </div>
+
+            <div className={`p-1.5 rounded border ${
+              isPrintPreview ? 'bg-white border-slate-300' : 'bg-slate-950 border-slate-800'
+            }`}>
+              <TemperatureGraph
+                channelData={activeTempRecord.channelData}
+                stats={activeTempRecord.stats}
+                preset="report"
+                height={140}
+              />
+            </div>
+
+            {isPrintPreview && (
+              <div className="text-[10px] text-slate-500 font-mono flex justify-between pt-0.5">
+                <span>Source: {activeTempRecord.sourceFileNames.join(', ')}</span>
+                <span>Points: {activeTempRecord.stats.pointCount}</span>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className={`py-6 text-center text-xs italic rounded border border-dashed p-4 ${
+            isPrintPreview
+              ? 'bg-slate-50 border-slate-300 text-slate-500'
+              : 'bg-slate-900/40 border-slate-800 text-slate-400'
+          }`}>
+            <p className="font-semibold text-slate-300">No temperature data recorded.</p>
+            {!isPrintPreview && (
+              <div className="flex items-center justify-center gap-2 mt-2">
+                {tempRecords.length > 0 && (
+                  <Button
+                    onClick={(e) => { e.stopPropagation(); setIsSelectTempRecordModalOpen(true); }}
+                    className="bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold py-1 px-3 flex items-center gap-1.5"
+                  >
+                    <FolderOpen className="w-3.5 h-3.5" />
+                    Select Saved Record
+                  </Button>
+                )}
+                <Button
+                  onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
+                  className="bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-bold py-1 px-3 flex items-center gap-1.5"
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  Import Log File
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const handleSavePowerCheckFromMhc = (newRecord: LaserPowerCheckRecord) => {
+    const updatedRecords = [newRecord, ...(machine.laserPowerRecords || [])];
+    const updatedMachine: Machine = {
+      ...machine,
+      laserPowerRecords: updatedRecords
+    };
+    if (onUpdateMachine) {
+      onUpdateMachine(updatedMachine);
+    }
+    const allMachines = StorageService.getMachines();
+    const otherMachines = allMachines.filter(m => m.id !== machine.id);
+    StorageService.saveMachines([updatedMachine, ...otherMachines]);
+
+    setSelectedLaserPowerRecordId(newRecord.id);
+    setIsEnterLaserPowerModalOpen(false);
+    showToast('Laser Power Check saved to Machine Passport & linked to MHC!');
+  };
+
+  const renderLaserPowerWidget = (isPrintPreview: boolean) => {
+    if (!activeLaserPowerRecord) {
+      return (
+        <div className={`py-4 text-center text-xs italic rounded border border-dashed p-3 ${
+          isPrintPreview ? 'bg-slate-50 border-slate-300 text-slate-500' : 'bg-slate-900/40 border-slate-800 text-slate-400'
+        }`}>
+          <p className="font-semibold text-slate-300">No Laser Power record linked.</p>
+          {!isPrintPreview && (
+            <div className="flex items-center justify-center gap-2 mt-2 font-sans not-italic">
+              {laserPowerRecords.length > 0 && (
+                <Button
+                  onClick={(e) => { e.stopPropagation(); setIsSelectLaserPowerModalOpen(true); }}
+                  className="bg-amber-600 hover:bg-amber-500 text-white text-[10px] font-bold py-1 px-2.5 flex items-center gap-1"
+                >
+                  <FolderOpen className="w-3 h-3" />
+                  Use Passport Record
+                </Button>
+              )}
+              <Button
+                onClick={(e) => { e.stopPropagation(); setIsEnterLaserPowerModalOpen(true); }}
+                className="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold py-1 px-2.5 flex items-center gap-1"
+              >
+                <Plus className="w-3 h-3" />
+                Enter New Power Check
+              </Button>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    const m13 = activeLaserPowerRecord.workingZoneMasks.find(m => m.maskSize === '1.3mm');
+
+    return (
+      <div className="space-y-2 text-xs font-mono">
+        {/* Metadata bar */}
+        <div className={`flex items-center justify-between px-2 py-1 rounded text-[11px] font-bold ${
+          isPrintPreview ? 'bg-slate-100 text-slate-800' : 'bg-slate-900 text-slate-200 border border-slate-800'
+        }`}>
+          <div className="flex items-center gap-3">
+            <span>Freq: <strong>{activeLaserPowerRecord.frequencyKhz} kHz</strong></span>
+            <span>Spec (1.3mm): <strong>≥1.0 W</strong></span>
+          </div>
+          <div className="flex items-center gap-2 font-sans">
+            <span className="text-slate-400 font-mono text-[10px]">Date: {activeLaserPowerRecord.date}</span>
+            <Badge variant={activeLaserPowerRecord.overallResult === 'PASS' ? 'success' : 'danger'}>
+              {activeLaserPowerRecord.overallResult}
+            </Badge>
+          </div>
+        </div>
+
+        {/* Streamlined A4 Table */}
+        <table className="w-full text-left border-collapse text-[11px]">
+          <thead>
+            <tr className={`border-b text-[10px] uppercase ${isPrintPreview ? 'border-slate-300 text-slate-600' : 'border-slate-800 text-slate-400'}`}>
+              <th className="py-1">STAGE</th>
+              <th className="py-1 text-center">HEAD A</th>
+              <th className="py-1 text-center">HEAD B</th>
+            </tr>
+          </thead>
+          <tbody className={`divide-y ${isPrintPreview ? 'divide-slate-200 text-slate-900' : 'divide-slate-800/80 text-slate-200'}`}>
+            <tr>
+              <td className="py-1.5 font-bold">Laser Source</td>
+              <td className="py-1.5 text-center font-bold text-amber-500">
+                {activeLaserPowerRecord.laserSource.headA ?? '—'} W
+              </td>
+              <td className="py-1.5 text-center font-bold text-amber-500">
+                {activeLaserPowerRecord.laserSource.headB ?? '—'} W
+              </td>
+            </tr>
+            <tr>
+              <td className="py-1.5 font-bold">Optics / Top Hat</td>
+              <td className="py-1.5 text-center font-bold text-cyan-500">
+                {activeLaserPowerRecord.opticsTopHat.headA ?? '—'} W
+              </td>
+              <td className="py-1.5 text-center font-bold text-cyan-500">
+                {activeLaserPowerRecord.opticsTopHat.headB ?? '—'} W
+              </td>
+            </tr>
+            <tr>
+              <td className="py-1.5 font-bold">Mask 1.3mm</td>
+              <td className="py-1.5 text-center font-bold text-emerald-500">
+                {m13?.headA ?? '—'} W
+              </td>
+              <td className="py-1.5 text-center font-bold text-emerald-500">
+                {m13?.headB ?? '—'} W
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        {/* Action buttons (only in non-print preview mode) */}
+        {!isPrintPreview && (
+          <div className="flex items-center gap-2 pt-1 border-t border-slate-800/80 font-sans">
+            {laserPowerRecords.length > 0 && (
+              <Button
+                onClick={(e) => { e.stopPropagation(); setIsSelectLaserPowerModalOpen(true); }}
+                className="bg-amber-600 hover:bg-amber-500 text-white text-[10px] font-bold py-1 px-2 flex items-center gap-1"
+              >
+                <FolderOpen className="w-3 h-3" />
+                Use Passport Record
+              </Button>
+            )}
+            <Button
+              onClick={(e) => { e.stopPropagation(); setIsEnterLaserPowerModalOpen(true); }}
+              className="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold py-1 px-2 flex items-center gap-1"
+            >
+              <Plus className="w-3 h-3" />
+              Enter New Power Check
+            </Button>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Beam Profile Record Selection & Evidence Selection State
+  const [selectedPrevBeamProfileRecordId, setSelectedPrevBeamProfileRecordId] = useState<string | null>(null);
+  const [selectedCurrBeamProfileRecordId, setSelectedCurrBeamProfileRecordId] = useState<string | null>(null);
+  const [selectedEvidenceCheckpoints, setSelectedEvidenceCheckpoints] = useState<CheckpointId[]>(DEFAULT_EVIDENCE_CHECKPOINTS);
+
+  const [isSelectBeamProfileModalOpen, setIsSelectBeamProfileModalOpen] = useState<boolean>(false);
+  const [isEnterBeamProfileModalOpen, setIsEnterBeamProfileModalOpen] = useState<boolean>(false);
+  const [isSelectEvidenceModalOpen, setIsSelectEvidenceModalOpen] = useState<boolean>(false);
+
+  const beamProfileRecords = machine.beamProfileRecords || [];
+
+  const currBeamProfileRecord = useMemo<BeamProfileCheckRecord | null>(() => {
+    if (selectedCurrBeamProfileRecordId) {
+      const found = beamProfileRecords.find(r => r.id === selectedCurrBeamProfileRecordId);
+      if (found) return found;
+    }
+    return beamProfileRecords[0] || null;
+  }, [selectedCurrBeamProfileRecordId, beamProfileRecords]);
+
+  const prevBeamProfileRecord = useMemo<BeamProfileCheckRecord | null>(() => {
+    if (selectedPrevBeamProfileRecordId) {
+      const found = beamProfileRecords.find(r => r.id === selectedPrevBeamProfileRecordId);
+      if (found) return found;
+    }
+    return beamProfileRecords[1] || beamProfileRecords[0] || null;
+  }, [selectedPrevBeamProfileRecordId, beamProfileRecords]);
+
+  const handleSaveBeamCheckFromMhc = (newRecord: BeamProfileCheckRecord) => {
+    const updatedRecords = [newRecord, ...(machine.beamProfileRecords || [])];
+    const updatedMachine: Machine = {
+      ...machine,
+      beamProfileRecords: updatedRecords
+    };
+    if (onUpdateMachine) {
+      onUpdateMachine(updatedMachine);
+    }
+    const allMachines = StorageService.getMachines();
+    const otherMachines = allMachines.filter(m => m.id !== machine.id);
+    StorageService.saveMachines([updatedMachine, ...otherMachines]);
+
+    setSelectedCurrBeamProfileRecordId(newRecord.id);
+    setIsEnterBeamProfileModalOpen(false);
+    showToast('Beam Profile Check saved to Machine Passport & linked to MHC!');
+  };
+
+  const renderBeamProfileWidget = (isPrintPreview: boolean) => {
+    if (!currBeamProfileRecord && !prevBeamProfileRecord) {
+      return (
+        <div className={`py-4 text-center text-xs italic rounded border border-dashed p-3 ${
+          isPrintPreview ? 'bg-slate-50 border-slate-300 text-slate-500' : 'bg-slate-900/40 border-slate-800 text-slate-400'
+        }`}>
+          <p className="font-semibold text-slate-300">No Beam Profile record linked.</p>
+          {!isPrintPreview && (
+            <div className="flex items-center justify-center gap-2 mt-2 font-sans not-italic">
+              {beamProfileRecords.length > 0 && (
+                <Button
+                  onClick={(e) => { e.stopPropagation(); setIsSelectBeamProfileModalOpen(true); }}
+                  className="bg-amber-600 hover:bg-amber-500 text-white text-[10px] font-bold py-1 px-2.5 flex items-center gap-1"
+                >
+                  <FolderOpen className="w-3 h-3" />
+                  Use Passport Record
+                </Button>
+              )}
+              <Button
+                onClick={(e) => { e.stopPropagation(); setIsEnterBeamProfileModalOpen(true); }}
+                className="bg-cyan-600 hover:bg-cyan-500 text-white text-[10px] font-bold py-1 px-2.5 flex items-center gap-1"
+              >
+                <Plus className="w-3 h-3" />
+                Enter New Beam Check
+              </Button>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    const currRecord = currBeamProfileRecord || prevBeamProfileRecord!;
+    const prevRecord = prevBeamProfileRecord || currRecord;
+
+    const evidenceSpecs = CHECKPOINT_SPECS.filter(s => selectedEvidenceCheckpoints.includes(s.id));
+    const totalSelected = evidenceSpecs.length;
+
+    const gridCols = totalSelected <= 1 ? 'grid-cols-1' : totalSelected <= 4 ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3';
+
+    return (
+      <div className="space-y-2 text-xs font-mono">
+        {/* Control / Metadata Bar */}
+        <div className={`flex flex-wrap items-center justify-between gap-2 px-2.5 py-1.5 rounded text-[11px] font-bold ${
+          isPrintPreview ? 'bg-slate-100 text-slate-800 border border-slate-300' : 'bg-slate-900 text-slate-200 border border-slate-800'
+        }`}>
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+            <span>PREV: <strong>{prevRecord.date}</strong></span>
+            <span>➔</span>
+            <span>CURR: <strong>{currRecord.date}</strong></span>
+            <span className="text-[10px] text-slate-400 font-sans">
+              ({totalSelected} Evidence Items)
+            </span>
+          </div>
+
+          {!isPrintPreview && (
+            <div className="flex items-center gap-2 font-sans">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={(e) => { e.stopPropagation(); setIsSelectEvidenceModalOpen(true); }}
+                className="text-[10px] py-0.5 px-2 bg-slate-800 hover:bg-slate-700 text-cyan-300 border-slate-700 flex items-center gap-1"
+              >
+                <Filter className="w-3 h-3" />
+                Select Evidence ({totalSelected})
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={(e) => { e.stopPropagation(); setIsSelectBeamProfileModalOpen(true); }}
+                className="text-[10px] py-0.5 px-2 bg-slate-800 hover:bg-slate-700 text-amber-300 border-slate-700 flex items-center gap-1"
+              >
+                <FolderOpen className="w-3 h-3" />
+                Passport Records
+              </Button>
+              <Button
+                size="sm"
+                onClick={(e) => { e.stopPropagation(); setIsEnterBeamProfileModalOpen(true); }}
+                className="text-[10px] py-0.5 px-2 bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-bold flex items-center gap-1"
+              >
+                <Plus className="w-3 h-3" />
+                New Check
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {/* Capacity Warning if >6 selected items */}
+        {totalSelected > 6 && (
+          <div className="p-2 rounded bg-amber-950/80 border border-amber-800 text-amber-200 text-[10px] flex items-center gap-2 font-sans">
+            <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+            <span>
+              <strong>A4 Capacity Notice:</strong> {totalSelected} evidence items selected. PDF export may extend beyond 1 page. Recommend selecting ≤6 primary evidence checkpoints.
+            </span>
+          </div>
+        )}
+
+        {/* Evidence Comparison Grid */}
+        <div className={`grid ${gridCols} gap-2.5`}>
+          {evidenceSpecs.map(spec => {
+            const prevReading = prevRecord.readings?.[spec.id];
+            const currReading = currRecord.readings?.[spec.id];
+
+            const prevVal = prevReading?.measuredDiameterMm ?? null;
+            const currVal = currReading?.measuredDiameterMm ?? null;
+
+            const prevValFormatted = prevVal !== null ? `${prevVal.toFixed(2)}mm` : '—';
+            const currValFormatted = currVal !== null ? `${currVal.toFixed(2)}mm` : '—';
+
+            let deltaMm: number | null = null;
+            let deltaPercent: number | null = null;
+            if (prevVal !== null && currVal !== null) {
+              deltaMm = currVal - prevVal;
+              if (prevVal !== 0) {
+                deltaPercent = ((currVal - prevVal) / prevVal) * 100;
+              }
+            }
+
+            const currPass = currReading?.pass ?? false;
+
+            return (
+              <div
+                key={spec.id}
+                className={`p-2 rounded border text-[11px] space-y-1.5 ${
+                  isPrintPreview
+                    ? 'bg-white border-slate-300 text-slate-900'
+                    : 'bg-slate-900/80 border-slate-800 text-slate-200'
+                }`}
+              >
+                {/* Checkpoint Title & Status */}
+                <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-1">
+                  <div className="flex items-center gap-1 font-bold truncate">
+                    <span className="text-cyan-600 dark:text-cyan-400">{spec.laser}</span>
+                    <span>•</span>
+                    <span className="truncate">{spec.stageLabel}</span>
+                  </div>
+
+                  <span className={`px-1.5 py-0.2 rounded text-[9px] font-bold shrink-0 ${
+                    currPass
+                      ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800'
+                      : 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 border border-rose-300 dark:border-rose-800'
+                  }`}>
+                    {currPass ? 'PASS' : 'FAIL'}
+                  </span>
+                </div>
+
+                <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                  Spec: <strong className="text-slate-700 dark:text-slate-300">{spec.specText}</strong>
+                </div>
+
+                {/* Images & Comparison Side-by-Side */}
+                <div className="grid grid-cols-2 gap-2 pt-0.5">
+                  {/* Previous */}
+                  <div className="space-y-1">
+                    <span className="text-[9px] font-bold text-slate-500 uppercase block">PREV ({prevRecord.date})</span>
+                    <div className="w-full aspect-square rounded bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 overflow-hidden flex items-center justify-center relative">
+                      {prevReading?.imageDataUrl ? (
+                        <img src={prevReading.imageDataUrl} alt={`Prev ${spec.stageLabel}`} className="w-full h-full object-cover" />
+                      ) : (
+                        <ImageIcon className="w-5 h-5 text-slate-400" />
+                      )}
+                    </div>
+                    <div className="font-mono text-center font-bold text-slate-700 dark:text-slate-300 text-[10px]">
+                      {prevValFormatted}
+                    </div>
+                  </div>
+
+                  {/* Current */}
+                  <div className="space-y-1">
+                    <span className="text-[9px] font-bold text-cyan-600 dark:text-cyan-400 uppercase block">CURR ({currRecord.date})</span>
+                    <div className="w-full aspect-square rounded bg-slate-100 dark:bg-slate-950 border border-cyan-300 dark:border-cyan-800 overflow-hidden flex items-center justify-center relative">
+                      {currReading?.imageDataUrl ? (
+                        <img src={currReading.imageDataUrl} alt={`Curr ${spec.stageLabel}`} className="w-full h-full object-cover" />
+                      ) : (
+                        <ImageIcon className="w-5 h-5 text-slate-400" />
+                      )}
+                    </div>
+                    <div className="font-mono text-center font-bold text-cyan-700 dark:text-cyan-300 text-[10px]">
+                      {currValFormatted}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Change Delta Footer */}
+                <div className="flex items-center justify-between pt-1 border-t border-slate-200 dark:border-slate-800 text-[10px] font-mono">
+                  <span className="text-slate-500">Change:</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className={`font-bold ${
+                      deltaMm === null ? 'text-slate-400' : deltaMm === 0 ? 'text-slate-400' : deltaMm > 0 ? 'text-amber-500' : 'text-emerald-500'
+                    }`}>
+                      {deltaMm !== null ? `${deltaMm > 0 ? '+' : ''}${deltaMm.toFixed(2)}mm` : '—'}
+                    </span>
+                    {deltaPercent !== null && (
+                      <span className="text-[9px] text-slate-400">
+                        ({deltaPercent > 0 ? '+' : ''}{deltaPercent.toFixed(1)}%)
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -1472,88 +2352,13 @@ export const SmartMhcWorkspace: React.FC<SmartMhcWorkspaceProps> = ({
                         )}
 
                         {/* WIDGET 2: LASER TEMPERATURE */}
-                        {widget.type === 'Laser Temperature' && (
-                          <div className="space-y-2 text-xs font-mono">
-                            <div className="flex justify-between items-center text-[11px] text-slate-300">
-                              <span>AVG: <strong className="text-cyan-400">22.8°C</strong></span>
-                              <span>MIN: <strong className="text-slate-300">21.4°C</strong></span>
-                              <span>MAX: <strong className="text-slate-300">24.1°C</strong></span>
-                              <span className="text-emerald-400 font-bold">STABLE</span>
-                            </div>
-                            {/* Visual Thermal Loop Sparkline */}
-                            <div className="h-10 bg-slate-900/80 rounded border border-slate-800 flex items-end justify-between px-2 py-1 gap-1">
-                              {[21.4, 22.0, 22.8, 23.1, 22.5, 22.8, 23.0, 22.6, 22.8, 24.1, 22.8].map((v, idx) => (
-                                <div key={idx} className="flex-1 bg-cyan-500/80 hover:bg-cyan-400 rounded-t" style={{ height: `${((v - 20) / 5) * 100}%` }} title={`${v}°C`} />
-                              ))}
-                            </div>
-                          </div>
-                        )}
+                        {widget.type === 'Laser Temperature' && renderLaserTemperatureWidget(false)}
 
                         {/* WIDGET 3: LASER POWER (WATT) */}
-                        {widget.type === 'Laser Power / Trend' && (
-                          <div className="space-y-1.5 text-xs font-mono">
-                            <table className="w-full text-left border-collapse">
-                              <thead>
-                                <tr className="border-b border-slate-800 text-[10px] text-slate-400">
-                                  <th className="py-1 font-normal">Previous ({previousSession?.startDate || '04 May 2026'})</th>
-                                  <th className="py-1 font-normal">Current (06 Aug 2026)</th>
-                                  <th className="py-1 font-normal">Change</th>
-                                  <th className="py-1 font-normal text-right">Condition</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                <tr className="text-slate-200">
-                                  <td className="py-1.5 font-bold">250 W</td>
-                                  <td className="py-1.5 font-bold text-emerald-400">242 W</td>
-                                  <td className="py-1.5 font-bold text-rose-400">-3.2% ▼ 8 W</td>
-                                  <td className="py-1.5 font-bold text-right text-emerald-400">NORMAL</td>
-                                </tr>
-                              </tbody>
-                            </table>
-                          </div>
-                        )}
+                        {widget.type === 'Laser Power / Trend' && renderLaserPowerWidget(false)}
 
                         {/* WIDGET 4: BEAM / OPTICAL CONDITION */}
-                        {widget.type === 'Beam Comparison' && (
-                          <div className="space-y-2 text-xs font-mono">
-                            <table className="w-full text-left border-collapse text-[11px]">
-                              <thead>
-                                <tr className="border-b border-slate-800 text-[10px] text-slate-400">
-                                  <th className="py-1 font-normal">Component</th>
-                                  <th className="py-1 font-normal text-center">PREVIOUS (04 May 2026)</th>
-                                  <th className="py-1 text-center font-normal">➔</th>
-                                  <th className="py-1 font-normal text-center">CURRENT (06 Aug 2026)</th>
-                                  <th className="py-1 font-normal text-right">CHANGE</th>
-                                </tr>
-                              </thead>
-                              <tbody className="divide-y divide-slate-800/50">
-                                <tr>
-                                  <td className="py-1.5 text-slate-300 font-semibold">Laser Source</td>
-                                  <td className="py-1.5 text-center text-indigo-400">● Gaussian TEM00</td>
-                                  <td className="py-1.5 text-center text-slate-500">➔</td>
-                                  <td className="py-1.5 text-center text-indigo-400">● Gaussian TEM00</td>
-                                  <td rowSpan={3} className="py-1.5 text-right align-middle">
-                                    <div className="text-[10px] text-slate-400">Profile Deviation</div>
-                                    <div className="text-emerald-400 font-bold text-xs">2.1%</div>
-                                    <div className="text-[10px] text-emerald-400">ACCEPTABLE</div>
-                                  </td>
-                                </tr>
-                                <tr>
-                                  <td className="py-1.5 text-slate-300 font-semibold">Optics Lens</td>
-                                  <td className="py-1.5 text-center text-cyan-400">Clean 98%</td>
-                                  <td className="py-1.5 text-center text-slate-500">➔</td>
-                                  <td className="py-1.5 text-center text-amber-400">Swabbed (95%)</td>
-                                </tr>
-                                <tr>
-                                  <td className="py-1.5 text-slate-300 font-semibold">Output Mask</td>
-                                  <td className="py-1.5 text-center text-slate-300">Aligned 0.00mm</td>
-                                  <td className="py-1.5 text-center text-slate-500">➔</td>
-                                  <td className="py-1.5 text-center text-slate-300">Aligned 0.01mm</td>
-                                </tr>
-                              </tbody>
-                            </table>
-                          </div>
-                        )}
+                        {widget.type === 'Beam Comparison' && renderBeamProfileWidget(false)}
 
                         {/* WIDGET 5: CURRENT PRODUCT */}
                         {widget.type === 'Product Info' && (
@@ -1936,7 +2741,15 @@ export const SmartMhcWorkspace: React.FC<SmartMhcWorkspaceProps> = ({
                     <span>{w.title}</span>
                     <span className="text-[10px] text-slate-600 uppercase font-mono">{w.status}</span>
                   </div>
-                  <p className="text-slate-700 font-mono text-[11px]">{w.subtitle || 'Verified live machine telemetry.'}</p>
+                  {w.type === 'Laser Temperature' ? (
+                    renderLaserTemperatureWidget(true)
+                  ) : w.type === 'Laser Power / Trend' ? (
+                    renderLaserPowerWidget(true)
+                  ) : w.type === 'Beam Comparison' ? (
+                    renderBeamProfileWidget(true)
+                  ) : (
+                    <p className="text-slate-700 font-mono text-[11px]">{w.subtitle || 'Verified live machine telemetry.'}</p>
+                  )}
                 </div>
               ))}
             </div>
@@ -2290,6 +3103,410 @@ export const SmartMhcWorkspace: React.FC<SmartMhcWorkspaceProps> = ({
           </div>
         </Modal>
       )}
+
+      {/* MODAL 10: SELECT SAVED TEMPERATURE RECORD */}
+      <Modal
+        isOpen={isSelectTempRecordModalOpen}
+        onClose={() => setIsSelectTempRecordModalOpen(false)}
+        title="Select Machine Passport Temperature Record"
+      >
+        <div className="space-y-4">
+          <p className="text-xs text-slate-400">
+            Select an existing historical temperature log record saved under <strong>{machine.model} ({machine.machineNumber})</strong>:
+          </p>
+
+          <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+            {tempRecords.length === 0 ? (
+              <p className="text-xs text-slate-500 italic py-4 text-center">No saved temperature records in Machine Passport.</p>
+            ) : (
+              tempRecords.map(rec => {
+                const isSelected = activeTempRecord?.id === rec.id;
+                return (
+                  <div
+                    key={rec.id}
+                    onClick={() => {
+                      setSelectedTempRecordId(rec.id);
+                      setIsSelectTempRecordModalOpen(false);
+                      showToast(`Selected temperature record from ${new Date(rec.createdAt).toLocaleDateString()}`);
+                    }}
+                    className={`p-3 rounded border cursor-pointer flex items-center justify-between transition ${
+                      isSelected
+                        ? 'bg-purple-950/60 border-purple-500 text-purple-200'
+                        : 'bg-slate-900 border-slate-800 hover:border-slate-700 text-slate-300'
+                    }`}
+                  >
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-xs">{rec.sourceFileNames.join(', ')}</span>
+                        {isSelected && <Badge variant="secondary" className="text-[9px] bg-purple-500/20 text-purple-300 border-purple-500/30">ACTIVE</Badge>}
+                      </div>
+                      <div className="text-[11px] font-mono text-slate-400">
+                        Date: {new Date(rec.createdAt).toLocaleString()} • Channels: {Object.keys(rec.channelData).length}
+                      </div>
+                      <div className="text-[10px] font-mono text-slate-400 flex gap-3 pt-0.5">
+                        <span>MIN: <strong className="text-sky-300">{rec.stats.min.toFixed(1)}°C</strong></span>
+                        <span>AVG: <strong className="text-cyan-400">{rec.stats.avg.toFixed(1)}°C</strong></span>
+                        <span>MAX: <strong className="text-rose-400">{rec.stats.max.toFixed(1)}°C</strong></span>
+                        <span>Points: {rec.stats.pointCount}</span>
+                      </div>
+                    </div>
+
+                    <Button className={`text-xs py-1 px-3 shrink-0 font-bold ${
+                      isSelected ? 'bg-purple-500 text-white' : 'bg-slate-800 text-slate-200 hover:bg-slate-700'
+                    }`}>
+                      {isSelected ? 'Selected' : 'Use Record'}
+                    </Button>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          <div className="flex justify-between items-center pt-2 border-t border-slate-800">
+            <Button
+              onClick={() => {
+                setIsSelectTempRecordModalOpen(false);
+                fileInputRef.current?.click();
+              }}
+              variant="outline"
+              className="text-xs border-cyan-800 text-cyan-300 hover:bg-cyan-950 flex items-center gap-1.5"
+            >
+              <Upload className="w-3.5 h-3.5" />
+              Import New Log Instead
+            </Button>
+            <Button variant="outline" onClick={() => setIsSelectTempRecordModalOpen(false)} className="text-xs">
+              Close
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* MODAL 11: SELECT SAVED LASER POWER RECORD */}
+      <Modal
+        isOpen={isSelectLaserPowerModalOpen}
+        onClose={() => setIsSelectLaserPowerModalOpen(false)}
+        title="Select Machine Passport Laser Power Record"
+      >
+        <div className="space-y-4">
+          <p className="text-xs text-slate-400">
+            Select an existing Laser Power check record saved under <strong>{machine.model} ({machine.machineNumber})</strong>:
+          </p>
+
+          <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+            {laserPowerRecords.length === 0 ? (
+              <p className="text-xs text-slate-500 italic py-4 text-center">No saved Laser Power records in Machine Passport.</p>
+            ) : (
+              laserPowerRecords.map(rec => {
+                const isSelected = activeLaserPowerRecord?.id === rec.id;
+                const m13 = rec.workingZoneMasks.find(m => m.maskSize === '1.3mm');
+                return (
+                  <div
+                    key={rec.id}
+                    onClick={() => {
+                      setSelectedLaserPowerRecordId(rec.id);
+                      setIsSelectLaserPowerModalOpen(false);
+                      showToast(`Selected Laser Power record from ${rec.date}`);
+                    }}
+                    className={`p-3 rounded border cursor-pointer flex items-center justify-between transition ${
+                      isSelected
+                        ? 'bg-amber-950/60 border-amber-500 text-amber-200'
+                        : 'bg-slate-900 border-slate-800 hover:border-slate-700 text-slate-300'
+                    }`}
+                  >
+                    <div className="space-y-0.5 font-mono">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-xs">{rec.date} • {rec.frequencyKhz} kHz</span>
+                        <Badge variant={rec.overallResult === 'PASS' ? 'success' : 'danger'} className="text-[9px]">
+                          {rec.overallResult}
+                        </Badge>
+                        {isSelected && <Badge variant="secondary" className="text-[9px] bg-amber-500/20 text-amber-300 border-amber-500/30">ACTIVE</Badge>}
+                      </div>
+                      <div className="text-[11px] text-slate-400">
+                        Laser Source: A={rec.laserSource.headA ?? '—'}W, B={rec.laserSource.headB ?? '—'}W
+                      </div>
+                      <div className="text-[10px] text-slate-400">
+                        Mask 1.3mm: A={m13?.headA ?? '—'}W, B={m13?.headB ?? '—'}W
+                      </div>
+                    </div>
+
+                    <Button className={`text-xs py-1 px-3 shrink-0 font-bold ${
+                      isSelected ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-200 hover:bg-slate-700'
+                    }`}>
+                      {isSelected ? 'Selected' : 'Use Record'}
+                    </Button>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          <div className="flex justify-between items-center pt-2 border-t border-slate-800 font-sans">
+            <Button
+              onClick={() => {
+                setIsSelectLaserPowerModalOpen(false);
+                setIsEnterLaserPowerModalOpen(true);
+              }}
+              variant="outline"
+              className="text-xs border-emerald-800 text-emerald-300 hover:bg-emerald-950 flex items-center gap-1.5"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Enter New Power Check
+            </Button>
+            <Button variant="outline" onClick={() => setIsSelectLaserPowerModalOpen(false)} className="text-xs">
+              Close
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* MODAL 12: ENTER NEW LASER POWER CHECK FROM MHC */}
+      <MhcEnterLaserPowerModal
+        isOpen={isEnterLaserPowerModalOpen}
+        onClose={() => setIsEnterLaserPowerModalOpen(false)}
+        machine={machine}
+        onSave={handleSavePowerCheckFromMhc}
+      />
+
+      {/* MODAL 13: SELECT SAVED BEAM PROFILE RECORDS */}
+      <Modal
+        isOpen={isSelectBeamProfileModalOpen}
+        onClose={() => setIsSelectBeamProfileModalOpen(false)}
+        title="Select Machine Passport Beam Profile Records"
+      >
+        <div className="space-y-4 text-xs font-sans">
+          <p className="text-slate-400">
+            Select the <strong>PREVIOUS</strong> baseline check and the <strong>CURRENT</strong> check to compare on the Smart MHC report:
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-3 rounded-xl bg-slate-900 border border-slate-800">
+            {/* Previous Selection */}
+            <div>
+              <label className="block text-xs font-bold text-slate-300 mb-1 uppercase tracking-wide">
+                PREVIOUS Check Date
+              </label>
+              <select
+                value={prevBeamProfileRecord?.id || ''}
+                onChange={(e) => setSelectedPrevBeamProfileRecordId(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 font-mono text-xs"
+              >
+                {beamProfileRecords.map(r => (
+                  <option key={r.id} value={r.id}>
+                    {r.date} ({r.overallResult}) — {r.id.slice(0, 8)}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Current Selection */}
+            <div>
+              <label className="block text-xs font-bold text-cyan-400 mb-1 uppercase tracking-wide">
+                CURRENT Check Date
+              </label>
+              <select
+                value={currBeamProfileRecord?.id || ''}
+                onChange={(e) => setSelectedCurrBeamProfileRecordId(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 font-mono text-xs"
+              >
+                {beamProfileRecords.map(r => (
+                  <option key={r.id} value={r.id}>
+                    {r.date} ({r.overallResult}) — {r.id.slice(0, 8)}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="space-y-2 max-h-52 overflow-y-auto pr-1">
+            <span className="text-[11px] font-bold text-slate-300 block">Available Passport Records:</span>
+            {beamProfileRecords.map(rec => {
+              const isPrev = prevBeamProfileRecord?.id === rec.id;
+              const isCurr = currBeamProfileRecord?.id === rec.id;
+
+              return (
+                <div
+                  key={rec.id}
+                  className={`p-2.5 rounded border flex items-center justify-between font-mono text-xs ${
+                    isCurr
+                      ? 'bg-cyan-950/60 border-cyan-500 text-cyan-200'
+                      : isPrev
+                      ? 'bg-amber-950/60 border-amber-500 text-amber-200'
+                      : 'bg-slate-900 border-slate-800 text-slate-300'
+                  }`}
+                >
+                  <div>
+                    <span className="font-bold">{rec.date}</span>
+                    <span className="text-slate-400 text-[10px] ml-2">ID: {rec.id.slice(0, 8)}</span>
+                    <Badge variant={rec.overallResult === 'PASS' ? 'success' : 'danger'} className="ml-2 text-[9px]">
+                      {rec.overallResult}
+                    </Badge>
+                  </div>
+
+                  <div className="flex items-center gap-1">
+                    {isPrev && <Badge variant="warning" className="text-[9px]">PREVIOUS</Badge>}
+                    {isCurr && <Badge variant="cyan" className="text-[9px]">CURRENT</Badge>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="flex justify-between items-center pt-2 border-t border-slate-800">
+            <Button
+              onClick={() => {
+                setIsSelectBeamProfileModalOpen(false);
+                setIsEnterBeamProfileModalOpen(true);
+              }}
+              variant="outline"
+              className="text-xs border-cyan-800 text-cyan-300 hover:bg-cyan-950 flex items-center gap-1.5"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Enter New Beam Check
+            </Button>
+            <Button onClick={() => setIsSelectBeamProfileModalOpen(false)} className="bg-cyan-500 text-slate-950 font-bold text-xs py-1.5 px-4">
+              Apply Selected Pair
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* MODAL 14: SELECT REPORT EVIDENCE CHECKPOINTS */}
+      <Modal
+        isOpen={isSelectEvidenceModalOpen}
+        onClose={() => setIsSelectEvidenceModalOpen(false)}
+        title="Select Beam Profile Report Evidence Checkpoints"
+        maxWidth="max-w-2xl"
+      >
+        <div className="space-y-4 text-xs font-sans">
+          <p className="text-slate-400">
+            Choose which specific beam profile checkpoints to include on the printable A4 Machine Health Report. This selection controls report evidence display only; all engineering history remains recorded.
+          </p>
+
+          <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+            <span className="font-bold text-slate-200">
+              Selected Checkpoints: <span className="text-cyan-400">{selectedEvidenceCheckpoints.length} / {CHECKPOINT_SPECS.length}</span>
+            </span>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setSelectedEvidenceCheckpoints(DEFAULT_EVIDENCE_CHECKPOINTS)}
+                className="text-xs text-amber-400 hover:underline font-semibold"
+              >
+                Reset Default (6 Items)
+              </button>
+              <span className="text-slate-600">•</span>
+              <button
+                type="button"
+                onClick={() => setSelectedEvidenceCheckpoints(CHECKPOINT_SPECS.map(s => s.id))}
+                className="text-xs text-cyan-400 hover:underline font-semibold"
+              >
+                Select All
+              </button>
+            </div>
+          </div>
+
+          {/* Laser 1 Group */}
+          <div className="space-y-2">
+            <h5 className="font-bold text-amber-400 uppercase tracking-wide text-[11px]">Laser 1 Checkpoints</h5>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {CHECKPOINT_SPECS.filter(s => s.laser === 'Laser 1').map(s => {
+                const isSelected = selectedEvidenceCheckpoints.includes(s.id);
+                return (
+                  <label
+                    key={s.id}
+                    className={`p-2 rounded border cursor-pointer flex items-center gap-2 transition ${
+                      isSelected
+                        ? 'bg-amber-950/40 border-amber-500 text-amber-100'
+                        : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedEvidenceCheckpoints(prev => [...prev, s.id]);
+                        } else {
+                          setSelectedEvidenceCheckpoints(prev => prev.filter(id => id !== s.id));
+                        }
+                      }}
+                      className="rounded border-slate-700 text-amber-500 focus:ring-0"
+                    />
+                    <div className="min-w-0">
+                      <span className="font-bold block truncate">{s.stageLabel}</span>
+                      <span className="text-[9px] text-slate-400 block font-mono">{s.specText}</span>
+                    </div>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Laser 2 Group */}
+          <div className="space-y-2">
+            <h5 className="font-bold text-cyan-400 uppercase tracking-wide text-[11px]">Laser 2 Checkpoints</h5>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {CHECKPOINT_SPECS.filter(s => s.laser === 'Laser 2').map(s => {
+                const isSelected = selectedEvidenceCheckpoints.includes(s.id);
+                return (
+                  <label
+                    key={s.id}
+                    className={`p-2 rounded border cursor-pointer flex items-center gap-2 transition ${
+                      isSelected
+                        ? 'bg-cyan-950/40 border-cyan-500 text-cyan-100'
+                        : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedEvidenceCheckpoints(prev => [...prev, s.id]);
+                        } else {
+                          setSelectedEvidenceCheckpoints(prev => prev.filter(id => id !== s.id));
+                        }
+                      }}
+                      className="rounded border-slate-700 text-cyan-500 focus:ring-0"
+                    />
+                    <div className="min-w-0">
+                      <span className="font-bold block truncate">{s.stageLabel}</span>
+                      <span className="text-[9px] text-slate-400 block font-mono">{s.specText}</span>
+                    </div>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="flex justify-between items-center pt-3 border-t border-slate-800">
+            <span className="text-[10px] text-slate-500">
+              {selectedEvidenceCheckpoints.length > 6 ? '⚠️ >6 items selected; A4 PDF may wrap.' : '✓ Optimal A4 export capacity (≤6 items).'}
+            </span>
+            <Button onClick={() => setIsSelectEvidenceModalOpen(false)} className="bg-cyan-500 text-slate-950 font-bold text-xs py-1.5 px-4">
+              Done & Update Report
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* MODAL 15: ENTER NEW BEAM PROFILE CHECK FROM MHC */}
+      <MhcEnterBeamProfileModal
+        isOpen={isEnterBeamProfileModalOpen}
+        onClose={() => setIsEnterBeamProfileModalOpen(false)}
+        machine={machine}
+        onSave={handleSaveBeamCheckFromMhc}
+      />
+
+      {/* Hidden File Input for Direct Temperature Log Import inside Smart MHC */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        accept=".log,.txt"
+        className="hidden"
+        onChange={(e) => handleFileUpload(e.target.files)}
+      />
     </div>
   );
 };
