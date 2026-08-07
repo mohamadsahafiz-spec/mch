@@ -6,6 +6,8 @@
    recalibration transactions, and EOL prognosis.
    ===================================================== */
 
+import { ProductProcessEngine } from './productProcessEngine';
+
 export interface CalibrationHistoryRecord {
   date: string;
   time?: string;
@@ -1061,6 +1063,9 @@ export const LaserEngine = {
       department,
       lasers,
       maintenanceHistory: Array.isArray(m.maintenanceHistory) ? m.maintenanceHistory : [],
+      productProcessRecords: Array.isArray(m.productProcessRecords)
+        ? m.productProcessRecords
+        : [],
       lastUpdated: m.lastUpdated || new Date().toISOString()
     };
   },

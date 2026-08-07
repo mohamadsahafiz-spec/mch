@@ -82,6 +82,9 @@ import { LaserPowerEngine } from '../../utils/laserPowerEngine';
 import { BeamProfileCheckRecord, CHECKPOINT_SPECS, CheckpointId, DEFAULT_EVIDENCE_CHECKPOINTS } from '../../types/beamProfile';
 import { BeamProfileEngine } from '../../utils/beamProfileEngine';
 import { MhcEnterBeamProfileModal } from './MhcEnterBeamProfileModal';
+import { ProductProcessRecord } from '../../types/productProcess';
+import { ProductProcessEngine } from '../../utils/productProcessEngine';
+import { MhcEnterProductProcessModal } from './MhcEnterProductProcessModal';
 
 const MhcEnterLaserPowerModal: React.FC<{
   isOpen: boolean;
@@ -1723,6 +1726,335 @@ export const SmartMhcWorkspace: React.FC<SmartMhcWorkspaceProps> = ({
             );
           })}
         </div>
+      </div>
+    );
+  };
+
+  // Product & Process Selection & Evidence State
+  const [selectedPrevProductProcessRecordId, setSelectedPrevProductProcessRecordId] = useState<string | null>(null);
+  const [selectedCurrProductProcessRecordId, setSelectedCurrProductProcessRecordId] = useState<string | null>(null);
+  const [isSelectProductProcessModalOpen, setIsSelectProductProcessModalOpen] = useState<boolean>(false);
+  const [isEnterProductProcessModalOpen, setIsEnterProductProcessModalOpen] = useState<boolean>(false);
+  const [productProcessEvidenceSelection, setProductProcessEvidenceSelection] = useState<('laser1' | 'laser2')[]>(['laser1', 'laser2']);
+  const [isSelectProductProcessEvidenceModalOpen, setIsSelectProductProcessEvidenceModalOpen] = useState<boolean>(false);
+
+  const productProcessRecords = machine.productProcessRecords || [];
+
+  const currProductProcessRecord = useMemo<ProductProcessRecord | null>(() => {
+    if (selectedCurrProductProcessRecordId) {
+      const found = productProcessRecords.find(r => r.id === selectedCurrProductProcessRecordId);
+      if (found) return found;
+    }
+    return productProcessRecords[0] || null;
+  }, [selectedCurrProductProcessRecordId, productProcessRecords]);
+
+  const prevProductProcessRecord = useMemo<ProductProcessRecord | null>(() => {
+    if (selectedPrevProductProcessRecordId) {
+      const found = productProcessRecords.find(r => r.id === selectedPrevProductProcessRecordId);
+      if (found) return found;
+    }
+    return productProcessRecords[1] || productProcessRecords[0] || null;
+  }, [selectedPrevProductProcessRecordId, productProcessRecords]);
+
+  const handleSaveProductProcessFromMhc = (newRecord: ProductProcessRecord) => {
+    const updatedRecords = [newRecord, ...(machine.productProcessRecords || [])];
+    const updatedMachine: Machine = {
+      ...machine,
+      productProcessRecords: updatedRecords
+    };
+    if (onUpdateMachine) {
+      onUpdateMachine(updatedMachine);
+    }
+    const allMachines = StorageService.getMachines();
+    const otherMachines = allMachines.filter(m => m.id !== machine.id);
+    StorageService.saveMachines([updatedMachine, ...otherMachines]);
+
+    setSelectedCurrProductProcessRecordId(newRecord.id);
+    setIsEnterProductProcessModalOpen(false);
+    showToast('Product & Process record saved to Machine Passport & linked to MHC!');
+  };
+
+  const renderProductProcessWidget = (isPrintPreview: boolean) => {
+    if (!currProductProcessRecord && !prevProductProcessRecord) {
+      return (
+        <div className={`py-4 text-center text-xs italic rounded border border-dashed p-3 ${
+          isPrintPreview ? 'bg-slate-50 border-slate-300 text-slate-500' : 'bg-slate-900/40 border-slate-800 text-slate-400'
+        }`}>
+          <p className="font-semibold text-slate-300">No Product & Process record linked.</p>
+          {!isPrintPreview && (
+            <div className="flex items-center justify-center gap-2 mt-2 font-sans not-italic">
+              {productProcessRecords.length > 0 && (
+                <Button
+                  onClick={(e) => { e.stopPropagation(); setIsSelectProductProcessModalOpen(true); }}
+                  className="bg-amber-600 hover:bg-amber-500 text-white text-[10px] font-bold py-1 px-2.5 flex items-center gap-1"
+                >
+                  <FolderOpen className="w-3 h-3" />
+                  Use Passport Record
+                </Button>
+              )}
+              <Button
+                onClick={(e) => { e.stopPropagation(); setIsEnterProductProcessModalOpen(true); }}
+                className="bg-cyan-600 hover:bg-cyan-500 text-slate-950 text-[10px] font-bold py-1 px-2.5 flex items-center gap-1"
+              >
+                <Plus className="w-3 h-3" />
+                Enter New Product / Process Check
+              </Button>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    const curr = currProductProcessRecord || prevProductProcessRecord!;
+    const prev = prevProductProcessRecord || curr;
+
+    const renderParamVal = (currVal: number | null, prevVal: number | null, unit: string) => {
+      if (currVal === null) return '—';
+      const changed = prevVal !== null && prevVal !== currVal;
+      if (changed) {
+        return (
+          <span className="font-bold text-amber-400">
+            {currVal}{unit} <span className="text-[9px] text-slate-400 font-normal">({prevVal}➔)</span>
+          </span>
+        );
+      }
+      return `${currVal}${unit}`;
+    };
+
+    const showL1 = productProcessEvidenceSelection.includes('laser1');
+    const showL2 = productProcessEvidenceSelection.includes('laser2');
+
+    return (
+      <div className="space-y-3 text-xs font-mono">
+        {/* TOP — COMPACT INFORMATION */}
+        <div className={`p-2.5 rounded border space-y-2 ${
+          isPrintPreview ? 'bg-slate-50 border-slate-200 text-slate-900' : 'bg-slate-900/80 border-slate-800 text-slate-200'
+        }`}>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
+            <div>
+              <span className="text-[10px] text-slate-400 block font-bold uppercase">Product</span>
+              <strong className="text-slate-100">{curr.productName || '—'}</strong>
+            </div>
+            <div>
+              <span className="text-[10px] text-slate-400 block font-bold uppercase">Recipe</span>
+              <strong className="text-cyan-400 font-mono">{curr.recipeName || '—'}</strong>
+            </div>
+            <div>
+              <span className="text-[10px] text-slate-400 block font-bold uppercase">Lot / Panel</span>
+              <strong className="text-slate-200 font-mono">{curr.lotPanel || '—'}</strong>
+            </div>
+          </div>
+
+          {/* PROCESS PARAMETERS COMPARISON TABLE */}
+          <table className="w-full text-left border-collapse text-[11px]">
+            <thead>
+              <tr className="border-b border-slate-200 dark:border-slate-800 text-[10px] text-slate-400 uppercase">
+                <th className="py-1">Parameter</th>
+                <th className="py-1 text-center">Phase 1</th>
+                <th className="py-1 text-center">Phase 2</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200 dark:divide-slate-800/60">
+              <tr>
+                <td className="py-1 text-slate-400">Power</td>
+                <td className="py-1 text-center font-bold">{renderParamVal(curr.phase1?.powerWatts, prev.phase1?.powerWatts, ' W')}</td>
+                <td className="py-1 text-center font-bold">{renderParamVal(curr.phase2?.powerWatts, prev.phase2?.powerWatts, ' W')}</td>
+              </tr>
+              <tr>
+                <td className="py-1 text-slate-400">Frequency</td>
+                <td className="py-1 text-center font-bold">{renderParamVal(curr.phase1?.frequencyKhz, prev.phase1?.frequencyKhz, ' kHz')}</td>
+                <td className="py-1 text-center font-bold">{renderParamVal(curr.phase2?.frequencyKhz, prev.phase2?.frequencyKhz, ' kHz')}</td>
+              </tr>
+              <tr>
+                <td className="py-1 text-slate-400">Shot Count</td>
+                <td className="py-1 text-center font-bold">{renderParamVal(curr.phase1?.shotCount, prev.phase1?.shotCount, ' shots')}</td>
+                <td className="py-1 text-center font-bold">{renderParamVal(curr.phase2?.shotCount, prev.phase2?.shotCount, ' shots')}</td>
+              </tr>
+              <tr>
+                <td className="py-1 text-slate-400">Mask</td>
+                <td className="py-1 text-center font-bold">{renderParamVal(curr.phase1?.maskMm, prev.phase1?.maskMm, ' mm')}</td>
+                <td className="py-1 text-center font-bold">{renderParamVal(curr.phase2?.maskMm, prev.phase2?.maskMm, ' mm')}</td>
+              </tr>
+              <tr>
+                <td className="py-1 text-slate-400">Defocus</td>
+                <td className="py-1 text-center font-bold">{renderParamVal(curr.phase1?.defocusMm, prev.phase1?.defocusMm, ' mm')}</td>
+                <td className="py-1 text-center font-bold">{renderParamVal(curr.phase2?.defocusMm, prev.phase2?.defocusMm, ' mm')}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        {/* BOTTOM — VIA IMAGE COMPARISON (Visual Evidence Priority) */}
+        <div className="space-y-3">
+          {showL1 && (
+            <div className={`p-3 rounded border space-y-2 ${
+              isPrintPreview ? 'bg-white border-slate-300' : 'bg-slate-900 border-slate-800'
+            }`}>
+              <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-1.5">
+                <span className="font-bold text-cyan-400 tracking-wide uppercase text-xs">VIA QUALITY — LASER 1</span>
+                <Badge variant={curr.laser1Via?.overallPass ? 'success' : 'danger'} className="text-[9px]">
+                  {curr.laser1Via?.overallPass ? 'PASS' : 'FAIL'}
+                </Badge>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 pt-1">
+                {/* Previous */}
+                <div className="space-y-1 text-center">
+                  <span className="text-[10px] font-bold text-slate-400 block uppercase">PREVIOUS ({prev.date})</span>
+                  <div className="w-full aspect-square rounded bg-slate-950 border border-slate-800 overflow-hidden flex items-center justify-center p-1">
+                    {prev.laser1Via?.viaImageDataUrl ? (
+                      <img src={prev.laser1Via.viaImageDataUrl} alt="Prev L1 Via" className="w-full h-full object-contain rounded" />
+                    ) : (
+                      <ImageIcon className="w-6 h-6 text-slate-600" />
+                    )}
+                  </div>
+                  <div className="text-[10px] space-y-0.5 pt-1 text-slate-300 font-mono text-left bg-slate-950/60 p-1.5 rounded border border-slate-800">
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Top Drill (51±10µm):</span>
+                      <strong className={prev.laser1Via?.topPass ? 'text-emerald-400' : 'text-rose-400'}>
+                        {prev.laser1Via?.topWidthUm ?? '—'} µm
+                      </strong>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Bottom Drill (23±10µm):</span>
+                      <strong className={prev.laser1Via?.bottomPass ? 'text-emerald-400' : 'text-rose-400'}>
+                        {prev.laser1Via?.bottomWidthUm ?? '—'} µm
+                      </strong>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Current */}
+                <div className="space-y-1 text-center">
+                  <span className="text-[10px] font-bold text-cyan-400 block uppercase">CURRENT ({curr.date})</span>
+                  <div className="w-full aspect-square rounded bg-slate-950 border border-cyan-800 overflow-hidden flex items-center justify-center p-1">
+                    {curr.laser1Via?.viaImageDataUrl ? (
+                      <img src={curr.laser1Via.viaImageDataUrl} alt="Curr L1 Via" className="w-full h-full object-contain rounded" />
+                    ) : (
+                      <ImageIcon className="w-6 h-6 text-slate-600" />
+                    )}
+                  </div>
+                  <div className="text-[10px] space-y-0.5 pt-1 text-slate-300 font-mono text-left bg-slate-950/60 p-1.5 rounded border border-slate-800">
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Top Drill (51±10µm):</span>
+                      <strong className={curr.laser1Via?.topPass ? 'text-emerald-400' : 'text-rose-400'}>
+                        {curr.laser1Via?.topWidthUm ?? '—'} µm [{curr.laser1Via?.topPass ? 'PASS' : 'FAIL'}]
+                      </strong>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Bottom Drill (23±10µm):</span>
+                      <strong className={curr.laser1Via?.bottomPass ? 'text-emerald-400' : 'text-rose-400'}>
+                        {curr.laser1Via?.bottomWidthUm ?? '—'} µm [{curr.laser1Via?.bottomPass ? 'PASS' : 'FAIL'}]
+                      </strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {showL2 && (
+            <div className={`p-3 rounded border space-y-2 ${
+              isPrintPreview ? 'bg-white border-slate-300' : 'bg-slate-900 border-slate-800'
+            }`}>
+              <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-1.5">
+                <span className="font-bold text-cyan-400 tracking-wide uppercase text-xs">VIA QUALITY — LASER 2</span>
+                <Badge variant={curr.laser2Via?.overallPass ? 'success' : 'danger'} className="text-[9px]">
+                  {curr.laser2Via?.overallPass ? 'PASS' : 'FAIL'}
+                </Badge>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 pt-1">
+                {/* Previous */}
+                <div className="space-y-1 text-center">
+                  <span className="text-[10px] font-bold text-slate-400 block uppercase">PREVIOUS ({prev.date})</span>
+                  <div className="w-full aspect-square rounded bg-slate-950 border border-slate-800 overflow-hidden flex items-center justify-center p-1">
+                    {prev.laser2Via?.viaImageDataUrl ? (
+                      <img src={prev.laser2Via.viaImageDataUrl} alt="Prev L2 Via" className="w-full h-full object-contain rounded" />
+                    ) : (
+                      <ImageIcon className="w-6 h-6 text-slate-600" />
+                    )}
+                  </div>
+                  <div className="text-[10px] space-y-0.5 pt-1 text-slate-300 font-mono text-left bg-slate-950/60 p-1.5 rounded border border-slate-800">
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Top Drill (51±10µm):</span>
+                      <strong className={prev.laser2Via?.topPass ? 'text-emerald-400' : 'text-rose-400'}>
+                        {prev.laser2Via?.topWidthUm ?? '—'} µm
+                      </strong>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Bottom Drill (23±10µm):</span>
+                      <strong className={prev.laser2Via?.bottomPass ? 'text-emerald-400' : 'text-rose-400'}>
+                        {prev.laser2Via?.bottomWidthUm ?? '—'} µm
+                      </strong>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Current */}
+                <div className="space-y-1 text-center">
+                  <span className="text-[10px] font-bold text-cyan-400 block uppercase">CURRENT ({curr.date})</span>
+                  <div className="w-full aspect-square rounded bg-slate-950 border border-cyan-800 overflow-hidden flex items-center justify-center p-1">
+                    {curr.laser2Via?.viaImageDataUrl ? (
+                      <img src={curr.laser2Via.viaImageDataUrl} alt="Curr L2 Via" className="w-full h-full object-contain rounded" />
+                    ) : (
+                      <ImageIcon className="w-6 h-6 text-slate-600" />
+                    )}
+                  </div>
+                  <div className="text-[10px] space-y-0.5 pt-1 text-slate-300 font-mono text-left bg-slate-950/60 p-1.5 rounded border border-slate-800">
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Top Drill (51±10µm):</span>
+                      <strong className={curr.laser2Via?.topPass ? 'text-emerald-400' : 'text-rose-400'}>
+                        {curr.laser2Via?.topWidthUm ?? '—'} µm [{curr.laser2Via?.topPass ? 'PASS' : 'FAIL'}]
+                      </strong>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Bottom Drill (23±10µm):</span>
+                      <strong className={curr.laser2Via?.bottomPass ? 'text-emerald-400' : 'text-rose-400'}>
+                        {curr.laser2Via?.bottomWidthUm ?? '—'} µm [{curr.laser2Via?.bottomPass ? 'PASS' : 'FAIL'}]
+                      </strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Non-print Control Bar */}
+        {!isPrintPreview && (
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-800 font-sans">
+            <div className="flex items-center gap-1.5">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={(e) => { e.stopPropagation(); setIsSelectProductProcessEvidenceModalOpen(true); }}
+                className="text-[10px] py-0.5 px-2 bg-slate-800 hover:bg-slate-700 text-cyan-300 border-slate-700 flex items-center gap-1"
+              >
+                <Filter className="w-3 h-3" />
+                Select Evidence ({productProcessEvidenceSelection.length}/2)
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={(e) => { e.stopPropagation(); setIsSelectProductProcessModalOpen(true); }}
+                className="text-[10px] py-0.5 px-2 bg-slate-800 hover:bg-slate-700 text-amber-300 border-slate-700 flex items-center gap-1"
+              >
+                <FolderOpen className="w-3 h-3" />
+                Passport Records
+              </Button>
+            </div>
+
+            <Button
+              size="sm"
+              onClick={(e) => { e.stopPropagation(); setIsEnterProductProcessModalOpen(true); }}
+              className="text-[10px] py-0.5 px-2 bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-bold flex items-center gap-1"
+            >
+              <Plus className="w-3 h-3" />
+              New Check
+            </Button>
+          </div>
+        )}
       </div>
     );
   };
@@ -3496,6 +3828,180 @@ export const SmartMhcWorkspace: React.FC<SmartMhcWorkspaceProps> = ({
         onClose={() => setIsEnterBeamProfileModalOpen(false)}
         machine={machine}
         onSave={handleSaveBeamCheckFromMhc}
+      />
+
+      {/* MODAL 16: SELECT SAVED PRODUCT & PROCESS RECORDS */}
+      <Modal
+        isOpen={isSelectProductProcessModalOpen}
+        onClose={() => setIsSelectProductProcessModalOpen(false)}
+        title="Select Machine Passport Product & Process Records"
+        maxWidth="max-w-2xl"
+      >
+        <div className="space-y-4 text-xs font-sans">
+          <p className="text-slate-400">
+            Select PREVIOUS and CURRENT product & process engineering records bound to <strong className="text-slate-200">{machine.name} ({machine.serialNumber})</strong>.
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Previous Selection */}
+            <div className="space-y-2">
+              <h5 className="font-bold text-amber-400 uppercase tracking-wide text-[11px]">Previous Record</h5>
+              <div className="space-y-1.5 max-h-60 overflow-y-auto pr-1">
+                {productProcessRecords.map(rec => {
+                  const isSelected = (selectedPrevProductProcessRecordId || prevProductProcessRecord?.id) === rec.id;
+                  return (
+                    <div
+                      key={rec.id}
+                      onClick={() => setSelectedPrevProductProcessRecordId(rec.id)}
+                      className={`p-2 rounded border cursor-pointer transition ${
+                        isSelected
+                          ? 'bg-amber-950/40 border-amber-500 text-amber-100 font-semibold'
+                          : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'
+                      }`}
+                    >
+                      <div className="flex justify-between items-center text-[11px]">
+                        <span className="font-bold">{rec.date}</span>
+                        <span className="text-[10px] text-slate-400">{rec.productName || 'No Product'}</span>
+                      </div>
+                      <div className="text-[10px] text-slate-400 font-mono mt-0.5">
+                        Recipe: {rec.recipeName || '—'} | Lot: {rec.lotPanel || '—'}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Current Selection */}
+            <div className="space-y-2">
+              <h5 className="font-bold text-cyan-400 uppercase tracking-wide text-[11px]">Current Record</h5>
+              <div className="space-y-1.5 max-h-60 overflow-y-auto pr-1">
+                {productProcessRecords.map(rec => {
+                  const isSelected = (selectedCurrProductProcessRecordId || currProductProcessRecord?.id) === rec.id;
+                  return (
+                    <div
+                      key={rec.id}
+                      onClick={() => setSelectedCurrProductProcessRecordId(rec.id)}
+                      className={`p-2 rounded border cursor-pointer transition ${
+                        isSelected
+                          ? 'bg-cyan-950/40 border-cyan-500 text-cyan-100 font-semibold'
+                          : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'
+                      }`}
+                    >
+                      <div className="flex justify-between items-center text-[11px]">
+                        <span className="font-bold">{rec.date}</span>
+                        <span className="text-[10px] text-slate-400">{rec.productName || 'No Product'}</span>
+                      </div>
+                      <div className="text-[10px] text-slate-400 font-mono mt-0.5">
+                        Recipe: {rec.recipeName || '—'} | Lot: {rec.lotPanel || '—'}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-between items-center pt-3 border-t border-slate-800">
+            <Button
+              onClick={() => {
+                setIsSelectProductProcessModalOpen(false);
+                setIsEnterProductProcessModalOpen(true);
+              }}
+              variant="outline"
+              className="text-xs border-cyan-800 text-cyan-300 hover:bg-cyan-950 flex items-center gap-1.5"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Enter New Record
+            </Button>
+            <Button onClick={() => setIsSelectProductProcessModalOpen(false)} className="bg-cyan-500 text-slate-950 font-bold text-xs py-1.5 px-4">
+              Apply Selected Pair
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* MODAL 17: SELECT PRODUCT & PROCESS REPORT EVIDENCE */}
+      <Modal
+        isOpen={isSelectProductProcessEvidenceModalOpen}
+        onClose={() => setIsSelectProductProcessEvidenceModalOpen(false)}
+        title="Select Product & Process Report Evidence"
+        maxWidth="max-w-md"
+      >
+        <div className="space-y-4 text-xs font-sans">
+          <p className="text-slate-400">
+            Choose which laser via quality evidence comparisons to include on the printable report. This affects report output display only; history remains complete in Machine Passport.
+          </p>
+
+          <div className="space-y-2">
+            <label className={`p-3 rounded border cursor-pointer flex items-center justify-between transition ${
+              productProcessEvidenceSelection.includes('laser1')
+                ? 'bg-cyan-950/40 border-cyan-500 text-cyan-100'
+                : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700'
+            }`}>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={productProcessEvidenceSelection.includes('laser1')}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setProductProcessEvidenceSelection(prev => [...prev, 'laser1']);
+                    } else {
+                      setProductProcessEvidenceSelection(prev => prev.filter(x => x !== 'laser1'));
+                    }
+                  }}
+                  className="rounded border-slate-700 text-cyan-500 focus:ring-0"
+                />
+                <div>
+                  <span className="font-bold block">Laser 1 Via Quality</span>
+                  <span className="text-[10px] text-slate-400">Top Drill (51±10µm) & Bottom Drill (23±10µm)</span>
+                </div>
+              </div>
+            </label>
+
+            <label className={`p-3 rounded border cursor-pointer flex items-center justify-between transition ${
+              productProcessEvidenceSelection.includes('laser2')
+                ? 'bg-cyan-950/40 border-cyan-500 text-cyan-100'
+                : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700'
+            }`}>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={productProcessEvidenceSelection.includes('laser2')}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setProductProcessEvidenceSelection(prev => [...prev, 'laser2']);
+                    } else {
+                      setProductProcessEvidenceSelection(prev => prev.filter(x => x !== 'laser2'));
+                    }
+                  }}
+                  className="rounded border-slate-700 text-cyan-500 focus:ring-0"
+                />
+                <div>
+                  <span className="font-bold block">Laser 2 Via Quality</span>
+                  <span className="text-[10px] text-slate-400">Top Drill (51±10µm) & Bottom Drill (23±10µm)</span>
+                </div>
+              </div>
+            </label>
+          </div>
+
+          <div className="flex justify-between items-center pt-3 border-t border-slate-800">
+            <span className="text-[10px] text-slate-500">
+              ✓ Optimal A4 PDF evidence rendering
+            </span>
+            <Button onClick={() => setIsSelectProductProcessEvidenceModalOpen(false)} className="bg-cyan-500 text-slate-950 font-bold text-xs py-1.5 px-4">
+              Done & Update Report
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* MODAL 18: ENTER NEW PRODUCT & PROCESS CHECK FROM MHC */}
+      <MhcEnterProductProcessModal
+        isOpen={isEnterProductProcessModalOpen}
+        onClose={() => setIsEnterProductProcessModalOpen(false)}
+        machine={machine}
+        onSave={handleSaveProductProcessFromMhc}
       />
 
       {/* Hidden File Input for Direct Temperature Log Import inside Smart MHC */}

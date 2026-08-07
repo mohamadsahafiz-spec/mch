@@ -200,6 +200,7 @@ export interface Machine {
   manualTemperatureReadings?: import('./temperature').ManualTemperatureReading[];
   laserPowerRecords?: import('./laserPower').LaserPowerCheckRecord[];
   beamProfileRecords?: import('./beamProfile').BeamProfileCheckRecord[];
+  productProcessRecords?: import('./productProcess').ProductProcessRecord[];
 }
 
 export interface SubsystemHealth {

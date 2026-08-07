@@ -37,6 +37,7 @@ import { Machine, MHCRecord, ExecutiveReport, Customer } from '../../types';
 import { MachineTemperatureWorkspace } from './MachineTemperatureWorkspace';
 import { MachineLaserPowerWorkspace } from './MachineLaserPowerWorkspace';
 import { MachineBeamProfileWorkspace } from './MachineBeamProfileWorkspace';
+import { MachineProductProcessWorkspace } from './MachineProductProcessWorkspace';
 import { INITIAL_CUSTOMERS } from '../../data/mockData';
 import { Card } from '../common/Card';
 import { Badge } from '../common/Badge';
@@ -91,8 +92,8 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
   const isDark = effectiveTheme === 'dark';
   const selectedMachine = machines.find((m) => m.id === selectedMachineId) || machines[0];
 
-  // Machine Passport Sub-Category Active Tab State ('lifecycle' | 'temperature' | 'laser_power' | 'beam_profile')
-  const [passportSubTab, setPassportSubTab] = useState<'lifecycle' | 'temperature' | 'laser_power' | 'beam_profile'>('lifecycle');
+  // Machine Passport Sub-Category Active Tab State ('lifecycle' | 'temperature' | 'laser_power' | 'beam_profile' | 'product_process')
+  const [passportSubTab, setPassportSubTab] = useState<'lifecycle' | 'temperature' | 'laser_power' | 'beam_profile' | 'product_process'>('lifecycle');
 
   // Authoritative Machine Laser Lifecycle Metrics derived via LaserEngine
   const machineMetrics: MachineMetrics = React.useMemo(() => {
@@ -1690,6 +1691,30 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
                 </span>
               )}
             </button>
+
+            <button
+              type="button"
+              onClick={() => setPassportSubTab('product_process')}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+                passportSubTab === 'product_process'
+                  ? isDark
+                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 shadow-xs'
+                    : 'bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-xs'
+                  : isDark
+                  ? 'text-slate-400 hover:text-slate-200'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Layers className="w-3.5 h-3.5 text-emerald-400" />
+              Product & Process
+              {(selectedMachine?.productProcessRecords?.length || 0) > 0 && (
+                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
+                  isDark ? 'bg-emerald-500/30 text-emerald-300' : 'bg-emerald-100 text-emerald-800'
+                }`}>
+                  {selectedMachine.productProcessRecords?.length}
+                </span>
+              )}
+            </button>
           </div>
 
           {passportSubTab === 'lifecycle' ? (
@@ -2020,8 +2045,13 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
             machine={selectedMachine}
             onUpdateMachine={(updated) => onEditMachine?.(updated)}
           />
-        ) : (
+        ) : passportSubTab === 'beam_profile' ? (
           <MachineBeamProfileWorkspace
+            machine={selectedMachine}
+            onUpdateMachine={(updated) => onEditMachine?.(updated)}
+          />
+        ) : (
+          <MachineProductProcessWorkspace
             machine={selectedMachine}
             onUpdateMachine={(updated) => onEditMachine?.(updated)}
           />
