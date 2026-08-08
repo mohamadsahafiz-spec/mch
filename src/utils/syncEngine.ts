@@ -165,6 +165,15 @@ class SyncEngineManager {
     }
   }
 
+  private async safeParseJson(res: Response) {
+    const contentType = res.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      const text = await res.text().catch(() => '');
+      throw new Error(`Server returned non-JSON response (${res.status}): ${text.substring(0, 80)}`);
+    }
+    return await res.json();
+  }
+
   // Primary Sync Process Execution
   public async processQueue() {
     if (this.isProcessing) return;
@@ -198,16 +207,21 @@ class SyncEngineManager {
         });
 
         if (res.ok) {
-          const result = await res.json();
+          const result = await this.safeParseJson(res);
           // Remove processed items from queue
           const processedIds = new Set(batchToUpload.map(i => i.id));
           this.queue = this.queue.filter(i => !processedIds.has(i.id));
           this.saveQueue();
-          this.lastSyncTime = new Date().toISOString();
-          localStorage.setItem(LAST_SYNC_KEY, this.lastSyncTime);
+          if (result.serverTimestamp) {
+            this.lastSyncTime = result.serverTimestamp;
+            localStorage.setItem(LAST_SYNC_KEY, this.lastSyncTime);
+          }
+          if (result.totalServerRecords !== undefined) {
+            this.serverRecordCount = result.totalServerRecords;
+          }
           this.lastError = null;
         } else {
-          this.lastError = `Server returned ${res.status}`;
+          this.lastError = `Server returned HTTP ${res.status}`;
         }
       }
 
@@ -272,8 +286,8 @@ class SyncEngineManager {
       const sinceParam = this.lastSyncTime ? encodeURIComponent(this.lastSyncTime) : '0';
       const res = await fetch(`/api/changes?since=${sinceParam}&deviceId=${encodeURIComponent(this.deviceId)}`);
       if (res.ok) {
-        const data = await res.json();
-        this.serverRecordCount = data.serverRecordCount || 0;
+        const data = await this.safeParseJson(res);
+        this.serverRecordCount = data.serverRecordCount ?? this.serverRecordCount;
         const changes: CloudRecord[] = data.changes || [];
 
         if (changes.length > 0 && this.onRemoteDataUpdateCallback) {
@@ -289,11 +303,18 @@ class SyncEngineManager {
           }
         }
 
-        this.lastSyncTime = new Date().toISOString();
+        if (data.serverTimestamp) {
+          this.lastSyncTime = data.serverTimestamp;
+        } else {
+          this.lastSyncTime = new Date().toISOString();
+        }
         localStorage.setItem(LAST_SYNC_KEY, this.lastSyncTime);
+      } else {
+        this.lastError = `Pull failed HTTP ${res.status}`;
       }
-    } catch (e) {
+    } catch (e: any) {
       console.warn('[SyncEngine] Pull changes soft error:', e);
+      this.lastError = e?.message || 'Pull error';
     }
   }
 

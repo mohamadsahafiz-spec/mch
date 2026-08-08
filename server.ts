@@ -30,6 +30,17 @@ async function startServer() {
 
   app.use(express.json({ limit: "50mb" }));
 
+  // Enable CORS & handle OPTIONS preflight to prevent 405 Method Not Allowed & cross-device errors
+  app.use((req, res, next) => {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
+    if (req.method === "OPTIONS") {
+      return res.status(200).end();
+    }
+    next();
+  });
+
   // Health check endpoint
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
@@ -93,14 +104,21 @@ async function startServer() {
         activeDevices.add(deviceIdParam);
       }
 
-      const sinceTime = new Date(sinceParam).getTime() || 0;
+      const sinceTime = sinceParam === "0" ? 0 : (new Date(sinceParam).getTime() || 0);
       const changes: D1Record[] = [];
 
       d1Database.forEach((rec) => {
         const recordTime = new Date(rec.updatedAt).getTime() || rec.version || 0;
-        // Deliver records that were updated after 'since' AND originated from a different device (or if since is 0)
-        if (recordTime > sinceTime && (!deviceIdParam || rec.deviceId !== deviceIdParam)) {
-          changes.push(rec);
+        // If since === 0, fetch ALL active non-deleted records to hydrate device
+        if (sinceTime === 0) {
+          if (!rec.isDeleted) {
+            changes.push(rec);
+          }
+        } else {
+          // Incremental updates: return records updated after sinceTime from OTHER devices
+          if (recordTime > sinceTime && (!deviceIdParam || rec.deviceId !== deviceIdParam)) {
+            changes.push(rec);
+          }
         }
       });
 
@@ -148,28 +166,30 @@ async function startServer() {
     res.json({ success: true, imageId: img.imageId, dataUrl: img.dataUrl });
   });
 
-  // 5. Worker API: Delete Record (POST or DELETE /api/record)
-  app.delete("/api/record", (req, res) => {
+  // 5. Worker API: Record Deletion / Mutation (Supports ALL methods: DELETE, POST, etc.)
+  app.all("/api/record", (req, res) => {
     try {
-      const { table, recordId, deviceId } = req.body || {};
+      const { table, recordId, deviceId, action } = req.body || {};
       if (!table || !recordId) {
         return res.status(400).json({ error: "table and recordId required" });
       }
 
       const key = `${table}:${recordId}`;
+      const isDeleted = action === "delete" || req.method === "DELETE";
+
       d1Database.set(key, {
         table,
         recordId,
-        data: null,
+        data: isDeleted ? null : req.body.data,
         updatedAt: new Date().toISOString(),
         deviceId: deviceId || "UNKNOWN",
         version: Date.now(),
-        isDeleted: true
+        isDeleted
       });
 
-      res.json({ success: true, table, recordId });
+      res.json({ success: true, table, recordId, isDeleted });
     } catch (err: any) {
-      res.status(500).json({ error: err?.message || "Failed to delete record" });
+      res.status(500).json({ error: err?.message || "Failed to process record" });
     }
   });
 

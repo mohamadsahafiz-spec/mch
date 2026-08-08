@@ -1,20 +1,11 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# FSOS - Field Services Operating System
 
-# Run and deploy your AI Studio app
+FSOS is a web-based engineering operating system designed for field service engineers, machine health diagnostics (Smart MHC), laser engine analysis, and automated cross-device cloud synchronization.
 
-This contains everything you need to run your app locally.
+## Features
 
-View your app in AI Studio: https://ai.studio/apps/b21e6eec-e147-41dc-9f7f-98f8a5baf7c1
-
-## Run Locally
-
-**Prerequisites:**  Node.js
-
-
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+- **Machine Passport & Field Tasks**: Manage machinery, serial numbers, baselines, and maintenance schedules.
+- **Smart MHC & Engineering Report Studio**: Machine health check workspace with modular widgets and continuous report studio.
+- **Engineering Engines**: Laser power analysis, beam profiling, temperature log analysis, product process analysis.
+- **Automatic Cloud Sync**: Background synchronization between IndexedDB local storage and Cloudflare D1 cloud replica across devices (e.g., `HOME-PC` and `STM-LAPTOP`).
+- **Offline-First**: Full offline support with automatic queue resumption when online.
