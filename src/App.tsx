@@ -26,6 +26,7 @@ import {
 } from './types';
 import { StorageService } from './utils/persistence';
 import { ImageStore } from './utils/imageStore';
+import { SyncEngine } from './utils/syncEngine';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
@@ -136,6 +137,26 @@ function AppLayout() {
     if (loadedUsers.length > 0) {
       setActiveUser(loadedUsers[0]);
     }
+
+    // Auto-migrate existing IndexedDB / StorageService data to Cloud D1 queue
+    SyncEngine.autoMigrateExistingData(StorageService.getAllLocalData);
+
+    // Subscribe to SyncEngine remote updates to synchronize React UI
+    const unsubscribeSync = SyncEngine.subscribe(() => {
+      setMachines(StorageService.getMachines());
+      setMhcRecords(StorageService.getMhcRecords());
+      setReports(StorageService.getReports());
+      setCustomers(StorageService.getCustomers());
+      setPlants(StorageService.getPlants());
+      setLines(StorageService.getLines());
+      setContracts(StorageService.getContracts());
+      setTasks(StorageService.getTasks());
+      setAlerts(StorageService.getAlerts());
+    });
+
+    return () => {
+      unsubscribeSync();
+    };
   }, []);
 
   // Auth & Workspace Mode Handlers

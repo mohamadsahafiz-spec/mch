@@ -1,0 +1,207 @@
+import express from "express";
+import path from "path";
+import { createServer as createViteServer } from "vite";
+
+interface D1Record {
+  table: string;
+  recordId: string;
+  data: any;
+  updatedAt: string;
+  deviceId: string;
+  version: number;
+  isDeleted?: boolean;
+}
+
+interface D1Image {
+  imageId: string;
+  dataUrl: string;
+  deviceId: string;
+  updatedAt: string;
+}
+
+// Simulated Cloudflare D1 replica storage
+const d1Database = new Map<string, D1Record>();
+const d1Images = new Map<string, D1Image>();
+const activeDevices = new Set<string>();
+
+async function startServer() {
+  const app = express();
+  const PORT = 3000;
+
+  app.use(express.json({ limit: "50mb" }));
+
+  // Health check endpoint
+  app.get("/api/health", (req, res) => {
+    res.json({ status: "ok", timestamp: new Date().toISOString() });
+  });
+
+  // 1. Worker API: Bulk Sync Upload (POST /api/sync)
+  app.post("/api/sync", (req, res) => {
+    try {
+      const { deviceId, items } = req.body || {};
+      if (!Array.isArray(items)) {
+        return res.status(400).json({ error: "Invalid sync request format: items array required" });
+      }
+
+      if (deviceId) {
+        activeDevices.add(deviceId);
+      }
+
+      let processedCount = 0;
+      const nowIso = new Date().toISOString();
+
+      items.forEach((item: any) => {
+        if (!item.table || !item.recordId) return;
+
+        const key = `${item.table}:${item.recordId}`;
+        const existing = d1Database.get(key);
+
+        // Conflict handling: Latest timestamp / version wins
+        if (!existing || (item.version && item.version >= existing.version) || item.updatedAt >= existing.updatedAt) {
+          d1Database.set(key, {
+            table: item.table,
+            recordId: item.recordId,
+            data: item.action === "delete" ? null : item.data,
+            updatedAt: item.updatedAt || nowIso,
+            deviceId: item.deviceId || deviceId || "UNKNOWN",
+            version: item.version || Date.now(),
+            isDeleted: item.action === "delete"
+          });
+          processedCount++;
+        }
+      });
+
+      res.json({
+        success: true,
+        processedCount,
+        serverTimestamp: nowIso,
+        totalServerRecords: d1Database.size
+      });
+    } catch (err: any) {
+      console.error("[Worker API /api/sync Error]:", err);
+      res.status(500).json({ error: err?.message || "Sync execution failed" });
+    }
+  });
+
+  // 2. Worker API: Cross-Device Changes Download (GET /api/changes)
+  app.get("/api/changes", (req, res) => {
+    try {
+      const sinceParam = (req.query.since as string) || "0";
+      const deviceIdParam = (req.query.deviceId as string) || "";
+
+      if (deviceIdParam) {
+        activeDevices.add(deviceIdParam);
+      }
+
+      const sinceTime = new Date(sinceParam).getTime() || 0;
+      const changes: D1Record[] = [];
+
+      d1Database.forEach((rec) => {
+        const recordTime = new Date(rec.updatedAt).getTime() || rec.version || 0;
+        // Deliver records that were updated after 'since' AND originated from a different device (or if since is 0)
+        if (recordTime > sinceTime && (!deviceIdParam || rec.deviceId !== deviceIdParam)) {
+          changes.push(rec);
+        }
+      });
+
+      res.json({
+        success: true,
+        serverTimestamp: new Date().toISOString(),
+        serverRecordCount: d1Database.size,
+        changes
+      });
+    } catch (err: any) {
+      console.error("[Worker API /api/changes Error]:", err);
+      res.status(500).json({ error: err?.message || "Failed to fetch cloud changes" });
+    }
+  });
+
+  // 3. Worker API: Separate Image Persistence (POST /api/images)
+  app.post("/api/images", (req, res) => {
+    try {
+      const { imageId, dataUrl, deviceId } = req.body || {};
+      if (!imageId || !dataUrl) {
+        return res.status(400).json({ error: "imageId and dataUrl required" });
+      }
+
+      d1Images.set(imageId, {
+        imageId,
+        dataUrl,
+        deviceId: deviceId || "UNKNOWN",
+        updatedAt: new Date().toISOString()
+      });
+
+      res.json({ success: true, imageId });
+    } catch (err: any) {
+      console.error("[Worker API /api/images Error]:", err);
+      res.status(500).json({ error: err?.message || "Failed to persist image" });
+    }
+  });
+
+  // 4. Worker API: Fetch Image Payload (GET /api/images/:imageId)
+  app.get("/api/images/:imageId", (req, res) => {
+    const { imageId } = req.params;
+    const img = d1Images.get(imageId);
+    if (!img) {
+      return res.status(404).json({ error: "Image not found in Cloud D1 replica" });
+    }
+    res.json({ success: true, imageId: img.imageId, dataUrl: img.dataUrl });
+  });
+
+  // 5. Worker API: Delete Record (POST or DELETE /api/record)
+  app.delete("/api/record", (req, res) => {
+    try {
+      const { table, recordId, deviceId } = req.body || {};
+      if (!table || !recordId) {
+        return res.status(400).json({ error: "table and recordId required" });
+      }
+
+      const key = `${table}:${recordId}`;
+      d1Database.set(key, {
+        table,
+        recordId,
+        data: null,
+        updatedAt: new Date().toISOString(),
+        deviceId: deviceId || "UNKNOWN",
+        version: Date.now(),
+        isDeleted: true
+      });
+
+      res.json({ success: true, table, recordId });
+    } catch (err: any) {
+      res.status(500).json({ error: err?.message || "Failed to delete record" });
+    }
+  });
+
+  // 6. Worker API: Status & Device Telemetry (GET /api/sync/status)
+  app.get("/api/sync/status", (req, res) => {
+    res.json({
+      status: "online",
+      serverRecordCount: d1Database.size,
+      totalStoredImages: d1Images.size,
+      activeDevices: Array.from(activeDevices),
+      serverTimestamp: new Date().toISOString()
+    });
+  });
+
+  // Vite middleware for development or static serving for production
+  if (process.env.NODE_ENV !== "production") {
+    const vite = await createViteServer({
+      server: { middlewareMode: true },
+      appType: "spa",
+    });
+    app.use(vite.middlewares);
+  } else {
+    const distPath = path.join(process.cwd(), 'dist');
+    app.use(express.static(distPath));
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(distPath, 'index.html'));
+    });
+  }
+
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log(`[FSOS Cloudflare Worker API & Server] running on http://0.0.0.0:${PORT}`);
+  });
+}
+
+startServer();

@@ -7,6 +7,7 @@ import { getThemeClasses } from '../../theme/tokens';
 import { NotificationPanel } from '../notifications/NotificationPanel';
 import { UserAvatar } from '../common/UserAvatar';
 import { WorkspaceModeSelector } from './WorkspaceModeSelector';
+import { SyncStatusIndicator } from '../common/SyncStatusIndicator';
 
 interface HeaderProps {
   activeTab: NavigationTab;
@@ -141,6 +142,9 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Right Controls */}
       <div className="flex items-center gap-2.5">
+        {/* Automatic Cloud Synchronization Indicator */}
+        <SyncStatusIndicator isDark={isDark} />
+
         {/* Workspace Mode Selector Control */}
         <WorkspaceModeSelector
           currentMode={workspaceMode}
