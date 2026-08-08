@@ -44,7 +44,7 @@ export const MachineBeamProfileWorkspace: React.FC<MachineBeamProfileWorkspacePr
   const { effectiveTheme } = useTheme();
   const isDark = effectiveTheme === 'dark';
 
-  const records = machine.beamProfileRecords || [];
+  const records = machine?.beamProfileRecords || [];
   const latestRecord = records[0] || null;
 
   // Modal states

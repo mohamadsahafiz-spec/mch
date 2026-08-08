@@ -310,6 +310,7 @@ export const MachinePassportModule: React.FC<MachinePassportProps> = ({
 
   // Handlers for Add Laser Modal
   const handleOpenAddLaser = () => {
+    if (!selectedMachine) return;
     const currentCount = (selectedMachine.lasers || selectedMachine.laserHeads || []).length;
     setAddLaserName(`Laser Head #${currentCount + 1}`);
     setAddLaserSerial(`LZR-${selectedMachine.machineNumber ? selectedMachine.machineNumber.replace('MCH-', '') : '01'}-0${currentCount + 1}`);

@@ -61,7 +61,7 @@ export const MachineTemperatureWorkspace: React.FC<MachineTemperatureWorkspacePr
   const { effectiveTheme } = useTheme();
   const isDark = effectiveTheme === 'dark';
 
-  const cachedDraft = tempDraftCache[machine.id];
+  const cachedDraft = machine?.id ? tempDraftCache[machine.id] : undefined;
 
   // State for raw log processing
   const [selectedFiles, setSelectedFiles] = useState<{ name: string; text: string }[]>(cachedDraft?.selectedFiles || []);

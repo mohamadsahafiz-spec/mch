@@ -18,7 +18,7 @@ export const MachineProductProcessWorkspace: React.FC<MachineProductProcessWorks
   machine,
   onUpdateMachine
 }) => {
-  const records = machine.productProcessRecords || [];
+  const records = machine?.productProcessRecords || [];
   const latestRecord = records[0] || null;
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);

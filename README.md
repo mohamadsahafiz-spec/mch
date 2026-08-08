@@ -9,3 +9,12 @@ FSOS is a web-based engineering operating system designed for field service engi
 - **Engineering Engines**: Laser power analysis, beam profiling, temperature log analysis, product process analysis.
 - **Automatic Cloud Sync**: Background synchronization between IndexedDB local storage and Cloudflare D1 cloud replica across devices (e.g., `HOME-PC` and `STM-LAPTOP`).
 - **Offline-First**: Full offline support with automatic queue resumption when online.
+
+## Deployment to Cloudflare Workers
+
+1. **Build Application**:
+   `npm run build`
+2. **Create D1 Database** (if not created):
+   `npx wrangler d1 create fsos-d1`
+3. **Deploy Worker**:
+   `npx wrangler deploy`

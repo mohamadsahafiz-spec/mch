@@ -1,5 +1,24 @@
 # FSOS CHANGELOG
 
+## v1.0.1 — Cloudflare Deployment & Validation (2026-08-08)
+
+### Verified & Documented
+- **Wrangler & D1 Binding Verification**: Confirmed `wrangler.toml` assets (`./dist`) and D1 database binding (`DB`).
+- **Cloud Run Decoupling**: Application runtime entirely independent of Cloud Run container dependencies.
+- **Deployment Documentation**: Complete step-by-step Wrangler deploy instructions provided in `README.md`.
+
+## v1.0.0 — Cloudflare Workers Foundation (2026-08-08)
+
+### Migrated & Architecture
+- **Cloudflare Workers Runtime Integration (`src/worker.ts` & `wrangler.toml`)**:
+  - Full migration of application runtime and server endpoints to Cloudflare Workers native fetch standard.
+  - Native route handling for `/api/health`, `/api/sync`, `/api/changes`, `/api/images`, `/api/record`, and `/api/sync/status`.
+  - Configured Cloudflare D1 database binding (`env.DB`) and static asset binding (`env.ASSETS`).
+- **Unified Static Asset & API Serving**:
+  - Serves compiled React SPA assets directly from `dist` via `env.ASSETS` while routing API queries to native worker handlers.
+- **Data Integrity & Robust Machine Lookup**:
+  - Hardened Machine Passport and workspace modules against null machine access.
+
 ## v0.9.1 — Data Integrity Hotfix (2026-08-07)
 
 ### Fixed & Enhanced

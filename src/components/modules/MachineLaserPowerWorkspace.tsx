@@ -41,7 +41,7 @@ export const MachineLaserPowerWorkspace: React.FC<MachineLaserPowerWorkspaceProp
   const { effectiveTheme } = useTheme();
   const isDark = effectiveTheme === 'dark';
 
-  const records = machine.laserPowerRecords || [];
+  const records = machine?.laserPowerRecords || [];
   const latestRecord = records[0] || null;
 
   // Modal states

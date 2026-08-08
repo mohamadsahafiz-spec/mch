@@ -15,6 +15,37 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
 
   const changelog = [
     {
+      version: 'v1.0.2',
+      date: '2026-08-08',
+      type: 'Migration Finalization & UI Version Harmonization',
+      highlights: [
+        'SYSTEM VERSION HARMONIZATION: Updated all in-app version badges, banners, and footers across the application to v1.0.2.',
+        'OPERATIONAL BUILD STATUS: Updated in-app Operational Build Status to Cloudflare Workers Engine (CFW-20260808-102).',
+        'PRODUCT EVOLUTION LOG: Updated Product Evolution Log to document native Cloudflare Workers and D1 database foundation.',
+        'DOCUMENTATION: Updated in-app Version/Changelog page and release notes summary.'
+      ]
+    },
+    {
+      version: 'v1.0.1',
+      date: '2026-08-08',
+      type: 'Cloudflare Deployment & Validation',
+      highlights: [
+        'Wrangler & D1 Binding Verification: Confirmed wrangler.toml assets (./dist) and D1 database binding (DB).',
+        'Cloud Run Decoupling: Application runtime decoupled from Cloud Run container dependencies.',
+        'Deployment Documentation: Created step-by-step Wrangler deploy instructions in README.md.'
+      ]
+    },
+    {
+      version: 'v1.0.0',
+      date: '2026-08-08',
+      type: 'Cloudflare Workers Foundation',
+      highlights: [
+        'Cloudflare Workers Runtime Integration: Migrated application server endpoints to Cloudflare Workers native fetch standard.',
+        'Native API Routing: Implemented worker handlers for /api/health, /api/sync, /api/changes, /api/images, /api/record, and /api/sync/status.',
+        'D1 Database & Static Assets: Bound Cloudflare D1 database (DB) and served static React SPA assets (ASSETS).'
+      ]
+    },
+    {
       version: 'v0.9.1',
       date: '2026-08-07',
       type: 'Data Integrity Hotfix (v0.9.1)',
@@ -547,16 +578,16 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
             <div className={`p-3 rounded-xl border font-mono font-bold text-lg ${
               isDark ? 'bg-[#8B9DFF]/15 border-[#8B9DFF]/30 text-[#8B9DFF]' : 'bg-indigo-50 border-indigo-200 text-indigo-800'
             }`}>
-              v0.8.1
+              v1.0.2
             </div>
             <div>
               <h3 className="text-base font-bold">Field Service Operations System</h3>
               <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600 font-medium'}`}>
-                MHC Operations Workspace v0.8.1 — Work-Adaptive Cleanroom Platform (ECO-20260803-035)
+                Cloudflare Workers Runtime v1.0.2 — Native Cloud Engine & D1 Sync Foundation (CFW-20260808-102)
               </p>
             </div>
           </div>
-          <Badge variant="blue">v0.8.1 OPERATIONAL</Badge>
+          <Badge variant="blue">v1.0.2 OPERATIONAL</Badge>
         </div>
       </Card>
 
@@ -570,7 +601,7 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
               <Tag className="w-3.5 h-3.5 text-[#8B9DFF]" />
               <span className="font-mono uppercase text-[10px]">Version</span>
             </div>
-            <p className="font-mono font-bold text-sm text-[#8B9DFF]">v0.8.1</p>
+            <p className="font-mono font-bold text-sm text-[#8B9DFF]">v1.0.2</p>
           </div>
 
           <div className={`p-3.5 rounded-xl border space-y-1 ${
@@ -580,7 +611,7 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
               <Cpu className="w-3.5 h-3.5 text-[#8B9DFF]" />
               <span className="font-mono uppercase text-[10px]">Build ID</span>
             </div>
-            <p className="font-mono font-bold text-sm">ECO-20260803-035</p>
+            <p className="font-mono font-bold text-sm">CFW-20260808-102</p>
           </div>
 
           <div className={`p-3.5 rounded-xl border space-y-1 ${
@@ -590,7 +621,7 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
               <Compass className="w-3.5 h-3.5 text-[#8B9DFF]" />
               <span className="font-mono uppercase text-[10px]">Release Codename</span>
             </div>
-            <p className="font-semibold text-xs text-emerald-400">MHC Operations Workspace</p>
+            <p className="font-semibold text-xs text-emerald-400">Cloudflare Workers Engine</p>
           </div>
 
           <div className={`p-3.5 rounded-xl border space-y-1 ${
@@ -600,7 +631,7 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
               <Calendar className="w-3.5 h-3.5 text-[#8B9DFF]" />
               <span className="font-mono uppercase text-[10px]">Release Date</span>
             </div>
-            <p className="font-mono text-xs">2026-08-03</p>
+            <p className="font-mono text-xs">2026-08-08</p>
           </div>
 
           <div className={`p-3.5 rounded-xl border space-y-1 ${
@@ -623,7 +654,7 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
               <ShieldCheck className="w-3.5 h-3.5 text-[#8B9DFF]" />
               <span className="font-mono uppercase text-[10px]">Target Deployment</span>
             </div>
-            <p className="font-semibold text-xs">Cleanroom Field Ops (TRUMPF/ASML)</p>
+            <p className="font-semibold text-xs">Cloudflare Workers & D1 Storage</p>
           </div>
         </div>
       </Card>
@@ -641,17 +672,17 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
                 <span>CTO STRATEGIC DIRECTIVE</span>
               </div>
               <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-[#8B9DFF]/20 text-[#8B9DFF] border border-[#8B9DFF]/30 font-semibold">
-                v0.8.1 MHC CRUD & PASSPORT REFINEMENT
+                v1.0.2 CLOUDFLARE WORKERS MIGRATION FINALIZATION
               </span>
             </div>
             <p className="leading-relaxed font-medium">
-              v0.8.1 solidifies Machine Passport customer data integrity and completes multi-laser & power-head CRUD flexibility within MHC inspection stages.
+              v1.0.2 finalizes the complete migration of FSOS from legacy Cloud Run container runtime to Cloudflare Workers native edge infrastructure with D1 database persistence.
             </p>
             <p className="leading-relaxed text-slate-300">
-              MHC now seamlessly connects:
+              Native Cloudflare Architecture:
             </p>
             <div className="font-mono text-[11px] font-bold text-emerald-400 bg-slate-950/60 p-2.5 rounded-lg border border-slate-800 tracking-wide">
-              Machine Identity → MHC Session → Multi-Laser Evidence → MHC Summary → Report Draft → Customer Report
+              Cloudflare Worker (src/worker.ts) → Cloudflare D1 (env.DB) → Asset Edge (env.ASSETS) → FSOS React SPA
             </div>
           </div>
 
@@ -661,29 +692,29 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
           }`}>
             <div className="flex items-center gap-2 font-bold text-sm text-slate-200">
               <History className="w-4 h-4 text-[#8B9DFF]" />
-              <span>Product Evolution Log: Dedicated MHC Operations Workspace</span>
+              <span>Product Evolution Log: Cloudflare Workers Foundation</span>
             </div>
 
             <div className="space-y-3 text-slate-300 dark:text-slate-300">
               <div className="space-y-1">
-                <p className="font-semibold text-[#8B9DFF]">FROM: MHC as a secondary service function</p>
-                <p className="font-semibold text-emerald-400">TO: MHC as a dedicated first-class operational workspace</p>
+                <p className="font-semibold text-[#8B9DFF]">FROM: Cloud Run Server Container Dependency</p>
+                <p className="font-semibold text-emerald-400">TO: Serverless Edge Cloudflare Workers & D1 Binding</p>
                 <p className="text-slate-400 leading-relaxed pt-1">
-                  Machine Health Check has evolved from a secondary utility into a primary first-class operational workspace within FSOS. The 01–08 inspection workflow directly binds field inspection data (laser hours, laser output power, optics, chiller thermal loops, and quality samples) to live report draft generation.
+                  The application runtime has been migrated to Cloudflare Workers (`src/worker.ts`), completely removing heavy Cloud Run server dependencies while maintaining full endpoint compatibility for sync, image storage, and status verification.
                 </p>
               </div>
 
               <div className="space-y-1">
-                <p className="font-semibold text-[#8B9DFF]">2. Complete Data Pipeline from Inspection to Customer Certificate</p>
+                <p className="font-semibold text-[#8B9DFF]">2. Native D1 Database Persistence</p>
                 <p className="text-slate-400 leading-relaxed">
-                  Field service engineers can execute structured 8-stage inspections on active machine assets, persist session progress, review findings in the MHC Summary, customize sections in the Live Report Builder, manage report drafts, import/export CSV engineering data, and issue executive release certificates.
+                  Cloud D1 sqlite binding handles background sync records and image metadata transactions seamlessly, providing edge persistence for multi-device field operations.
                 </p>
               </div>
 
               <div className="space-y-1">
-                <p className="font-semibold text-[#8B9DFF]">3. Platform Support & Ergonomics</p>
+                <p className="font-semibold text-[#8B9DFF]">3. Platform Support & Edge Delivery</p>
                 <p className="text-slate-400 leading-relaxed">
-                  Login session management and MHC Workspace Mode serve as supporting platform capabilities, allowing cleanroom field service engineers to focus strictly on inspection execution without distraction.
+                  Static React SPA assets are delivered via Cloudflare Workers Asset Binding (`env.ASSETS`), ensuring ultra-fast load times for cleanroom field service engineers worldwide.
                 </p>
               </div>
             </div>
@@ -692,43 +723,42 @@ export const SettingsModule: React.FC<SettingsProps> = ({ onResetData }) => {
       </Card>
 
       {/* Release Notes Summary */}
-      <Card title="Release Notes — v0.8.1 MHC CRUD & Machine Passport UX Refinement">
+      <Card title="Release Notes — v1.0.2 Migration Finalization & Version Harmonization">
         <div className={`p-4 rounded-xl border space-y-3 text-xs ${
           isDark ? 'bg-[#1A1D21] border-[#2B323A]' : 'bg-slate-50 border-slate-200'
         }`}>
           <div className="flex items-center justify-between border-b border-[#2B323A]/60 pb-2">
-            <span className="font-bold text-sm text-[#8B9DFF]">Release Summary (Sprint ECO-20260803-035)</span>
-            <span className="font-mono text-slate-400">Target: v0.8.1</span>
+            <span className="font-bold text-sm text-[#8B9DFF]">Release Summary (Sprint Cloudflare Migration)</span>
+            <span className="font-mono text-slate-400">Target: v1.0.2</span>
           </div>
 
           <p className="text-slate-300 leading-relaxed">
-            Sprint v0.8.1 delivers critical CRUD protections and multi-head inspection capabilities across Machine Passport and Machine Health Check (MHC). Key deliverables include:
+            Sprint v1.0.2 finalizes the Cloudflare Workers migration and synchronizes all in-app version badges, operational status indicators, and documentation across FSOS. Key deliverables include:
           </p>
 
           <ul className="grid grid-cols-1 md:grid-cols-2 gap-1.5 text-slate-300 font-mono text-[11px] bg-slate-950/50 p-3 rounded-lg border border-slate-800/80">
-            <li>• Customer delete protection when machines are assigned</li>
-            <li>• Machine deletion preserves parent customer account</li>
-            <li>• Single 3-dot card menu for Machine CRUD (duplicate removed)</li>
-            <li>• Stage 01 Add/Delete Laser controls & remaining hours alert</li>
-            <li>• Stage 03 Add/Delete Laser Power Head controls</li>
-            <li>• Stage 03 Evidence Photo upload & thumbnail deletion</li>
-            <li>• Stages 02, 04, 05, 06 Photo evidence uploads with deletion</li>
-            <li>• Stage 07 Spare Parts Add/Edit/Delete workflow</li>
-            <li>• Complete internal documentation & changelog update</li>
+            <li>• Native Cloudflare Workers runtime (src/worker.ts)</li>
+            <li>• Cloudflare D1 Database binding (env.DB)</li>
+            <li>• Asset Edge Serving (env.ASSETS)</li>
+            <li>• Wrangler deployment configuration (wrangler.toml)</li>
+            <li>• Decoupled from Cloud Run server container</li>
+            <li>• Updated in-app Operational Build Status</li>
+            <li>• Updated in-app Product Evolution Log</li>
+            <li>• Updated in-app Version & Changelog page</li>
           </ul>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
             <div className={`p-3 rounded-lg border ${isDark ? 'bg-[#111315] border-[#2B323A]/80' : 'bg-white border-slate-200'}`}>
               <p className="font-bold text-[#7FD4A6] mb-1">✓ What Changed</p>
-              <p className="text-slate-400 text-[11px]">Protected Customer deletion, fixed machine deletion scoping, removed duplicate actions menu, added multi-laser/head CRUD in MHC Stages 01 and 03 with photo evidence management, and updated release documentation to v0.8.1.</p>
+              <p className="text-slate-400 text-[11px]">Migrated server runtime to Cloudflare Workers, integrated D1 database binding, updated all in-app version references to v1.0.2, and completed deployment instructions.</p>
             </div>
             <div className={`p-3 rounded-lg border ${isDark ? 'bg-[#111315] border-[#2B323A]/80' : 'bg-white border-slate-200'}`}>
               <p className="font-bold text-[#8ECDF7] mb-1">✓ Why It Changed</p>
-              <p className="text-slate-400 text-[11px]">Ensures customer accounts are never inadvertently lost when deleting machines, streamlines machine CRUD UI, and provides cleanroom engineers full flexibility to measure multi-head laser configurations.</p>
+              <p className="text-slate-400 text-[11px]">Provides ultra-fast serverless edge performance, eliminates Cloud Run runtime dependencies, and maintains complete system version harmonization.</p>
             </div>
             <div className={`p-3 rounded-lg border ${isDark ? 'bg-[#111315] border-[#2B323A]/80' : 'bg-white border-slate-200'}`}>
               <p className="font-bold text-[#EFCB7A] mb-1">✓ Remaining for Future</p>
-              <p className="text-slate-400 text-[11px]">Future specialized operational modes (Calibration, Service), Workflow Navigator UX refinement, and AI Studio Git sync optimization.</p>
+              <p className="text-slate-400 text-[11px]">Ongoing background sync optimization and additional specialized operational modes.</p>
             </div>
           </div>
         </div>

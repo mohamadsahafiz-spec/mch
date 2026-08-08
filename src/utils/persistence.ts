@@ -128,7 +128,10 @@ export const StorageService = {
   },
 
   getMachines: (): Machine[] => {
-    const raw = getStorage(KEYS.MACHINES, INITIAL_MACHINES);
+    let raw = getStorage(KEYS.MACHINES, INITIAL_MACHINES);
+    if (!raw || !Array.isArray(raw) || raw.length === 0) {
+      raw = INITIAL_MACHINES;
+    }
     const normalized = LaserEngine.normalizeMachines(raw) as unknown as Machine[];
     return ImageStore.hydrateImagesSync(normalized);
   },

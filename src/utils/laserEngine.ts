@@ -704,6 +704,75 @@ export const LaserEngine = {
     let now = currentTime ? new Date(currentTime) : new Date();
     if (isNaN(now.getTime())) now = new Date();
 
+    if (!machine || typeof machine !== 'object') {
+      const dummyLaser: LaserMetrics = {
+        id: 'NONE',
+        name: 'No Laser Head',
+        serialNo: '—',
+        baseLaserHour: null,
+        baseTimestamp: null,
+        ratedLife: 25000,
+        warningLife: 20000,
+        contingencyCeiling: 28000,
+        isContingencyActive: false,
+        hoursExceeded: 0,
+        contingencyMargin: null,
+        warningMessage: 'No Machine Selected',
+        currentHour: null,
+        currentHourRaw: null,
+        estimatedCurrentHour: null,
+        recommendedRemainingHour: null,
+        remainingDays: null,
+        remainingTotal: null,
+        lifeRemainingPercent: null,
+        formattedLifeRemaining: '—',
+        status: 'BASELINE_REQUIRED',
+        runtimeState: 'BASELINE_REQUIRED',
+        baselineRequired: true,
+        estimatedRecommendedEOL: null,
+        contingencyActive: false,
+        remainingDaysInfo: { daysVal: '—', statusMsg: 'No Machine Selected', urgency: 'BASELINE_REQUIRED', formattedText: '—' },
+        recommendedLimitInfo: { daysText: '—', subText: 'No Machine Selected', dateFormatted: '—', isExceeded: false },
+        daysSinceRecal: null,
+        accuracy: { level: 'UNKNOWN', label: '⚪ UNKNOWN', color: 'var(--muted)', code: 'UNKNOWN', icon: '⚪' },
+        recalRecommendation: { status: 'No Machine', urgency: 'BASELINE_REQUIRED', color: 'var(--muted)' },
+        nextRecalDate: '—',
+        eolDate: '—',
+        age: { years: null, remainDays: null, formattedText: '—' },
+        lastRecalibrationDate: null,
+        calibrationHistory: []
+      };
+
+      return {
+        status: 'SAFE',
+        totalLasers: 0,
+        safeCount: 0,
+        warningCount: 0,
+        alarmCount: 0,
+        baselineRequiredCount: 0,
+        avgLifeRemaining: null,
+        formattedAvgLifeRemaining: '—',
+        laserMetricsList: [],
+        mostCriticalLaser: dummyLaser,
+        currentHour: '—',
+        currentHourRaw: null,
+        remainingTotal: '—',
+        remainingDaysInfo: dummyLaser.remainingDaysInfo,
+        recommendedLimitInfo: dummyLaser.recommendedLimitInfo,
+        lifeRemainingPercent: null,
+        formattedLifeRemaining: '—',
+        accuracy: dummyLaser.accuracy,
+        daysSinceRecal: null,
+        recalRecommendation: dummyLaser.recalRecommendation,
+        nextRecalDate: '—',
+        eolDate: '—',
+        age: dummyLaser.age,
+        lastRecalibrationDate: null,
+        healthPercent: null,
+        baselineRequired: false
+      };
+    }
+
     let lasers = Array.isArray(machine.lasers) && machine.lasers.length > 0 ? machine.lasers : [];
 
     if (lasers.length === 0) {
