@@ -46,9 +46,18 @@ async function startServer() {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
   });
 
-  // 1. Worker API: Bulk Sync Upload (POST /api/sync)
-  app.post("/api/sync", (req, res) => {
+  // 1. Worker API: Bulk Sync Upload & Status (POST & GET /api/sync)
+  app.all(["/api/sync", "/api/sync/"], (req, res) => {
     try {
+      if (req.method === "GET") {
+        return res.json({
+          status: "online",
+          endpoint: "/api/sync",
+          serverRecordCount: d1Database.size,
+          serverTimestamp: new Date().toISOString()
+        });
+      }
+
       const { deviceId, items } = req.body || {};
       if (!Array.isArray(items)) {
         return res.status(400).json({ error: "Invalid sync request format: items array required" });
@@ -82,7 +91,7 @@ async function startServer() {
         }
       });
 
-      res.json({
+      return res.json({
         success: true,
         processedCount,
         serverTimestamp: nowIso,
@@ -90,7 +99,7 @@ async function startServer() {
       });
     } catch (err: any) {
       console.error("[Worker API /api/sync Error]:", err);
-      res.status(500).json({ error: err?.message || "Sync execution failed" });
+      return res.status(500).json({ error: err?.message || "Sync execution failed" });
     }
   });
 
@@ -202,6 +211,11 @@ async function startServer() {
       activeDevices: Array.from(activeDevices),
       serverTimestamp: new Date().toISOString()
     });
+  });
+
+  // Catch-all 404 handler for unhandled /api/* requests to ensure JSON is always returned instead of HTML
+  app.all("/api/*", (req, res) => {
+    res.status(404).json({ error: `API route not found: ${req.method} ${req.path}` });
   });
 
   // Vite middleware for development or static serving for production
