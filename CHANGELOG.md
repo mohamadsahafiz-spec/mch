@@ -1,5 +1,11 @@
 # FSOS CHANGELOG
 
+## v1.0.7 — Cloudflare Git Build Audit (2026-08-08)
+
+### Audited & Resolved
+- **Duplicate Dependency Clean-up**: Removed duplicate `vite` declaration present in both `dependencies` and `devDependencies` in `package.json`.
+- **Lockfile & Build Verification**: Audit confirmed `.gitignore` preserves `package-lock.json` and root path configuration is correct for Cloudflare Git Build.
+
 ## v1.0.6 — Git Lockfile Verification (2026-08-08)
 
 ### Verified & Verified
