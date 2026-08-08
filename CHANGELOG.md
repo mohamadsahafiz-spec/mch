@@ -1,5 +1,10 @@
 # FSOS CHANGELOG
 
+## v1.0.8 — Lockfile Synchronization (2026-08-08)
+
+### Synchronized & Verified
+- **Lockfile Regeneration**: Regenerated `package-lock.json` via `npm install`. Verified `vite` is strictly listed under `devDependencies`.
+
 ## v1.0.7 — Cloudflare Git Build Audit (2026-08-08)
 
 ### Audited & Resolved
