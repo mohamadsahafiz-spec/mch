@@ -1,5 +1,11 @@
 # FSOS CHANGELOG
 
+## v1.0.9 — Atlas Lockfile Verification (2026-08-08)
+
+### Verified & Synchronized
+- **Lockfile Clean Regeneration**: Deleted `node_modules` and `package-lock.json`, regenerated via `npm install`.
+- **Clean Install Verification**: Executed `npm ci` locally with 100% success and 0 errors, guaranteeing lockfile parity for Cloudflare Git builds.
+
 ## v1.0.8 — Lockfile Synchronization (2026-08-08)
 
 ### Synchronized & Verified
