@@ -1,6 +1,6 @@
 {
   "name": "Field Service Operations System",
-  "description": "Enterprise Field Service Operations System (FSOS v0.8.0 Mission Workspace) with Work-Adaptive Workspace Modes, cleanroom login session management, Machine Health Check, Machine Passport, and Executive Engineering Reports.",
+  "description": "Enterprise Field Service Operations System (FSOS v0.9.3 Cloud Engine) with Work-Adaptive Workspace Modes, cleanroom session management, Machine Health Check, Machine Passport, Executive Engineering Reports, and Unified Server-Centric Cloud Replica Sync.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
