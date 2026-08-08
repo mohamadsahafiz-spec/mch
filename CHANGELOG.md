@@ -1,5 +1,18 @@
 # FSOS CHANGELOG
 
+## v1.0.5 — Build Lockfile Sync (2026-08-08)
+
+### Synchronized & Fixed
+- **Lockfile Synchronization**: Synchronized package-lock.json with package.json for seamless Cloudflare Workers automated builds.
+
+## v1.0.4 — Workers Build Finalization (2026-08-08)
+
+### Finalized & Production Ready
+- **Primary Runtime**: Set Cloudflare Workers (`src/worker.ts`) as primary production runtime.
+- **Package Scripts**: Added `build:worker` and `deploy` scripts in `package.json`.
+- **D1 Production Binding**: Bound production D1 UUID `5121135f-9336-46a6-88cc-9a2c85caae0b` in `wrangler.toml`.
+- **Direct GitHub Deploy**: Repository verified ready for direct Cloudflare Workers deployment.
+
 ## v1.0.1 — Cloudflare Deployment & Validation (2026-08-08)
 
 ### Verified & Documented
